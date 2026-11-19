@@ -73,6 +73,10 @@ func TestReviewHandler(t *testing.T) {
 	assertion.MustLen(t, res.Msg.GetReviews(), 1)
 	assertion.Equal(t, res.Msg.GetReviews()[0].GetRounds()[0].GetCommits()[0].GetCommitId(), "c1")
 	assertion.MustLen(t, res.Msg.GetReviews()[0].GetComments(), 3)
+
+	// The commits are read from the repository which must be opened.
+	_, err = h.ListApprovedCommits(t.Context(), connect.NewRequest(api.RequestListApprovedCommits_builder{Path: new("/repo")}.Build()))
+	assertion.Equal(t, connect.CodeOf(err), connect.CodeNotFound)
 }
 
 func TestReviewMCP(t *testing.T) {

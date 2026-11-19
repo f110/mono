@@ -3122,6 +3122,40 @@ export declare type ResponseListReviews = Message<"mono.codexel.ResponseListRevi
 export declare const ResponseListReviewsSchema: GenMessage<ResponseListReviews>;
 
 /**
+ * @generated from message mono.codexel.RequestListApprovedCommits
+ */
+export declare type RequestListApprovedCommits = Message<"mono.codexel.RequestListApprovedCommits"> & {
+  /**
+   * path is the repository.
+   *
+   * @generated from field: string path = 1;
+   */
+  path: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestListApprovedCommits.
+ * Use `create(RequestListApprovedCommitsSchema)` to create a new message.
+ */
+export declare const RequestListApprovedCommitsSchema: GenMessage<RequestListApprovedCommits>;
+
+/**
+ * @generated from message mono.codexel.ResponseListApprovedCommits
+ */
+export declare type ResponseListApprovedCommits = Message<"mono.codexel.ResponseListApprovedCommits"> & {
+  /**
+   * @generated from field: repeated string commit_ids = 1;
+   */
+  commitIds: string[];
+};
+
+/**
+ * Describes the message mono.codexel.ResponseListApprovedCommits.
+ * Use `create(ResponseListApprovedCommitsSchema)` to create a new message.
+ */
+export declare const ResponseListApprovedCommitsSchema: GenMessage<ResponseListApprovedCommits>;
+
+/**
  * @generated from message mono.codexel.RequestGetReview
  */
 export declare type RequestGetReview = Message<"mono.codexel.RequestGetReview"> & {
@@ -4552,6 +4586,17 @@ export declare const ReviewService: GenService<{
     methodKind: "unary";
     input: typeof RequestListReviewsSchema;
     output: typeof ResponseListReviewsSchema;
+  },
+  /**
+   * ListApprovedCommits returns the commits approved in the reviews of the repository. The commit rewritten after the
+   * approval is included if the change of it is not changed including the description (e.g. rebased).
+   *
+   * @generated from rpc mono.codexel.ReviewService.ListApprovedCommits
+   */
+  listApprovedCommits: {
+    methodKind: "unary";
+    input: typeof RequestListApprovedCommitsSchema;
+    output: typeof ResponseListApprovedCommitsSchema;
   },
   /**
    * @generated from rpc mono.codexel.ReviewService.GetReview

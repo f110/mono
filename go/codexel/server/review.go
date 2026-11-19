@@ -19,16 +19,17 @@ import (
 )
 
 type ReviewHandler struct {
-	config *config.File
-	store  *review.Store
-	herdr  *herdr.Client
-	now    func() time.Time
+	config    *config.File
+	store     *review.Store
+	herdr     *herdr.Client
+	approvals *review.Approvals
+	now       func() time.Time
 }
 
 var _ api.ReviewServiceHandler = (*ReviewHandler)(nil)
 
 func NewReviewHandler(conf *config.File, store *review.Store, herdrClient *herdr.Client) *ReviewHandler {
-	return &ReviewHandler{config: conf, store: store, herdr: herdrClient, now: time.Now}
+	return &ReviewHandler{config: conf, store: store, herdr: herdrClient, approvals: review.NewApprovals(), now: time.Now}
 }
 
 type authorKey struct{}
@@ -55,6 +56,22 @@ func (h *ReviewHandler) ListReviews(_ context.Context, req *connect.Request[api.
 		res = append(res, toReview(v))
 	}
 	return connect.NewResponse(api.ResponseListReviews_builder{Reviews: res}.Build()), nil
+}
+
+func (h *ReviewHandler) ListApprovedCommits(ctx context.Context, req *connect.Request[api.RequestListApprovedCommits]) (*connect.Response[api.ResponseListApprovedCommits], error) {
+	repo, err := openedRepository(h.config, req.Msg.GetPath())
+	if err != nil {
+		return nil, err
+	}
+	reviews, err := h.store.List(repo.Root())
+	if err != nil {
+		return nil, toReviewError(err)
+	}
+	commits, err := h.approvals.Commits(ctx, repo, reviews)
+	if err != nil {
+		return nil, toReviewError(err)
+	}
+	return connect.NewResponse(api.ResponseListApprovedCommits_builder{CommitIds: commits}.Build()), nil
 }
 
 func (h *ReviewHandler) GetReview(_ context.Context, req *connect.Request[api.RequestGetReview]) (*connect.Response[api.ResponseGetReview], error) {
@@ -311,10 +328,10 @@ func (h *ReviewHandler) RoundDiff(ctx context.Context, req *connect.Request[api.
 		return nil, err
 	}
 	return connect.NewResponse(api.ResponseRoundDiff_builder{
-		Commit:      toCommit(c),
-		Files:       toFileDiffs(files),
-		Generated:   generated,
-		Message:     toFileDiff(review.MessageDiff(fromDescription, c.FullDescription)),
+		Commit:    toCommit(c),
+		Files:     toFileDiffs(files),
+		Generated: generated,
+		Message:   toFileDiff(review.MessageDiff(fromDescription, c.FullDescription)),
 	}.Build()), nil
 }
 

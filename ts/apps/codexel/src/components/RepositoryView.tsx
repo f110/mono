@@ -33,6 +33,7 @@ import {
   type Commit,
 } from '../connect/codexel_pb.js'
 import { useAgents } from '../hooks/useAgents.ts'
+import { useApprovedCommits } from '../hooks/useApprovedCommits.ts'
 import { useDiffNavigation } from '../hooks/useDiffNavigation.ts'
 import { useOperation } from '../hooks/useOperation.ts'
 import { fileRevset, visibleNodes } from '../lib/fileTree.ts'
@@ -149,6 +150,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   const { split, preview } = useDiffNavigation(detailRef)
   const operation = useOperation(path)
   const { agents } = useAgents()
+  const approved = useApprovedCommits(path, operation)
   const { data, error, refetch } = useQuery(RevisionService.method.log, { path, revset })
   const { data: bookmarkData, refetch: refetchBookmarks } = useQuery(BookmarkService.method.listBookmarks, { path })
   const bookmarks = bookmarkData?.bookmarks ?? []
@@ -681,6 +683,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
               selected={selected}
               checked={checked}
               marks={marks}
+              approved={approved}
               agents={agents ?? []}
               onSelect={selectIndex}
               onContextMenu={(i, x, y) => {

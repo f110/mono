@@ -211,3 +211,17 @@ func (r *Repository) DiffRange(ctx context.Context, from, to string) ([]*FileDif
 	}
 	return parseGitDiff(string(out))
 }
+
+func interdiffArgs(from, to string) []string {
+	return []string{"interdiff", "--git", "--color", "never", "--ignore-working-copy", "--config", "diff.git.show-path-prefix=true", "--from=" + from, "--to=" + to}
+}
+
+// Interdiff returns the difference between the changes of two revisions. The difference of the parents is ignored and
+// the difference of the descriptions is the file JJ-COMMIT-DESCRIPTION.
+func (r *Repository) Interdiff(ctx context.Context, from, to string) ([]*FileDiff, error) {
+	out, err := run(ctx, r.root, interdiffArgs(from, to)...)
+	if err != nil {
+		return nil, err
+	}
+	return parseGitDiff(string(out))
+}

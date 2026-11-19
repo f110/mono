@@ -893,6 +893,9 @@ message ResponseWatchTranscript {
 service ReviewService {
   // ListReviews returns the reviews of the repository in descending order of the creation.
   rpc ListReviews(RequestListReviews) returns (ResponseListReviews);
+  // ListApprovedCommits returns the commits approved in the reviews of the repository. The commit rewritten after the
+  // approval is included if the change of it is not changed including the description (e.g. rebased).
+  rpc ListApprovedCommits(RequestListApprovedCommits) returns (ResponseListApprovedCommits);
   rpc GetReview(RequestGetReview) returns (ResponseGetReview);
   // StartReview starts the review of the changes. The first round is the current commits of the changes.
   rpc StartReview(RequestStartReview) returns (ResponseStartReview);
@@ -1002,6 +1005,15 @@ message RequestListReviews {
 
 message ResponseListReviews {
   repeated Review reviews = 1;
+}
+
+message RequestListApprovedCommits {
+  // path is the repository.
+  string path = 1;
+}
+
+message ResponseListApprovedCommits {
+  repeated string commit_ids = 1;
 }
 
 message RequestGetReview {

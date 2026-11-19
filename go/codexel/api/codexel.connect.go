@@ -195,6 +195,9 @@ const (
 	// ReviewServiceListReviewsProcedure is the fully-qualified name of the ReviewService's ListReviews
 	// RPC.
 	ReviewServiceListReviewsProcedure = "/mono.codexel.ReviewService/ListReviews"
+	// ReviewServiceListApprovedCommitsProcedure is the fully-qualified name of the ReviewService's
+	// ListApprovedCommits RPC.
+	ReviewServiceListApprovedCommitsProcedure = "/mono.codexel.ReviewService/ListApprovedCommits"
 	// ReviewServiceGetReviewProcedure is the fully-qualified name of the ReviewService's GetReview RPC.
 	ReviewServiceGetReviewProcedure = "/mono.codexel.ReviewService/GetReview"
 	// ReviewServiceStartReviewProcedure is the fully-qualified name of the ReviewService's StartReview
@@ -2118,6 +2121,7 @@ func (UnimplementedTranscriptServiceHandler) WatchTranscript(context.Context, *c
 // ReviewServiceClient is a client for the mono.codexel.ReviewService service.
 type ReviewServiceClient interface {
 	ListReviews(context.Context, *connect.Request[RequestListReviews]) (*connect.Response[ResponseListReviews], error)
+	ListApprovedCommits(context.Context, *connect.Request[RequestListApprovedCommits]) (*connect.Response[ResponseListApprovedCommits], error)
 	GetReview(context.Context, *connect.Request[RequestGetReview]) (*connect.Response[ResponseGetReview], error)
 	StartReview(context.Context, *connect.Request[RequestStartReview]) (*connect.Response[ResponseStartReview], error)
 	AddComment(context.Context, *connect.Request[RequestAddComment]) (*connect.Response[ResponseAddComment], error)
@@ -2147,6 +2151,12 @@ func NewReviewServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			httpClient,
 			baseURL+ReviewServiceListReviewsProcedure,
 			connect.WithSchema(reviewServiceMethods.ByName("ListReviews")),
+			connect.WithClientOptions(opts...),
+		),
+		listApprovedCommits: connect.NewClient[RequestListApprovedCommits, ResponseListApprovedCommits](
+			httpClient,
+			baseURL+ReviewServiceListApprovedCommitsProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("ListApprovedCommits")),
 			connect.WithClientOptions(opts...),
 		),
 		getReview: connect.NewClient[RequestGetReview, ResponseGetReview](
@@ -2226,24 +2236,30 @@ func NewReviewServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 
 // reviewServiceClient implements ReviewServiceClient.
 type reviewServiceClient struct {
-	listReviews    *connect.Client[RequestListReviews, ResponseListReviews]
-	getReview      *connect.Client[RequestGetReview, ResponseGetReview]
-	startReview    *connect.Client[RequestStartReview, ResponseStartReview]
-	addComment     *connect.Client[RequestAddComment, ResponseAddComment]
-	editComment    *connect.Client[RequestEditComment, ResponseEditComment]
-	deleteComment  *connect.Client[RequestDeleteComment, ResponseDeleteComment]
-	reply          *connect.Client[RequestReply, ResponseReply]
-	resolveComment *connect.Client[RequestResolveComment, ResponseResolveComment]
-	finish         *connect.Client[RequestFinish, ResponseFinish]
-	approve        *connect.Client[RequestApprove, ResponseApprove]
-	startNextRound *connect.Client[RequestStartNextRound, ResponseStartNextRound]
-	roundDiff      *connect.Client[RequestRoundDiff, ResponseRoundDiff]
-	setViewed      *connect.Client[RequestSetViewed, ResponseSetViewed]
+	listReviews         *connect.Client[RequestListReviews, ResponseListReviews]
+	listApprovedCommits *connect.Client[RequestListApprovedCommits, ResponseListApprovedCommits]
+	getReview           *connect.Client[RequestGetReview, ResponseGetReview]
+	startReview         *connect.Client[RequestStartReview, ResponseStartReview]
+	addComment          *connect.Client[RequestAddComment, ResponseAddComment]
+	editComment         *connect.Client[RequestEditComment, ResponseEditComment]
+	deleteComment       *connect.Client[RequestDeleteComment, ResponseDeleteComment]
+	reply               *connect.Client[RequestReply, ResponseReply]
+	resolveComment      *connect.Client[RequestResolveComment, ResponseResolveComment]
+	finish              *connect.Client[RequestFinish, ResponseFinish]
+	approve             *connect.Client[RequestApprove, ResponseApprove]
+	startNextRound      *connect.Client[RequestStartNextRound, ResponseStartNextRound]
+	roundDiff           *connect.Client[RequestRoundDiff, ResponseRoundDiff]
+	setViewed           *connect.Client[RequestSetViewed, ResponseSetViewed]
 }
 
 // ListReviews calls mono.codexel.ReviewService.ListReviews.
 func (c *reviewServiceClient) ListReviews(ctx context.Context, req *connect.Request[RequestListReviews]) (*connect.Response[ResponseListReviews], error) {
 	return c.listReviews.CallUnary(ctx, req)
+}
+
+// ListApprovedCommits calls mono.codexel.ReviewService.ListApprovedCommits.
+func (c *reviewServiceClient) ListApprovedCommits(ctx context.Context, req *connect.Request[RequestListApprovedCommits]) (*connect.Response[ResponseListApprovedCommits], error) {
+	return c.listApprovedCommits.CallUnary(ctx, req)
 }
 
 // GetReview calls mono.codexel.ReviewService.GetReview.
@@ -2309,6 +2325,7 @@ func (c *reviewServiceClient) SetViewed(ctx context.Context, req *connect.Reques
 // ReviewServiceHandler is an implementation of the mono.codexel.ReviewService service.
 type ReviewServiceHandler interface {
 	ListReviews(context.Context, *connect.Request[RequestListReviews]) (*connect.Response[ResponseListReviews], error)
+	ListApprovedCommits(context.Context, *connect.Request[RequestListApprovedCommits]) (*connect.Response[ResponseListApprovedCommits], error)
 	GetReview(context.Context, *connect.Request[RequestGetReview]) (*connect.Response[ResponseGetReview], error)
 	StartReview(context.Context, *connect.Request[RequestStartReview]) (*connect.Response[ResponseStartReview], error)
 	AddComment(context.Context, *connect.Request[RequestAddComment]) (*connect.Response[ResponseAddComment], error)
@@ -2334,6 +2351,12 @@ func NewReviewServiceHandler(svc ReviewServiceHandler, opts ...connect.HandlerOp
 		ReviewServiceListReviewsProcedure,
 		svc.ListReviews,
 		connect.WithSchema(reviewServiceMethods.ByName("ListReviews")),
+		connect.WithHandlerOptions(opts...),
+	)
+	reviewServiceListApprovedCommitsHandler := connect.NewUnaryHandler(
+		ReviewServiceListApprovedCommitsProcedure,
+		svc.ListApprovedCommits,
+		connect.WithSchema(reviewServiceMethods.ByName("ListApprovedCommits")),
 		connect.WithHandlerOptions(opts...),
 	)
 	reviewServiceGetReviewHandler := connect.NewUnaryHandler(
@@ -2412,6 +2435,8 @@ func NewReviewServiceHandler(svc ReviewServiceHandler, opts ...connect.HandlerOp
 		switch r.URL.Path {
 		case ReviewServiceListReviewsProcedure:
 			reviewServiceListReviewsHandler.ServeHTTP(w, r)
+		case ReviewServiceListApprovedCommitsProcedure:
+			reviewServiceListApprovedCommitsHandler.ServeHTTP(w, r)
 		case ReviewServiceGetReviewProcedure:
 			reviewServiceGetReviewHandler.ServeHTTP(w, r)
 		case ReviewServiceStartReviewProcedure:
@@ -2447,6 +2472,10 @@ type UnimplementedReviewServiceHandler struct{}
 
 func (UnimplementedReviewServiceHandler) ListReviews(context.Context, *connect.Request[RequestListReviews]) (*connect.Response[ResponseListReviews], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.ListReviews is not implemented"))
+}
+
+func (UnimplementedReviewServiceHandler) ListApprovedCommits(context.Context, *connect.Request[RequestListApprovedCommits]) (*connect.Response[ResponseListApprovedCommits], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.ListApprovedCommits is not implemented"))
 }
 
 func (UnimplementedReviewServiceHandler) GetReview(context.Context, *connect.Request[RequestGetReview]) (*connect.Response[ResponseGetReview], error) {

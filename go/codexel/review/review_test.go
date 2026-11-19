@@ -20,6 +20,8 @@ type fakeRepository struct {
 	descriptions map[string]string
 	snapshots    int
 	revsets      []string
+	// interdiffs is the calls of Interdiff as "<from>^<to>". The changed files of it are in diffs.
+	interdiffs []string
 }
 
 func (f *fakeRepository) Root() string { return "/repo" }
@@ -58,6 +60,11 @@ func (f *fakeRepository) Diff(_ context.Context, rev string) ([]*jujutsu.FileDif
 
 func (f *fakeRepository) DiffRange(_ context.Context, from, to string) ([]*jujutsu.FileDiff, error) {
 	return f.fileDiffs(from + ".." + to), nil
+}
+
+func (f *fakeRepository) Interdiff(_ context.Context, from, to string) ([]*jujutsu.FileDiff, error) {
+	f.interdiffs = append(f.interdiffs, from+"^"+to)
+	return f.fileDiffs(from + "^" + to), nil
 }
 
 func (f *fakeRepository) fileDiffs(key string) []*jujutsu.FileDiff {
@@ -345,4 +352,33 @@ func TestMatchPattern(t *testing.T) {
 			assertion.Equal(t, matchPattern(tc.path, tc.pattern), tc.match)
 		})
 	}
+}
+
+func TestApprovals(t *testing.T) {
+	ctx := t.Context()
+	repo := &fakeRepository{
+		commits: map[string]string{"kkkk": "c1", "llll": "d2", "mmmm": "e2", "nnnn": "f1"},
+		diffs:   map[string][]string{"e1^e2": {"a.go"}},
+	}
+	reviews := []*Review{
+		{
+			State: StateApproved,
+			Rounds: []*Round{
+				{Commits: map[string]string{"kkkk": "c0", "llll": "d0", "mmmm": "e0"}},
+				{Commits: map[string]string{"kkkk": "c1", "llll": "d1", "mmmm": "e1"}},
+			},
+		},
+		{State: StateFinished, Rounds: []*Round{{Commits: map[string]string{"nnnn": "f1"}}}},
+	}
+
+	a := NewApprovals()
+	commits, err := a.Commits(ctx, repo, reviews)
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, commits, []string{"c1", "d2"})
+	assertion.Equal(t, repo.interdiffs, []string{"d1^d2", "e1^e2"})
+
+	commits, err = a.Commits(ctx, repo, reviews)
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, commits, []string{"c1", "d2"})
+	assertion.Equal(t, repo.interdiffs, []string{"d1^d2", "e1^e2"})
 }

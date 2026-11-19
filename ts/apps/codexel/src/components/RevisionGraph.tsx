@@ -2,6 +2,7 @@ import { useEffect, useRef, type MouseEvent } from 'react'
 import { Box, Chip, Stack, Typography } from '@mui/material'
 import { useNavigate } from '@tanstack/react-router'
 import type { Agent, Commit, LogRow } from '../connect/codexel_pb.js'
+import { ApprovedBadge } from './ApprovedBadge.tsx'
 import { GraphGutter, cellWidth } from './GraphGutter.tsx'
 
 const nodeHeight = 28
@@ -56,11 +57,12 @@ const AgentBadge = ({ commit, agents }: { commit: Commit; agents: Agent[] }) => 
   )
 }
 
-const CommitLine = ({ commit, mark, agents }: { commit: Commit; mark: string | undefined; agents: Agent[] }) => (
+const CommitLine = ({ commit, mark, approved, agents }: { commit: Commit; mark: string | undefined; approved: boolean; agents: Agent[] }) => (
   <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0, flex: 1 }}>
     {mark && <Chip label={mark} size="small" color="warning" sx={{ height: 18 }} />}
     <ChangeId commit={commit} />
     <AgentBadge commit={commit} agents={agents} />
+    {approved && <ApprovedBadge />}
     {commit.localBookmarks.map((b) => (
       <Chip key={b} label={b} size="small" color="primary" variant="outlined" sx={{ height: 18 }} />
     ))}
@@ -88,6 +90,7 @@ export const RevisionGraph = ({
   selected,
   checked,
   marks,
+  approved,
   agents,
   onSelect,
   onContextMenu,
@@ -98,6 +101,8 @@ export const RevisionGraph = ({
   checked: Set<string>
   // marks is the labels shown on the revisions by the commit ID (e.g. the source of the rebase).
   marks: Map<string, string>
+  // approved is the commit IDs approved in the reviews.
+  approved: Set<string>
   // agents is the agents running in herdr. They are linked from the commits created by them.
   agents: Agent[]
   onSelect: (index: number) => void
@@ -148,7 +153,7 @@ export const RevisionGraph = ({
                     workingCopy={commit.currentWorkingCopy}
                   />
                   {line.node ? (
-                    <CommitLine commit={commit} mark={marks.get(commit.commitId)} agents={agents} />
+                    <CommitLine commit={commit} mark={marks.get(commit.commitId)} approved={approved.has(commit.commitId)} agents={agents} />
                   ) : (
                     <Typography variant="caption" color="text.disabled">
                       {line.content}

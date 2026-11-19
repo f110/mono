@@ -20,11 +20,13 @@ import {
 } from '@mui/material'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { AgentOutput } from '../components/AgentOutput.tsx'
+import { ApprovedBadge } from '../components/ApprovedBadge.tsx'
 import { RevisionDetail } from '../components/RevisionDetail.tsx'
 import { StartAgentDialog } from '../components/StartAgentDialog.tsx'
 import { TranscriptTimeline } from '../components/TranscriptTimeline.tsx'
 import { AgentService, AgentStatus, ReviewService, RevisionService, type Agent } from '../connect/codexel_pb.js'
 import { useAgents } from '../hooks/useAgents.ts'
+import { useApprovedCommits } from '../hooks/useApprovedCommits.ts'
 import { useDiffNavigation } from '../hooks/useDiffNavigation.ts'
 import { useOperation } from '../hooks/useOperation.ts'
 import { useTranscript } from '../hooks/useTranscript.ts'
@@ -78,6 +80,7 @@ const AgentCommits = ({ agent }: { agent: Agent }) => {
   const { data, error, refetch } = useQuery(RevisionService.method.listAgentCommits, { cwd: agent.cwd, kind: agent.kind, sessionId: agent.sessionId })
   const path = data?.repository?.path
   const operation = useOperation(path)
+  const approved = useApprovedCommits(path, operation)
   useEffect(() => {
     refetch()
   }, [operation, refetch])
@@ -126,9 +129,16 @@ const AgentCommits = ({ agent }: { agent: Agent }) => {
         {commits.map((c) => (
           <ListItemButton key={c.commitId} selected={c === selected} onClick={() => setSelectedChange(c.changeId)}>
             <ListItemText
-              primary={c.description || '(no description set)'}
+              primary={
+                <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0 }}>
+                  {approved.has(c.commitId) && <ApprovedBadge />}
+                  <Typography variant="body2" noWrap>
+                    {c.description || '(no description set)'}
+                  </Typography>
+                </Stack>
+              }
               secondary={`${c.changeId.slice(0, 8)} · ${new Date(Number(c.timestamp) * 1000).toLocaleString()}`}
-              slotProps={{ primary: { noWrap: true }, secondary: { sx: { fontFamily: 'monospace' } } }}
+              slotProps={{ primary: { component: 'div' }, secondary: { sx: { fontFamily: 'monospace' } } }}
             />
           </ListItemButton>
         ))}

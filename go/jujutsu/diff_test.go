@@ -84,3 +84,11 @@ func TestDiffRangeArgs(t *testing.T) {
 	assertion.Contains(t, args, "--from=--config=x")
 	assertion.Contains(t, args, "--to=b")
 }
+
+func TestInterdiffArgs(t *testing.T) {
+	args := interdiffArgs("--config=x", "b")
+	assertion.Equal(t, args[0], "interdiff")
+	assertion.Contains(t, args, "--git")
+	assertion.Contains(t, args, "--from=--config=x")
+	assertion.Contains(t, args, "--to=b")
+}

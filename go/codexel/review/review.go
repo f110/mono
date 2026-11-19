@@ -121,6 +121,7 @@ type Repository interface {
 	Diff(ctx context.Context, rev string) ([]*jujutsu.FileDiff, error)
 	DiffRange(ctx context.Context, from, to string) ([]*jujutsu.FileDiff, error)
 	Show(ctx context.Context, rev string) (*jujutsu.Commit, error)
+	Interdiff(ctx context.Context, from, to string) ([]*jujutsu.FileDiff, error)
 }
 
 var changeIDPattern = regexp.MustCompile(`^[k-z]+$`)
@@ -538,6 +539,85 @@ func newID() (string, error) {
 		return "", xerrors.WithStack(err)
 	}
 	return hex.EncodeToString(buf), nil
+}
+
+// Approvals finds the commits approved in the reviews. The comparisons of the commits are cached because the commit ID
+// is the hash of the content.
+type Approvals struct {
+	mu   sync.Mutex
+	same map[[2]string]bool
+}
+
+func NewApprovals() *Approvals {
+	return &Approvals{same: make(map[[2]string]bool)}
+}
+
+// Commits returns the commit IDs of the changes approved in the reviews. The commit is approved if the change of it is
+// the same as the commit in the latest round of the approved review including the description. The commit rebased after
+// the approval is approved because the difference of the parents is ignored.
+func (a *Approvals) Commits(ctx context.Context, repo Repository, reviews []*Review) ([]string, error) {
+	approved := make(map[string][]string)
+	for _, r := range reviews {
+		if r.State != StateApproved || len(r.Rounds) == 0 {
+			continue
+		}
+		for change, commit := range r.Rounds[len(r.Rounds)-1].Commits {
+			approved[change] = append(approved[change], commit)
+		}
+	}
+	if len(approved) == 0 {
+		return nil, nil
+	}
+	revsets := make([]string, 0, len(approved))
+	for change := range approved {
+		if !changeIDPattern.MatchString(change) {
+			return nil, xerrors.WithMessagef(ErrInvalidArgument, "%q is not a change ID", change)
+		}
+		revsets = append(revsets, "change_id("+change+")")
+	}
+	slices.Sort(revsets)
+	rows, err := repo.Log(ctx, strings.Join(revsets, "|"), 0)
+	if err != nil {
+		return nil, err
+	}
+
+	var commits []string
+	for _, row := range rows {
+		for _, v := range approved[row.Commit.ChangeID] {
+			same, err := a.sameChange(ctx, repo, v, row.Commit.CommitID)
+			if err != nil {
+				return nil, err
+			}
+			if same {
+				commits = append(commits, row.Commit.CommitID)
+				break
+			}
+		}
+	}
+	slices.Sort(commits)
+	return commits, nil
+}
+
+func (a *Approvals) sameChange(ctx context.Context, repo Repository, from, to string) (bool, error) {
+	if from == to {
+		return true, nil
+	}
+	key := [2]string{from, to}
+	a.mu.Lock()
+	same, ok := a.same[key]
+	a.mu.Unlock()
+	if ok {
+		return same, nil
+	}
+	files, err := repo.Interdiff(ctx, from, to)
+	if err != nil {
+		return false, err
+	}
+	same = len(files) == 0
+	a.mu.Lock()
+	a.same[key] = same
+	a.mu.Unlock()
+	return same, nil
 }
 
 var idPattern = regexp.MustCompile(`^[0-9a-f]+$`)
