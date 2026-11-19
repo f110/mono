@@ -36,6 +36,7 @@ import { useAgents } from '../hooks/useAgents.ts'
 import { useApprovedCommits } from '../hooks/useApprovedCommits.ts'
 import { useDiffNavigation } from '../hooks/useDiffNavigation.ts'
 import { useOperation } from '../hooks/useOperation.ts'
+import { useReviews } from '../hooks/useReviews.ts'
 import { fileRevset, visibleNodes } from '../lib/fileTree.ts'
 import { ignoreKey, pressKey } from '../lib/keys.ts'
 import { computeSlide } from '../lib/slide.ts'
@@ -151,6 +152,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   const operation = useOperation(path)
   const { agents } = useAgents()
   const approved = useApprovedCommits(path, operation)
+  const reviews = useReviews(path)
   const { data, error, refetch } = useQuery(RevisionService.method.log, { path, revset })
   const { data: bookmarkData, refetch: refetchBookmarks } = useQuery(BookmarkService.method.listBookmarks, { path })
   const bookmarks = bookmarkData?.bookmarks ?? []
@@ -684,6 +686,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
               checked={checked}
               marks={marks}
               approved={approved}
+              reviews={reviews}
               agents={agents ?? []}
               onSelect={selectIndex}
               onContextMenu={(i, x, y) => {
@@ -746,6 +749,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
               commit={selectedCommit}
               split={split}
               preview={preview}
+              reviews={reviews.get(selectedCommit.changeId)}
               onHistory={showHistory}
               onRestore={(commit, file) => setRestoringFile({ commit, file })}
               onResolveDivergence={setDivergent}

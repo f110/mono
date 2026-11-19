@@ -1,7 +1,8 @@
 import { useEffect, useRef, type MouseEvent } from 'react'
 import { Box, Chip, Stack, Typography } from '@mui/material'
 import { useNavigate } from '@tanstack/react-router'
-import type { Agent, Commit, LogRow } from '../connect/codexel_pb.js'
+import type { Agent, Commit, LogRow, Review } from '../connect/codexel_pb.js'
+import { stateChip } from '../lib/review.ts'
 import { ApprovedBadge } from './ApprovedBadge.tsx'
 import { GraphGutter, cellWidth } from './GraphGutter.tsx'
 
@@ -57,12 +58,48 @@ const AgentBadge = ({ commit, agents }: { commit: Commit; agents: Agent[] }) => 
   )
 }
 
-const CommitLine = ({ commit, mark, approved, agents }: { commit: Commit; mark: string | undefined; approved: boolean; agents: Agent[] }) => (
+// ReviewBadge shows the state of the latest review of the change and the number of the reviews. It links to the latest
+// review.
+const ReviewBadge = ({ reviews }: { reviews: Review[] }) => {
+  const navigate = useNavigate()
+  const latest = reviews[0]
+  if (!latest) {
+    return null
+  }
+  return (
+    <Chip
+      label={`review: ${stateChip[latest.state].label}${reviews.length > 1 ? ` (${reviews.length})` : ''}`}
+      size="small"
+      color={stateChip[latest.state].color}
+      variant="outlined"
+      sx={{ height: 18 }}
+      onClick={(e: MouseEvent) => {
+        e.stopPropagation()
+        navigate({ to: '/reviews/$reviewId', params: { reviewId: latest.id } })
+      }}
+    />
+  )
+}
+
+const CommitLine = ({
+  commit,
+  mark,
+  approved,
+  reviews,
+  agents,
+}: {
+  commit: Commit
+  mark: string | undefined
+  approved: boolean
+  reviews: Review[]
+  agents: Agent[]
+}) => (
   <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0, flex: 1 }}>
     {mark && <Chip label={mark} size="small" color="warning" sx={{ height: 18 }} />}
     <ChangeId commit={commit} />
     <AgentBadge commit={commit} agents={agents} />
     {approved && <ApprovedBadge />}
+    <ReviewBadge reviews={reviews} />
     {commit.localBookmarks.map((b) => (
       <Chip key={b} label={b} size="small" color="primary" variant="outlined" sx={{ height: 18 }} />
     ))}
@@ -91,6 +128,7 @@ export const RevisionGraph = ({
   checked,
   marks,
   approved,
+  reviews,
   agents,
   onSelect,
   onContextMenu,
@@ -103,6 +141,8 @@ export const RevisionGraph = ({
   marks: Map<string, string>
   // approved is the commit IDs approved in the reviews.
   approved: Set<string>
+  // reviews is the reviews by the change ID.
+  reviews: Map<string, Review[]>
   // agents is the agents running in herdr. They are linked from the commits created by them.
   agents: Agent[]
   onSelect: (index: number) => void
@@ -153,7 +193,13 @@ export const RevisionGraph = ({
                     workingCopy={commit.currentWorkingCopy}
                   />
                   {line.node ? (
-                    <CommitLine commit={commit} mark={marks.get(commit.commitId)} approved={approved.has(commit.commitId)} agents={agents} />
+                    <CommitLine
+                      commit={commit}
+                      mark={marks.get(commit.commitId)}
+                      approved={approved.has(commit.commitId)}
+                      reviews={reviews.get(commit.changeId) ?? []}
+                      agents={agents}
+                    />
                   ) : (
                     <Typography variant="caption" color="text.disabled">
                       {line.content}

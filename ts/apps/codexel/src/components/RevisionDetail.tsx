@@ -1,6 +1,8 @@
 import { useQuery } from '@connectrpc/connect-query'
 import { Alert, Box, Chip, Divider, Stack, Typography } from '@mui/material'
-import { RevisionService, type Commit, type FileDiff } from '../connect/codexel_pb.js'
+import { useNavigate } from '@tanstack/react-router'
+import { RevisionService, type Commit, type FileDiff, type Review } from '../connect/codexel_pb.js'
+import { stateChip } from '../lib/review.ts'
 import { FileDiffView, FileStatusChip } from './FileDiffView.tsx'
 
 // ChangedFiles lists the changed files with the numbers of the changed lines. Clicking the file scrolls to its diff.
@@ -50,6 +52,28 @@ const ChangedFiles = ({ files }: { files: FileDiff[] }) => {
   )
 }
 
+// Reviews lists the reviews of the change. Clicking the review opens it.
+const Reviews = ({ reviews }: { reviews: Review[] }) => {
+  const navigate = useNavigate()
+  return (
+    <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', mt: 0.5 }}>
+      <Typography variant="caption" color="text.secondary">
+        Reviews
+      </Typography>
+      {reviews.map((r) => (
+        <Chip
+          key={r.id}
+          label={`${stateChip[r.state].label} · round ${r.rounds.length} · ${new Date(Number(r.createdAt) * 1000).toLocaleString()}`}
+          size="small"
+          color={stateChip[r.state].color}
+          variant="outlined"
+          onClick={() => navigate({ to: '/reviews/$reviewId', params: { reviewId: r.id } })}
+        />
+      ))}
+    </Stack>
+  )
+}
+
 // RevisionDetail shows the whole description and the diff of the revision. The revision is identified by the commit ID,
 // so the result doesn't change while the commit exists.
 export const RevisionDetail = ({
@@ -57,6 +81,7 @@ export const RevisionDetail = ({
   commit,
   split,
   preview,
+  reviews,
   onHistory,
   onRestore,
   onResolveDivergence,
@@ -65,6 +90,8 @@ export const RevisionDetail = ({
   commit: Commit
   split: boolean
   preview: boolean
+  // reviews is the reviews of the change. They are not shown if it is undefined or empty.
+  reviews?: Review[]
   // The operations are not shown if the handlers are undefined.
   onHistory?: (file: string) => void
   onRestore?: (commit: Commit, file: string) => void
@@ -95,6 +122,7 @@ export const RevisionDetail = ({
       <Typography variant="caption" color="text.secondary">
         {commit.author} &lt;{commit.email}&gt; · {new Date(Number(commit.timestamp) * 1000).toLocaleString()}
       </Typography>
+      {reviews && reviews.length > 0 && <Reviews reviews={reviews} />}
       {error && <Alert severity="error">{error.message}</Alert>}
       <Box component="pre" sx={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: 13, my: 1 }}>
         {data?.description || '(no description set)'}
