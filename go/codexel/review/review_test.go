@@ -2,6 +2,8 @@ package review
 
 import (
 	"context"
+	"maps"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -34,7 +36,8 @@ func (f *fakeRepository) Snapshot(_ context.Context) error {
 func (f *fakeRepository) Log(_ context.Context, revset string, _ int) ([]*jujutsu.LogRow, error) {
 	f.revsets = append(f.revsets, revset)
 	var rows []*jujutsu.LogRow
-	for change, commit := range f.commits {
+	for _, change := range slices.Sorted(maps.Keys(f.commits)) {
+		commit := f.commits[change]
 		if strings.Contains(revset, "change_id("+change+")") {
 			rows = append(rows, &jujutsu.LogRow{Commit: &jujutsu.Commit{ChangeID: change, CommitID: commit}})
 		}
