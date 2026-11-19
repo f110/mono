@@ -279,8 +279,12 @@ jj のテンプレート `self.trailers()` で Trailer を構造化して取得�
 
 - 標準入出力に依存する部分を引数・戻り値にする
   - PR テンプレートの選択 (`pickTemplate` の `fmt.Scanf`): テンプレートの候補を返し、選択を引数で受け取る
+    - 候補は `PullRequestTemplates` で返す。前回選んだテンプレート (`.jj/.last_template_file`) があればそれだけを返す
+    - 選択は `PullRequestSubmitter.SelectTemplate` で受け取る。PR を作成するときに候補が複数ある場合だけ呼ぶ。
+      候補が 1 つならそれを使う (jj-pr と同じ)
   - 進捗の出力 (`fmt.Printf`): 結果 (作成・更新した PR の URL) を戻り値で返す
-- トークンは今と同じく `gh auth token` で取得する
+    - `Submit` が push した change ID と、PR ごとの操作 (作成・更新・既存) と URL を返す。jj-pr はそれを表示する
+- トークンは今と同じく `gh auth token` で取得する (`go/github` の `CLIToken`)。テストでは `PullRequestSubmitter.GitHubClient` にモックのクライアントを渡す
 - 切り出しはリファクタリングとして先に行い、jj-pr の既存テストが通ることを確認する
 
 ### 7.2 UI からの実行

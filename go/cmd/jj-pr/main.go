@@ -1,13 +1,8 @@
 package main
 
 import (
-	"bufio"
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"log/slog"
-	"net/url"
 	"os"
 	"os/exec"
 	"strings"
@@ -17,119 +12,77 @@ import (
 	"golang.org/x/oauth2"
 
 	"go.f110.dev/mono/go/cli"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/cli/flag"
+	githubutil "go.f110.dev/mono/go/github"
+	"go.f110.dev/mono/go/jujutsu"
 )
 
-func getToken(ctx context.Context) (string, error) {
-	cmd := exec.CommandContext(ctx, "gh", "auth", "token")
-	v, err := cmd.CombinedOutput()
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(string(v)), nil
-}
-
-func getDefaultBranch(ctx context.Context, ghClient *github.Client, owner, name string) (string, error) {
-	logger.Log.Debug("Retrieve repository metadata")
-	cmd := exec.CommandContext(ctx, "jj", "show", "trunk()", "--template", "remote_bookmarks")
-	buf, err := cmd.CombinedOutput()
-	if err == nil {
-		if before, _, ok := bytes.Cut(buf, []byte("@")); ok {
-			logger.Log.Debug("Get default branch from local repository")
-			return string(before), nil
-		}
-	}
-
-	repo, _, err := ghClient.Repositories.Get(ctx, owner, name)
-	if err != nil {
-		logger.Log.Error("Could not get repository metadata from api.github.com", logger.E(err))
-		return "", err
-	}
-	return repo.GetDefaultBranch(), nil
-}
-
-// getStack returns commits of the current stack. The first commit is the newest commit.
-func getStack(ctx context.Context, withoutNoSend bool, dir, defaultBranch, changeID string) (stackedCommit, error) {
-	if changeID == "" {
-		cmd := exec.CommandContext(ctx, "jj", "log", "--revisions", "@", "--no-graph", "--template", "change_id")
-		cmd.Dir = dir
-		buf, err := cmd.CombinedOutput()
-		if err != nil {
-			return nil, xerrors.WithStack(err)
-		}
-		changeID = strings.TrimSpace(string(buf))
-	}
-
-	const logTemplate = `"{\"change_id\":" ++ json(change_id) ++ ",\"commit_id\":" ++ json(commit_id) ++ ",\"bookmarks\":" ++ json(bookmarks) ++ ",\"description\":" ++ json(description) ++ "}\n"`
-	cmd := exec.CommandContext(ctx, "jj", "log", "--revisions", fmt.Sprintf(stackRevsets, defaultBranch, changeID), "--no-graph", "--template", logTemplate)
-	cmd.Dir = dir
-	buf, err := cmd.CombinedOutput()
-	if err != nil {
-		return nil, xerrors.WithStack(xerrors.WithStack(err))
-	}
-
-	var commits stackedCommit
-	scanner := bufio.NewScanner(bytes.NewReader(buf))
-	for scanner.Scan() {
-		c := &commit{}
-		if err := json.Unmarshal(scanner.Bytes(), c); err != nil {
-			return nil, xerrors.WithStack(err)
-		}
-		if !(withoutNoSend && (strings.HasPrefix(c.Description, noSendTag) || strings.HasPrefix(c.Description, wipTag))) {
-			logger.Log.Debug("Stack", slog.String("change_id", c.ChangeID), slog.Any("bookmarks", c.Bookmarks))
-			commits = append(commits, c)
-		}
-	}
-
-	return commits, nil
-}
-
-func findRepositoryOwnerName(ctx context.Context, dir string) (string, string, error) {
-	c := exec.CommandContext(ctx, "jj", "git", "remote", "list")
-	c.Dir = dir
-	r, err := c.CombinedOutput()
-	if err != nil {
-		return "", "", xerrors.WithMessage(err, "failed to get remote list")
-	}
-	s := bufio.NewScanner(bytes.NewReader(r))
-	var owner, name string
-	for s.Scan() {
-		line := s.Text()
-		s := strings.Split(line, " ")
-		if len(s) == 1 {
-			continue
-		}
-		u, err := url.Parse(s[1])
-		if err != nil {
-			continue
-		}
-		if u.Host != "github.com" {
-			continue
-		}
-		s = strings.Split(u.Path, "/")
-		owner, name = s[1], s[2]
-		if before, ok := strings.CutSuffix(name, ".git"); ok {
-			name = before
-		}
-		break
-	}
-	if owner == "" || name == "" {
-		return "", "", xerrors.New("could not find repository owner and name")
-	}
-
-	return owner, name, nil
-}
-
 func jujutsuPRSubmit(rootCmd *cli.Command) {
-	c := newSubmitCommand()
+	c := jujutsu.NewPullRequestSubmitter()
+	c.SelectTemplate = func(templates []string) (string, error) {
+		return pickTemplate(templates, c.RootDir)
+	}
 	submitCmd := &cli.Command{
 		Use: "submit",
 		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
-			return c.LoopContext(ctx)
+			res, err := c.Submit(ctx)
+			printSubmitResult(res)
+			return err
 		},
 	}
-	c.flags(submitCmd.Flags())
+	submitFlags(submitCmd.Flags(), c)
 	rootCmd.AddCommand(submitCmd)
+}
+
+func submitFlags(fs *flag.FlagSet, c *jujutsu.PullRequestSubmitter) {
+	fs.String("dir", "Working directory").Var(&c.Dir)
+	fs.String("repository", "Repository name. If not specified, try to get from remote url").Var(&c.Repository)
+	fs.String("default-branch", "Default branch name. If not specified, get from API").Var(&c.DefaultBranch)
+	fs.Bool("dry-run", "Not impact on remote").Var(&c.DryRun)
+	fs.Bool("force", "Push commits when there are more than 10 commits in the stack").Var(&c.Force)
+	fs.Bool("single-pr", "Make the PR in multiple commits").Var(&c.SinglePR)
+	fs.String("revision", "Revision to create PR from. If not specified, use current revision").Shorthand("r").Var(&c.Revision)
+}
+
+func pickTemplate(templates []string, repoRoot string) (string, error) {
+	fmt.Println("Found multiple templates. Please pick the template.")
+	for i, v := range templates {
+		fmt.Printf("%d: %s\n", i+1, strings.TrimPrefix(v, repoRoot))
+	}
+	fmt.Printf("%d: Don't use\n", len(templates)+1)
+	fmt.Printf("Which template do you want to use?) ")
+	num := -1
+	n, _ := fmt.Scanf("%d", &num)
+	if n != 1 {
+		return "", xerrors.New("please pick the template")
+	}
+	if 0 < num && num <= len(templates) {
+		return templates[num-1], nil
+	}
+	return "", nil
+}
+
+func printSubmitResult(res *jujutsu.SubmitResult) {
+	if res == nil {
+		return
+	}
+	for _, v := range res.Pushed {
+		fmt.Printf("Push %s\n", v)
+	}
+	for _, v := range res.PullRequests {
+		switch v.Action {
+		case jujutsu.PullRequestCreated:
+			if v.URL == "" {
+				fmt.Printf("Create pull request for %s\n", v.ChangeID)
+			} else {
+				fmt.Printf("Created: %s\n", v.URL)
+			}
+		case jujutsu.PullRequestUpdated:
+			fmt.Printf("Update pull request: %s\n", v.URL)
+		case jujutsu.PullRequestExisting:
+			fmt.Printf("Pull request already exists for %s: %s\n", v.ChangeID, v.URL)
+		}
+	}
 }
 
 func jujutsuPRStack(rootCmd *cli.Command) {
@@ -137,23 +90,23 @@ func jujutsuPRStack(rootCmd *cli.Command) {
 	stackCmd := &cli.Command{
 		Use: "stack",
 		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
-			token, err := getToken(ctx)
+			token, err := githubutil.CLIToken(ctx)
 			if err != nil {
 				return err
 			}
 			ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 			ghClient := github.NewClient(oauth2.NewClient(ctx, ts))
 
-			owner, repoName, err := findRepositoryOwnerName(ctx, dir)
+			owner, repoName, err := jujutsu.GitHubRepository(ctx, dir)
 			if err != nil {
 				return err
 			}
-			defaultBranch, err := getDefaultBranch(ctx, ghClient, owner, repoName)
+			defaultBranch, err := jujutsu.DefaultBranch(ctx, ghClient, owner, repoName)
 			if err != nil {
 				return err
 			}
 
-			commits, err := getStack(ctx, false, dir, defaultBranch, "")
+			commits, err := jujutsu.Stack(ctx, false, dir, defaultBranch, "")
 			if err != nil {
 				return err
 			}
@@ -178,7 +131,7 @@ func jujutsuPRList(rootCmd *cli.Command) {
 	listCmd := &cli.Command{
 		Use: "list",
 		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
-			owner, repoName, err := findRepositoryOwnerName(ctx, dir)
+			owner, repoName, err := jujutsu.GitHubRepository(ctx, dir)
 			if err != nil {
 				return err
 			}
@@ -194,7 +147,7 @@ func jujutsuPRList(rootCmd *cli.Command) {
 				localBookmarks[v] = struct{}{}
 			}
 
-			token, err := getToken(ctx)
+			token, err := githubutil.CLIToken(ctx)
 			if err != nil {
 				return err
 			}

@@ -2,16 +2,41 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "jujutsu",
-    srcs = ["jujutsu.go"],
+    srcs = [
+        "jujutsu.go",
+        "stack.go",
+    ],
     importpath = "go.f110.dev/mono/go/jujutsu",
     visibility = ["//visibility:public"],
-    deps = ["@dev_f110_go_xerrors//:xerrors"],
+    deps = [
+        "//go/fsm",
+        "//go/github",
+        "//go/logger",
+        "@com_github_google_go_github_v85//github",
+        "@dev_f110_go_xerrors//:xerrors",
+        "@org_golang_x_oauth2//:oauth2",
+    ],
 )
 
 go_test(
     name = "jujutsu_test",
-    srcs = ["jujutsu_test.go"],
-    data = glob(["testdata/**"]),
+    srcs = [
+        "jujutsu_test.go",
+        "stack_test.go",
+    ],
+    args = [
+        "-test.jj-binary=../../$(location @jj//:bin)",
+    ],
+    data = glob(["testdata/**"]) + [
+        "@jj//:bin",
+    ],
     embed = [":jujutsu"],
-    deps = ["//go/testing/assertion"],
+    deps = [
+        "//go/logger",
+        "//go/testing/assertion",
+        "@com_github_google_go_github_v85//github",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+        "@dev_f110_go_githubmock//:githubmock",
+    ],
 )

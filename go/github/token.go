@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"time"
@@ -29,6 +30,15 @@ func (p *TokenProvider) Token(ctx context.Context) (string, error) {
 	}
 
 	return "", xerrors.New("does not configure with any credential")
+}
+
+// CLIToken returns the token which GitHub CLI (gh) has.
+func CLIToken(ctx context.Context) (string, error) {
+	v, err := exec.CommandContext(ctx, "gh", "auth", "token").CombinedOutput()
+	if err != nil {
+		return "", xerrors.WithStack(err)
+	}
+	return strings.TrimSpace(string(v)), nil
 }
 
 type App struct {
