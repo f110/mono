@@ -114,7 +114,7 @@ lightjj の機能を次のとおり分類する。キーバインドは lightjj 
 | 履歴 | op log (undo/restore)、evolog とステップごとの差分 | `4`/`O`, `5`/`E` |
 | divergence | divergent なコミットの比較と解決 | — |
 | workspace | 一覧 / add / forget / rename / stale の復旧 | — |
-| その他 | コマンドパレット (Cmd+K)、jj alias の実行、テーマ (dark/light)、設定 | `t` |
+| その他 | コマンドパレット (Cmd+K)、jj alias の実行、設定 | — |
 
 ### 4.3 再実装しない機能
 
@@ -122,7 +122,7 @@ lightjj の機能を次のとおり分類する。キーバインドは lightjj 
 - Doc mode (Markdown を ProseMirror で編集・コメント)
 - SSH プロキシモード (`--remote`)
 - エージェント向け HTTP API と `lightjj api` / `lightjj skill`: Codexel の MCP (§5.4) に置き換える
-- Ghostty 由来の 486 テーマ: 組み込みテーマだけにする
+- テーマ (Ghostty 由来の 486 テーマ、dark/light の切り替え): ライトテーマだけにする
 - `rg` による定義ジャンプ
 
 ### 4.4 状態の同期

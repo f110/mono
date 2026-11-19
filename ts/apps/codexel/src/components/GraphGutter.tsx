@@ -25,9 +25,7 @@ export const GraphGutter = ({
   width: number
   workingCopy: boolean
 }) => {
-  // The colors of theme.vars are CSS variables which follow the color scheme. Only the style can use them.
-  const theme = useTheme()
-  const palette = theme.vars?.palette ?? theme.palette
+  const { palette } = useTheme()
   const color = palette.text.secondary
   const chars = [...gutter]
   const cx = (i: number) => i * cellWidth + cellWidth / 2

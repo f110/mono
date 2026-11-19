@@ -1,5 +1,5 @@
 import { isValidElement, useEffect, useId, useState } from 'react'
-import { Alert, Box, useColorScheme } from '@mui/material'
+import { Alert, Box } from '@mui/material'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
@@ -7,15 +7,13 @@ import remarkGfm from 'remark-gfm'
 // strict sanitizes the diagram because it is written by the agents and the files in the repository.
 const Mermaid = ({ code }: { code: string }) => {
   const id = useId().replace(/[^a-zA-Z0-9]/g, '')
-  const { mode, systemMode } = useColorScheme()
-  const dark = (mode === 'system' ? systemMode : mode) === 'dark'
   const [result, setResult] = useState<{ svg?: string; error?: string }>({})
 
   useEffect(() => {
     let canceled = false
     import('mermaid')
       .then(async ({ default: mermaid }) => {
-        mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', theme: dark ? 'dark' : 'default' })
+        mermaid.initialize({ startOnLoad: false, securityLevel: 'strict' })
         const { svg } = await mermaid.render(`mermaid${id}`, code)
         if (!canceled) setResult({ svg })
       })
@@ -25,7 +23,7 @@ const Mermaid = ({ code }: { code: string }) => {
     return () => {
       canceled = true
     }
-  }, [code, dark, id])
+  }, [code, id])
 
   if (result.error) {
     return (

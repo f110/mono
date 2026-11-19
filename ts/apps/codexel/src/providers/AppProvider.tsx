@@ -6,8 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 export const transport = createConnectTransport({ baseUrl: window.location.origin })
 const queryClient = new QueryClient()
-// The color scheme is set as the class of html so that the CSS (e.g. highlight.css) follows it.
-const theme = createTheme({ colorSchemes: { dark: true }, cssVariables: { colorSchemeSelector: 'class' } })
+const theme = createTheme()
 
 export const AppProvider = ({ children }: { children: React.ReactNode }) => (
   <TransportProvider transport={transport}>
