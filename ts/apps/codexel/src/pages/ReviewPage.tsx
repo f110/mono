@@ -23,6 +23,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useParams } from '@tanstack/react-router'
+import { ChangedFiles } from '../components/ChangedFiles.tsx'
 import { FileDiffView, type LineAnnotation } from '../components/FileDiffView.tsx'
 import { CommentComposer, CommentThread } from '../components/ReviewComments.tsx'
 import { DiffSide, ReviewService, ReviewState, type Review, type ReviewComment } from '../connect/codexel_pb.js'
@@ -105,6 +106,7 @@ const ChangeReview = ({
   actions: Actions
 }) => {
   const { data, error } = useQuery(ReviewService.method.roundDiff, { reviewId: review.id, changeId, fromRound, toRound }, { staleTime: Infinity })
+  const ref = useRef<HTMLDivElement>(null)
   const [fileComposer, setFileComposer] = useState<string>()
   // opened is the files opened or closed explicitly. It overrides the default of the viewed and the generated files.
   const [opened, setOpened] = useState<Record<string, boolean>>({})
@@ -122,7 +124,8 @@ const ChangeReview = ({
   }
   const commit = data.commit
   return (
-    <Box data-change={changeId} sx={{ mb: 4 }}>
+    // scrollMarginTop of the files leaves the space for the sticky header of the change.
+    <Box ref={ref} data-change={changeId} sx={{ mb: 4, '& [data-file]': { scrollMarginTop: 56 } }}>
       <Stack direction="row" spacing={1} sx={{ alignItems: 'baseline', position: 'sticky', top: 0, zIndex: 2, bgcolor: 'background.default', py: 1 }}>
         <Typography variant="h6" sx={{ flex: 1, minWidth: 0 }} noWrap>
           {commit?.description || '(no description set)'}
@@ -134,6 +137,9 @@ const ChangeReview = ({
           {commit?.commitId}
         </Typography>
       </Stack>
+      {files.length > 0 && (
+        <ChangedFiles files={files} onSelect={(p) => ref.current?.querySelector(`[data-file="${CSS.escape(p)}"]`)?.scrollIntoView({ block: 'start' })} />
+      )}
       {otherComments.map((c) => (
         <CommentThread key={c.id} comment={c} showLocation {...actions.thread(c)} />
       ))}
