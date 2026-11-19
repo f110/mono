@@ -84,7 +84,7 @@ export const RevisionDetail = ({
       <Divider sx={{ mb: 2 }} />
       {data?.files.length === 0 && <Typography color="text.secondary">No changes</Typography>}
       {data && data.files.length > 0 && (
-        <ChangedFiles files={data.files} onSelect={(p) => document.querySelector(`[data-file="${CSS.escape(p)}"]`)?.scrollIntoView({ block: 'start' })} />
+        <ChangedFiles files={data.files} findFile={(p) => document.querySelector(`[data-file="${CSS.escape(p)}"]`)} />
       )}
       {data?.files.map((f) => (
         <FileDiffView

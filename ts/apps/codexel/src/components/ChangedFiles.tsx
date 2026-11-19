@@ -1,16 +1,20 @@
+import { useRef } from 'react'
 import { Box, Stack, Typography } from '@mui/material'
 import type { FileDiff } from '../connect/codexel_pb.js'
 import { FileStatusChip } from './FileDiffView.tsx'
+import { useScrollHistory } from '../hooks/useScrollHistory.ts'
 
-// ChangedFiles lists the changed files with the numbers of the changed lines. onSelect is called with the path of the
-// clicked file.
-export const ChangedFiles = ({ files, onSelect }: { files: FileDiff[]; onSelect: (path: string) => void }) => {
+// ChangedFiles lists the changed files with the numbers of the changed lines. Clicking the file scrolls to the element
+// returned by findFile, and the browser back returns to the position before the scroll.
+export const ChangedFiles = ({ files, findFile }: { files: FileDiff[]; findFile: (path: string) => Element | null | undefined }) => {
+  const ref = useRef<HTMLDivElement>(null)
+  const jump = useScrollHistory(ref)
   const added = files.reduce((n, f) => n + f.added, 0)
   const removed = files.reduce((n, f) => n + f.removed, 0)
   const max = Math.max(1, ...files.map((f) => f.added + f.removed))
 
   return (
-    <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 1, mb: 2 }}>
+    <Box ref={ref} sx={{ border: 1, borderColor: 'divider', borderRadius: 1, mb: 2 }}>
       <Stack direction="row" spacing={1} sx={{ px: 1, py: 0.5, borderBottom: 1, borderColor: 'divider', alignItems: 'center' }}>
         <Typography variant="body2" sx={{ flex: 1 }}>
           {files.length} file(s) changed
@@ -27,7 +31,7 @@ export const ChangedFiles = ({ files, onSelect }: { files: FileDiff[]; onSelect:
           key={f.path}
           direction="row"
           spacing={1}
-          onClick={() => onSelect(f.path)}
+          onClick={() => jump(findFile(f.path))}
           sx={{ px: 1, height: 24, alignItems: 'center', cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
         >
           <FileStatusChip status={f.status} />

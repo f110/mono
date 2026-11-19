@@ -140,7 +140,7 @@ const ChangeReview = ({
         </Typography>
       </Stack>
       {files.length > 0 && (
-        <ChangedFiles files={files} onSelect={(p) => ref.current?.querySelector(`[data-file="${CSS.escape(p)}"]`)?.scrollIntoView({ block: 'start' })} />
+        <ChangedFiles files={files} findFile={(p) => ref.current?.querySelector(`[data-file="${CSS.escape(p)}"]`)} />
       )}
       {otherComments.map((c) => (
         <CommentThread key={c.id} comment={c} showLocation {...actions.thread(c)} />
