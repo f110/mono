@@ -11,14 +11,14 @@ import { RepositoryService } from '../connect/codexel_pb.js'
 export const RepositoriesPage = () => {
   const { path } = useSearch({ from: '/repositories' })
   const navigate = useNavigate({ from: '/repositories' })
-  const { data, refetch } = useQuery(RepositoryService.method.listRepositories, {})
+  const { data, refetch } = useQuery(RepositoryService.method.list, {})
   const { agents } = useAgents()
   useEffect(() => {
     if (agents) {
       refetch()
     }
   }, [agents, refetch])
-  const closeRepository = useMutation(RepositoryService.method.closeRepository)
+  const closeRepository = useMutation(RepositoryService.method.close)
   const [openDialog, setOpenDialog] = useState(false)
   const repositories = data?.repositories ?? []
   const current = path ?? repositories[0]?.path

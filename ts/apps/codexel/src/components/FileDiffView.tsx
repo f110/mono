@@ -3,7 +3,7 @@ import { create } from '@bufbuild/protobuf'
 import { useQuery } from '@connectrpc/connect-query'
 import { Box, Button, Chip, Stack, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
-import { DiffLineKind, DiffLineSchema, FileService, FileStatus, type DiffLine, type FileDiff, type Hunk } from '../connect/codexel_pb.js'
+import { DiffLineKind, DiffLineSchema, FileStatus, RepositoryService, type DiffLine, type FileDiff, type Hunk } from '../connect/codexel_pb.js'
 import { lineRanges, lineSide, splitRows, type LineSide, type Range } from '../lib/diffLines.ts'
 import { languageOf, tokenize } from '../lib/highlight.ts'
 import { Markdown } from './Markdown.tsx'
@@ -151,7 +151,7 @@ const decoder = new TextDecoder()
 
 // useFile reads the file at the revision when enabled is true.
 const useFile = (repoPath: string, revision: string | undefined, file: string, enabled: boolean) =>
-  useQuery(FileService.method.getFile, { path: repoPath, revision: revision ?? '', file }, { enabled: enabled && revision !== undefined, staleTime: Infinity })
+  useQuery(RepositoryService.method.getFile, { path: repoPath, revision: revision ?? '', file }, { enabled: enabled && revision !== undefined, staleTime: Infinity })
 
 const ImageDiff = ({ file, repoPath, revision, oldRevision }: { file: FileDiff; repoPath: string; revision: string; oldRevision: string | undefined }) => {
   const type = imageTypes[extension(file.path)]

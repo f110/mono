@@ -19,7 +19,7 @@ export const useOperation = (path: string | undefined): string | undefined => {
     const watch = async () => {
       while (!abort.signal.aborted) {
         try {
-          for await (const res of client.watchRepository({ path }, { signal: abort.signal })) {
+          for await (const res of client.watch({ path }, { signal: abort.signal })) {
             setOperation(res.operationId)
           }
         } catch {

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useQuery } from '@connectrpc/connect-query'
 import { Box, Button, Stack, TextField, Typography } from '@mui/material'
-import { FileService } from '../connect/codexel_pb.js'
+import { RepositoryService } from '../connect/codexel_pb.js'
 import type { TreeNode } from '../lib/fileTree.ts'
 import { languageOf, tokenize } from '../lib/highlight.ts'
 
@@ -74,7 +74,7 @@ const decoder = new TextDecoder()
 
 // FileView shows the content of the file at the revision with the syntax highlighting.
 export const FileView = ({ repoPath, revision, file, onHistory }: { repoPath: string; revision: string; file: string; onHistory: () => void }) => {
-  const { data, error } = useQuery(FileService.method.getFile, { path: repoPath, revision, file }, { staleTime: Infinity })
+  const { data, error } = useQuery(RepositoryService.method.getFile, { path: repoPath, revision, file }, { staleTime: Infinity })
   const lang = languageOf(file)
   const lines = useMemo(() => (data ? decoder.decode(data.content).split('\n') : []), [data])
   const binary = useMemo(() => data?.content.slice(0, 8000).includes(0) ?? false, [data])

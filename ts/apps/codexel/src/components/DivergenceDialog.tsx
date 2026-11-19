@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@connectrpc/connect-query'
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Radio, Stack, Typography } from '@mui/material'
-import { RevisionService, type Commit } from '../connect/codexel_pb.js'
+import { RepositoryService, type Commit } from '../connect/codexel_pb.js'
 import { FileDiffView } from './FileDiffView.tsx'
 
 // DivergenceDialog resolves the divergent change. The versions of the change are compared and one of them is kept by
@@ -17,12 +17,12 @@ export const DivergenceDialog = ({
   onKeep: (keep: Commit, abandon: Commit[]) => void
   onClose: () => void
 }) => {
-  const { data } = useQuery(RevisionService.method.log, { path: repoPath, revset: `change_id(${commit.changeId})` })
+  const { data } = useQuery(RepositoryService.method.log, { path: repoPath, revset: `change_id(${commit.changeId})` })
   const versions = (data?.rows ?? []).map((r) => r.commit!)
   const [from, setFrom] = useState(0)
   const [to, setTo] = useState(1)
   const diff = useQuery(
-    RevisionService.method.diffRange,
+    RepositoryService.method.diffRange,
     { path: repoPath, from: versions[from]?.commitId ?? '', to: versions[to]?.commitId ?? '' },
     { enabled: versions.length > 1 && from !== to },
   )

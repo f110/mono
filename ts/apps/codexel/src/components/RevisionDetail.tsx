@@ -1,7 +1,7 @@
 import { useQuery } from '@connectrpc/connect-query'
 import { Alert, Box, Chip, Divider, Stack, Typography } from '@mui/material'
 import { useNavigate } from '@tanstack/react-router'
-import { RevisionService, type Commit, type Review } from '../connect/codexel_pb.js'
+import { RepositoryService, type Commit, type Review } from '../connect/codexel_pb.js'
 import { stateChip } from '../lib/review.ts'
 import { ChangedFiles } from './ChangedFiles.tsx'
 import { FileDiffView } from './FileDiffView.tsx'
@@ -51,7 +51,7 @@ export const RevisionDetail = ({
   onRestore?: (commit: Commit, file: string) => void
   onResolveDivergence?: (commit: Commit) => void
 }) => {
-  const { data, error } = useQuery(RevisionService.method.getRevision, { path, revision: commit.commitId }, { staleTime: Infinity })
+  const { data, error } = useQuery(RepositoryService.method.getRevision, { path, revision: commit.commitId }, { staleTime: Infinity })
 
   return (
     <Box sx={{ p: 2 }}>

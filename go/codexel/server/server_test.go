@@ -143,7 +143,7 @@ func TestListAgents(t *testing.T) {
 	t.Cleanup(srv.Close)
 
 	client := api.NewAgentServiceClient(srv.Client(), srv.URL)
-	res, err := client.ListAgents(t.Context(), connect.NewRequest(&api.RequestListAgents{}))
+	res, err := client.List(t.Context(), connect.NewRequest(&api.RequestListAgents{}))
 	assertion.MustNoError(t, err)
 	agents := res.Msg.GetAgents()
 	assertion.MustLen(t, agents, 1)
@@ -159,7 +159,7 @@ func TestReadOutputNotFound(t *testing.T) {
 	c := startHerdr(t, map[string]string{
 		"agent.read": `"error":{"code":"agent_not_found","message":"agent target w9:p9 not found"}`,
 	})
-	h := NewAgentHandler(c, nil)
+	h := NewAgentHandler(c, nil, "")
 
 	_, err := h.ReadOutput(context.Background(), connect.NewRequest(api.RequestReadOutput_builder{PaneId: new("w9:p9")}.Build()))
 	assertion.MustError(t, err)
@@ -180,9 +180,9 @@ func TestStartAgent(t *testing.T) {
 			"agent.start":    {paneBusy, agentStarted},
 			"workspace.list": {workspaces},
 		})
-		h := NewAgentHandler(c, nil)
+		h := NewAgentHandler(c, nil, "")
 
-		res, err := h.StartAgent(t.Context(), connect.NewRequest(api.RequestStartAgent_builder{WorkspaceId: new("w1"), Kind: new("claude")}.Build()))
+		res, err := h.Start(t.Context(), connect.NewRequest(api.RequestStartAgent_builder{WorkspaceId: new("w1"), Kind: new("claude")}.Build()))
 		assertion.MustNoError(t, err)
 		assertion.Equal(t, res.Msg.GetAgent().GetPaneId(), "w1:p3")
 		assertion.Equal(t, methods(received()), []string{"tab.create", "agent.start", "agent.start", "workspace.list"})
@@ -194,10 +194,10 @@ func TestStartAgent(t *testing.T) {
 			"agent.start":    {agentStarted},
 			"workspace.list": {workspaces},
 		})
-		h := NewAgentHandler(c, nil)
+		h := NewAgentHandler(c, nil, "")
 
 		for range 2 {
-			_, err := h.StartAgent(t.Context(), connect.NewRequest(api.RequestStartAgent_builder{WorkspaceId: new("w1"), Kind: new("claude")}.Build()))
+			_, err := h.Start(t.Context(), connect.NewRequest(api.RequestStartAgent_builder{WorkspaceId: new("w1"), Kind: new("claude")}.Build()))
 			assertion.MustNoError(t, err)
 		}
 		var names []string
@@ -217,9 +217,9 @@ func TestStartAgent(t *testing.T) {
 			"agent.start": {`"error":{"code":"agent_not_ready","message":"not ready"}`},
 			"tab.close":   {`"result":{"type":"ok"}`},
 		})
-		h := NewAgentHandler(c, nil)
+		h := NewAgentHandler(c, nil, "")
 
-		_, err := h.StartAgent(t.Context(), connect.NewRequest(api.RequestStartAgent_builder{WorkspaceId: new("w1"), Kind: new("claude")}.Build()))
+		_, err := h.Start(t.Context(), connect.NewRequest(api.RequestStartAgent_builder{WorkspaceId: new("w1"), Kind: new("claude")}.Build()))
 		assertion.MustError(t, err)
 		reqs := received()
 		assertion.Equal(t, methods(reqs), []string{"tab.create", "agent.start", "tab.close"})
@@ -234,9 +234,9 @@ func TestStartAgent(t *testing.T) {
 			"agent.start":      {agentStarted},
 			"workspace.list":   {workspaces},
 		})
-		h := NewAgentHandler(c, nil)
+		h := NewAgentHandler(c, nil, "")
 
-		_, err := h.StartAgent(t.Context(), connect.NewRequest(api.RequestStartAgent_builder{Cwd: new("/repo"), Kind: new("claude")}.Build()))
+		_, err := h.Start(t.Context(), connect.NewRequest(api.RequestStartAgent_builder{Cwd: new("/repo"), Kind: new("claude")}.Build()))
 		assertion.MustNoError(t, err)
 		reqs := received()
 		assertion.Equal(t, methods(reqs), []string{"workspace.create", "agent.start", "workspace.list"})
@@ -250,9 +250,9 @@ func TestStartAgent(t *testing.T) {
 			"agent.start":      {`"error":{"code":"agent_not_ready","message":"not ready"}`},
 			"workspace.close":  {`"result":{"type":"ok"}`},
 		})
-		h := NewAgentHandler(c, nil)
+		h := NewAgentHandler(c, nil, "")
 
-		_, err := h.StartAgent(t.Context(), connect.NewRequest(api.RequestStartAgent_builder{Kind: new("claude")}.Build()))
+		_, err := h.Start(t.Context(), connect.NewRequest(api.RequestStartAgent_builder{Kind: new("claude")}.Build()))
 		assertion.MustError(t, err)
 		reqs := received()
 		assertion.Equal(t, methods(reqs), []string{"workspace.create", "agent.start", "workspace.close"})
@@ -267,7 +267,7 @@ func TestReadOutputWhileWorking(t *testing.T) {
 			`"result":{"type":"pane_read","read":{"pane_id":"w1:p1","text":"screen"}}`,
 		},
 	})
-	h := NewAgentHandler(c, nil)
+	h := NewAgentHandler(c, nil, "")
 
 	res, err := h.ReadOutput(t.Context(), connect.NewRequest(api.RequestReadOutput_builder{PaneId: new("w1:p1"), Lines: new(int32(2000))}.Build()))
 	assertion.MustNoError(t, err)
@@ -287,7 +287,7 @@ func TestWatchTranscript(t *testing.T) {
 	srv := httptest.NewServer(New(nil, config.NewFile(filepath.Join(t.TempDir(), "config.json")), review.NewStore(t.TempDir()), fstest.MapFS{}, dir, nil))
 	t.Cleanup(srv.Close)
 
-	client := api.NewTranscriptServiceClient(srv.Client(), srv.URL)
+	client := api.NewAgentServiceClient(srv.Client(), srv.URL)
 	stream, err := client.WatchTranscript(t.Context(), connect.NewRequest(api.RequestWatchTranscript_builder{SessionId: new("sess")}.Build()))
 	assertion.MustNoError(t, err)
 	t.Cleanup(func() { stream.Close() })
@@ -306,19 +306,6 @@ func TestWatchTranscript(t *testing.T) {
 	assertion.True(t, stream.Receive())
 	assertion.MustLen(t, stream.Msg().GetEntries(), 1)
 	assertion.Equal(t, stream.Msg().GetEntries()[0].GetText(), "Done")
-}
-
-func TestWatchTranscriptDisabled(t *testing.T) {
-	frontend := fstest.MapFS{"index.html": {Data: []byte("<html></html>")}}
-	srv := httptest.NewServer(New(nil, config.NewFile(filepath.Join(t.TempDir(), "config.json")), review.NewStore(t.TempDir()), frontend, "", nil))
-	t.Cleanup(srv.Close)
-
-	client := api.NewTranscriptServiceClient(srv.Client(), srv.URL)
-	stream, err := client.WatchTranscript(t.Context(), connect.NewRequest(api.RequestWatchTranscript_builder{SessionId: new("sess")}.Build()))
-	assertion.MustNoError(t, err)
-	t.Cleanup(func() { stream.Close() })
-	assertion.False(t, stream.Receive())
-	assertion.Equal(t, connect.CodeOf(stream.Err()), connect.CodeUnimplemented)
 }
 
 func TestGetStatus(t *testing.T) {

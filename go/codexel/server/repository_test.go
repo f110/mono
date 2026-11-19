@@ -31,13 +31,13 @@ func TestListAndCloseRepositories(t *testing.T) {
 	conf := newConfig(t, "/src/mono", "/src/ops")
 	h := NewRepositoryHandler(conf)
 
-	res, err := h.ListRepositories(t.Context(), connect.NewRequest(&api.RequestListRepositories{}))
+	res, err := h.List(t.Context(), connect.NewRequest(&api.RequestListRepositories{}))
 	assertion.MustNoError(t, err)
 	assertion.MustLen(t, res.Msg.GetRepositories(), 2)
 	assertion.Equal(t, res.Msg.GetRepositories()[0].GetPath(), "/src/mono")
 	assertion.Equal(t, res.Msg.GetRepositories()[0].GetName(), "mono")
 
-	_, err = h.CloseRepository(t.Context(), connect.NewRequest(api.RequestCloseRepository_builder{Path: new("/src/mono")}.Build()))
+	_, err = h.Close(t.Context(), connect.NewRequest(api.RequestCloseRepository_builder{Path: new("/src/mono")}.Build()))
 	assertion.MustNoError(t, err)
 	c, err := conf.Load()
 	assertion.MustNoError(t, err)
@@ -46,7 +46,7 @@ func TestListAndCloseRepositories(t *testing.T) {
 }
 
 func TestLogRejectsRepositoryNotOpened(t *testing.T) {
-	h := NewRevisionHandler(newConfig(t, "/src/mono"))
+	h := NewRepositoryHandler(newConfig(t, "/src/mono"))
 
 	_, err := h.Log(t.Context(), connect.NewRequest(api.RequestLog_builder{Path: new("/etc")}.Build()))
 	assertion.MustError(t, err)
@@ -56,7 +56,7 @@ func TestLogRejectsRepositoryNotOpened(t *testing.T) {
 }
 
 func TestOperationRejectsRepositoryNotOpened(t *testing.T) {
-	h := NewRevisionHandler(newConfig(t, "/src/mono"))
+	h := NewRepositoryHandler(newConfig(t, "/src/mono"))
 
 	_, err := h.Undo(t.Context(), connect.NewRequest(api.RequestUndo_builder{Path: new("/etc")}.Build()))
 	assertion.MustError(t, err)
@@ -66,7 +66,7 @@ func TestOperationRejectsRepositoryNotOpened(t *testing.T) {
 }
 
 func TestListAgentCommitsRequiresAgent(t *testing.T) {
-	h := NewRevisionHandler(newConfig(t, "/src/mono"))
+	h := NewRepositoryHandler(newConfig(t, "/src/mono"))
 
 	_, err := h.ListAgentCommits(t.Context(), connect.NewRequest(api.RequestListAgentCommits_builder{Cwd: new("/src/mono"), Kind: new("claude")}.Build()))
 	assertion.MustError(t, err)

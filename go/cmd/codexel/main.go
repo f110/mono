@@ -26,11 +26,10 @@ import (
 )
 
 type command struct {
-	Addr         string
-	NoBrowser    bool
-	HerdrSocket  string
-	Config       string
-	NoTranscript bool
+	Addr        string
+	NoBrowser   bool
+	HerdrSocket string
+	Config      string
 }
 
 func (c *command) Flags(fs *flag.FlagSet) {
@@ -38,7 +37,6 @@ func (c *command) Flags(fs *flag.FlagSet) {
 	fs.Bool("no-browser", "Don't open the browser").Var(&c.NoBrowser)
 	fs.String("herdr-socket", "Path of the socket of herdr. If not specified, $HERDR_SOCKET_PATH or ~/.config/herdr/herdr.sock").Var(&c.HerdrSocket)
 	fs.String("config", "Path of the config file. If not specified, ~/.config/codexel/config.json").Var(&c.Config)
-	fs.Bool("no-transcript", "Disable the timeline from the transcripts of Claude Code. It is experimental because the format of the transcript is not public").Var(&c.NoTranscript)
 }
 
 func (c *command) Run(ctx context.Context) error {
@@ -61,12 +59,9 @@ func (c *command) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	var claudeProjectsDir string
-	if !c.NoTranscript {
-		claudeProjectsDir, err = claudecode.DefaultProjectsDir()
-		if err != nil {
-			return err
-		}
+	claudeProjectsDir, err := claudecode.DefaultProjectsDir()
+	if err != nil {
+		return err
 	}
 
 	missing := missingBinaries("herdr", "jj")

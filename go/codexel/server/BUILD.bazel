@@ -3,17 +3,10 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "server",
     srcs = [
-        "alias.go",
-        "bookmark.go",
-        "conflict.go",
-        "file.go",
         "mcp.go",
-        "operation.go",
         "repository.go",
         "review.go",
         "server.go",
-        "transcript.go",
-        "workspace.go",
     ],
     importpath = "go.f110.dev/mono/go/codexel/server",
     visibility = ["//visibility:public"],

@@ -3945,19 +3945,19 @@ export declare const DiffSideSchema: GenEnum<DiffSide>;
  */
 export declare const AgentService: GenService<{
   /**
-   * @generated from rpc mono.codexel.AgentService.ListAgents
+   * @generated from rpc mono.codexel.AgentService.List
    */
-  listAgents: {
+  list: {
     methodKind: "unary";
     input: typeof RequestListAgentsSchema;
     output: typeof ResponseListAgentsSchema;
   },
   /**
-   * WatchAgents sends all agents at first and every time the agents change.
+   * Watch sends all agents at first and every time the agents change.
    *
-   * @generated from rpc mono.codexel.AgentService.WatchAgents
+   * @generated from rpc mono.codexel.AgentService.Watch
    */
-  watchAgents: {
+  watch: {
     methodKind: "server_streaming";
     input: typeof RequestWatchAgentsSchema;
     output: typeof ResponseWatchAgentsSchema;
@@ -3989,11 +3989,11 @@ export declare const AgentService: GenService<{
     output: typeof ResponseSendKeysSchema;
   },
   /**
-   * FocusAgent moves the focus of herdr to the agent.
+   * Focus moves the focus of herdr to the agent.
    *
-   * @generated from rpc mono.codexel.AgentService.FocusAgent
+   * @generated from rpc mono.codexel.AgentService.Focus
    */
-  focusAgent: {
+  focus: {
     methodKind: "unary";
     input: typeof RequestFocusAgentSchema;
     output: typeof ResponseFocusAgentSchema;
@@ -4007,71 +4007,76 @@ export declare const AgentService: GenService<{
     output: typeof ResponseListWorkspacesSchema;
   },
   /**
-   * StartAgent creates a new tab in the workspace and starts the agent in it. If workspace_id is empty, it creates a new
+   * Start creates a new tab in the workspace and starts the agent in it. If workspace_id is empty, it creates a new
    * workspace and starts the agent in it. The server of herdr is started if it is not running.
    *
-   * @generated from rpc mono.codexel.AgentService.StartAgent
+   * @generated from rpc mono.codexel.AgentService.Start
    */
-  startAgent: {
+  start: {
     methodKind: "unary";
     input: typeof RequestStartAgentSchema;
     output: typeof ResponseStartAgentSchema;
   },
+  /**
+   * WatchTranscript sends the timeline of the session of Claude Code from its transcript. It sends the theme and all
+   * entries at first, and then the theme and the new entries every time the transcript is appended. Until the
+   * transcript is created, it sends the empty theme.
+   *
+   * @generated from rpc mono.codexel.AgentService.WatchTranscript
+   */
+  watchTranscript: {
+    methodKind: "server_streaming";
+    input: typeof RequestWatchTranscriptSchema;
+    output: typeof ResponseWatchTranscriptSchema;
+  },
 }>;
 
 /**
- * RepositoryService manages the repositories opened in Codexel. The repositories are saved in the config file.
+ * RepositoryService manages the repositories opened in Codexel and runs jj in them. The repositories are saved in the
+ * config file. The operations which change the repository return the message of jj in output.
  *
  * @generated from service mono.codexel.RepositoryService
  */
 export declare const RepositoryService: GenService<{
   /**
-   * @generated from rpc mono.codexel.RepositoryService.ListRepositories
+   * @generated from rpc mono.codexel.RepositoryService.List
    */
-  listRepositories: {
+  list: {
     methodKind: "unary";
     input: typeof RequestListRepositoriesSchema;
     output: typeof ResponseListRepositoriesSchema;
   },
   /**
-   * OpenRepository opens the workspace which contains the path.
+   * Open opens the workspace which contains the path.
    *
-   * @generated from rpc mono.codexel.RepositoryService.OpenRepository
+   * @generated from rpc mono.codexel.RepositoryService.Open
    */
-  openRepository: {
+  open: {
     methodKind: "unary";
     input: typeof RequestOpenRepositorySchema;
     output: typeof ResponseOpenRepositorySchema;
   },
   /**
-   * @generated from rpc mono.codexel.RepositoryService.CloseRepository
+   * @generated from rpc mono.codexel.RepositoryService.Close
    */
-  closeRepository: {
+  close: {
     methodKind: "unary";
     input: typeof RequestCloseRepositorySchema;
     output: typeof ResponseCloseRepositorySchema;
   },
   /**
-   * WatchRepository sends the ID of the operation at first and every time the operation changes. The working copy is
+   * Watch sends the ID of the operation at first and every time the operation changes. The working copy is
    * snapshotted periodically while watching.
    *
-   * @generated from rpc mono.codexel.RepositoryService.WatchRepository
+   * @generated from rpc mono.codexel.RepositoryService.Watch
    */
-  watchRepository: {
+  watch: {
     methodKind: "server_streaming";
     input: typeof RequestWatchRepositorySchema;
     output: typeof ResponseWatchRepositorySchema;
   },
-}>;
-
-/**
- * RevisionService provides the revisions of the repository.
- *
- * @generated from service mono.codexel.RevisionService
- */
-export declare const RevisionService: GenService<{
   /**
-   * @generated from rpc mono.codexel.RevisionService.Log
+   * @generated from rpc mono.codexel.RepositoryService.Log
    */
   log: {
     methodKind: "unary";
@@ -4081,7 +4086,7 @@ export declare const RevisionService: GenService<{
   /**
    * GetRevision returns the commit with the whole description and the diff of the revision.
    *
-   * @generated from rpc mono.codexel.RevisionService.GetRevision
+   * @generated from rpc mono.codexel.RepositoryService.GetRevision
    */
   getRevision: {
     methodKind: "unary";
@@ -4089,10 +4094,9 @@ export declare const RevisionService: GenService<{
     output: typeof ResponseGetRevisionSchema;
   },
   /**
-   * The operations below return the message of jj in output.
    * New creates the new revision on the revisions.
    *
-   * @generated from rpc mono.codexel.RevisionService.New
+   * @generated from rpc mono.codexel.RepositoryService.New
    */
   new: {
     methodKind: "unary";
@@ -4102,7 +4106,7 @@ export declare const RevisionService: GenService<{
   /**
    * Edit makes the revision the working copy.
    *
-   * @generated from rpc mono.codexel.RevisionService.Edit
+   * @generated from rpc mono.codexel.RepositoryService.Edit
    */
   edit: {
     methodKind: "unary";
@@ -4110,7 +4114,7 @@ export declare const RevisionService: GenService<{
     output: typeof ResponseEditSchema;
   },
   /**
-   * @generated from rpc mono.codexel.RevisionService.Abandon
+   * @generated from rpc mono.codexel.RepositoryService.Abandon
    */
   abandon: {
     methodKind: "unary";
@@ -4118,7 +4122,7 @@ export declare const RevisionService: GenService<{
     output: typeof ResponseAbandonSchema;
   },
   /**
-   * @generated from rpc mono.codexel.RevisionService.Describe
+   * @generated from rpc mono.codexel.RepositoryService.Describe
    */
   describe: {
     methodKind: "unary";
@@ -4128,7 +4132,7 @@ export declare const RevisionService: GenService<{
   /**
    * Commit describes the working copy and creates the new working copy on it.
    *
-   * @generated from rpc mono.codexel.RevisionService.Commit
+   * @generated from rpc mono.codexel.RepositoryService.Commit
    */
   commit: {
     methodKind: "unary";
@@ -4138,7 +4142,7 @@ export declare const RevisionService: GenService<{
   /**
    * Undo undoes the last operation.
    *
-   * @generated from rpc mono.codexel.RevisionService.Undo
+   * @generated from rpc mono.codexel.RepositoryService.Undo
    */
   undo: {
     methodKind: "unary";
@@ -4146,7 +4150,7 @@ export declare const RevisionService: GenService<{
     output: typeof ResponseUndoSchema;
   },
   /**
-   * @generated from rpc mono.codexel.RevisionService.Rebase
+   * @generated from rpc mono.codexel.RepositoryService.Rebase
    */
   rebase: {
     methodKind: "unary";
@@ -4156,7 +4160,7 @@ export declare const RevisionService: GenService<{
   /**
    * Squash moves the changes of the revisions into the destination.
    *
-   * @generated from rpc mono.codexel.RevisionService.Squash
+   * @generated from rpc mono.codexel.RepositoryService.Squash
    */
   squash: {
     methodKind: "unary";
@@ -4166,7 +4170,7 @@ export declare const RevisionService: GenService<{
   /**
    * Evolog returns the versions of the revision from the newest.
    *
-   * @generated from rpc mono.codexel.RevisionService.Evolog
+   * @generated from rpc mono.codexel.RepositoryService.Evolog
    */
   evolog: {
     methodKind: "unary";
@@ -4176,7 +4180,7 @@ export declare const RevisionService: GenService<{
   /**
    * Split moves the files into the new revision before the revision.
    *
-   * @generated from rpc mono.codexel.RevisionService.Split
+   * @generated from rpc mono.codexel.RepositoryService.Split
    */
   split: {
     methodKind: "unary";
@@ -4186,7 +4190,7 @@ export declare const RevisionService: GenService<{
   /**
    * Restore discards the changes of the files in the revision.
    *
-   * @generated from rpc mono.codexel.RevisionService.Restore
+   * @generated from rpc mono.codexel.RepositoryService.Restore
    */
   restore: {
     methodKind: "unary";
@@ -4196,7 +4200,7 @@ export declare const RevisionService: GenService<{
   /**
    * DiffRange returns the diff between two revisions.
    *
-   * @generated from rpc mono.codexel.RevisionService.DiffRange
+   * @generated from rpc mono.codexel.RepositoryService.DiffRange
    */
   diffRange: {
     methodKind: "unary";
@@ -4207,23 +4211,15 @@ export declare const RevisionService: GenService<{
    * ListAgentCommits returns the commits which have the Agent and the Agent-Session trailers of the agent in the
    * repository of the working directory of the agent. The repository must be opened.
    *
-   * @generated from rpc mono.codexel.RevisionService.ListAgentCommits
+   * @generated from rpc mono.codexel.RepositoryService.ListAgentCommits
    */
   listAgentCommits: {
     methodKind: "unary";
     input: typeof RequestListAgentCommitsSchema;
     output: typeof ResponseListAgentCommitsSchema;
   },
-}>;
-
-/**
- * BookmarkService manages the bookmarks. The operations return the message of jj in output.
- *
- * @generated from service mono.codexel.BookmarkService
- */
-export declare const BookmarkService: GenService<{
   /**
-   * @generated from rpc mono.codexel.BookmarkService.ListBookmarks
+   * @generated from rpc mono.codexel.RepositoryService.ListBookmarks
    */
   listBookmarks: {
     methodKind: "unary";
@@ -4233,7 +4229,7 @@ export declare const BookmarkService: GenService<{
   /**
    * SetBookmark creates the bookmark or moves it to the revision.
    *
-   * @generated from rpc mono.codexel.BookmarkService.SetBookmark
+   * @generated from rpc mono.codexel.RepositoryService.SetBookmark
    */
   setBookmark: {
     methodKind: "unary";
@@ -4243,7 +4239,7 @@ export declare const BookmarkService: GenService<{
   /**
    * MoveBookmark moves the bookmark to the revision even if it moves backwards or sideways.
    *
-   * @generated from rpc mono.codexel.BookmarkService.MoveBookmark
+   * @generated from rpc mono.codexel.RepositoryService.MoveBookmark
    */
   moveBookmark: {
     methodKind: "unary";
@@ -4253,7 +4249,7 @@ export declare const BookmarkService: GenService<{
   /**
    * DeleteBookmark deletes the bookmark. The tracked remote bookmarks are deleted on the next push.
    *
-   * @generated from rpc mono.codexel.BookmarkService.DeleteBookmark
+   * @generated from rpc mono.codexel.RepositoryService.DeleteBookmark
    */
   deleteBookmark: {
     methodKind: "unary";
@@ -4263,7 +4259,7 @@ export declare const BookmarkService: GenService<{
   /**
    * ForgetBookmark forgets the bookmark without deleting the remote bookmarks.
    *
-   * @generated from rpc mono.codexel.BookmarkService.ForgetBookmark
+   * @generated from rpc mono.codexel.RepositoryService.ForgetBookmark
    */
   forgetBookmark: {
     methodKind: "unary";
@@ -4271,7 +4267,7 @@ export declare const BookmarkService: GenService<{
     output: typeof ResponseForgetBookmarkSchema;
   },
   /**
-   * @generated from rpc mono.codexel.BookmarkService.TrackBookmark
+   * @generated from rpc mono.codexel.RepositoryService.TrackBookmark
    */
   trackBookmark: {
     methodKind: "unary";
@@ -4279,23 +4275,15 @@ export declare const BookmarkService: GenService<{
     output: typeof ResponseTrackBookmarkSchema;
   },
   /**
-   * @generated from rpc mono.codexel.BookmarkService.UntrackBookmark
+   * @generated from rpc mono.codexel.RepositoryService.UntrackBookmark
    */
   untrackBookmark: {
     methodKind: "unary";
     input: typeof RequestUntrackBookmarkSchema;
     output: typeof ResponseUntrackBookmarkSchema;
   },
-}>;
-
-/**
- * GitService runs the operations with the remote repositories. The operations return the message of jj in output.
- *
- * @generated from service mono.codexel.GitService
- */
-export declare const GitService: GenService<{
   /**
-   * @generated from rpc mono.codexel.GitService.Fetch
+   * @generated from rpc mono.codexel.RepositoryService.Fetch
    */
   fetch: {
     methodKind: "unary";
@@ -4305,25 +4293,17 @@ export declare const GitService: GenService<{
   /**
    * Push pushes the bookmark. The bookmarks of revsets.git-push are pushed if bookmark is empty.
    *
-   * @generated from rpc mono.codexel.GitService.Push
+   * @generated from rpc mono.codexel.RepositoryService.Push
    */
   push: {
     methodKind: "unary";
     input: typeof RequestPushSchema;
     output: typeof ResponsePushSchema;
   },
-}>;
-
-/**
- * OperationService provides the operation log. The operations return the message of jj in output.
- *
- * @generated from service mono.codexel.OperationService
- */
-export declare const OperationService: GenService<{
   /**
    * ListOperations returns the operations from the newest.
    *
-   * @generated from rpc mono.codexel.OperationService.ListOperations
+   * @generated from rpc mono.codexel.RepositoryService.ListOperations
    */
   listOperations: {
     methodKind: "unary";
@@ -4333,7 +4313,7 @@ export declare const OperationService: GenService<{
   /**
    * RevertOperation creates the operation which reverts the operation.
    *
-   * @generated from rpc mono.codexel.OperationService.RevertOperation
+   * @generated from rpc mono.codexel.RepositoryService.RevertOperation
    */
   revertOperation: {
     methodKind: "unary";
@@ -4343,25 +4323,17 @@ export declare const OperationService: GenService<{
   /**
    * RestoreOperation restores the repository to the state at the operation.
    *
-   * @generated from rpc mono.codexel.OperationService.RestoreOperation
+   * @generated from rpc mono.codexel.RepositoryService.RestoreOperation
    */
   restoreOperation: {
     methodKind: "unary";
     input: typeof RequestRestoreOperationSchema;
     output: typeof ResponseRestoreOperationSchema;
   },
-}>;
-
-/**
- * FileService provides the files at the revision.
- *
- * @generated from service mono.codexel.FileService
- */
-export declare const FileService: GenService<{
   /**
    * GetFile returns the content of the file at the revision.
    *
-   * @generated from rpc mono.codexel.FileService.GetFile
+   * @generated from rpc mono.codexel.RepositoryService.GetFile
    */
   getFile: {
     methodKind: "unary";
@@ -4371,7 +4343,7 @@ export declare const FileService: GenService<{
   /**
    * ListFiles returns the paths of all files at the revision.
    *
-   * @generated from rpc mono.codexel.FileService.ListFiles
+   * @generated from rpc mono.codexel.RepositoryService.ListFiles
    */
   listFiles: {
     methodKind: "unary";
@@ -4381,23 +4353,17 @@ export declare const FileService: GenService<{
   /**
    * WriteFile writes the file of the working copy. The path must be in the workspace.
    *
-   * @generated from rpc mono.codexel.FileService.WriteFile
+   * @generated from rpc mono.codexel.RepositoryService.WriteFile
    */
   writeFile: {
     methodKind: "unary";
     input: typeof RequestWriteFileSchema;
     output: typeof ResponseWriteFileSchema;
   },
-}>;
-
-/**
- * ConflictService provides the conflicts of the mutable revisions.
- *
- * @generated from service mono.codexel.ConflictService
- */
-export declare const ConflictService: GenService<{
   /**
-   * @generated from rpc mono.codexel.ConflictService.ListConflicts
+   * ListConflicts returns the conflicts of the mutable revisions.
+   *
+   * @generated from rpc mono.codexel.RepositoryService.ListConflicts
    */
   listConflicts: {
     methodKind: "unary";
@@ -4405,10 +4371,10 @@ export declare const ConflictService: GenService<{
     output: typeof ResponseListConflictsSchema;
   },
   /**
-   * GetConflict returns the conflicted file with the markers of the snapshot style which has the whole content of each
-   * side.
+   * GetConflict returns the conflicted file with the markers of the snapshot style which has the whole content of
+   * each side.
    *
-   * @generated from rpc mono.codexel.ConflictService.GetConflict
+   * @generated from rpc mono.codexel.RepositoryService.GetConflict
    */
   getConflict: {
     methodKind: "unary";
@@ -4416,58 +4382,52 @@ export declare const ConflictService: GenService<{
     output: typeof ResponseGetConflictSchema;
   },
   /**
-   * Resolve resolves the conflict of two sides by taking one side. It returns the message of jj in output.
+   * Resolve resolves the conflict of two sides by taking one side.
    *
-   * @generated from rpc mono.codexel.ConflictService.Resolve
+   * @generated from rpc mono.codexel.RepositoryService.Resolve
    */
   resolve: {
     methodKind: "unary";
     input: typeof RequestResolveSchema;
     output: typeof ResponseResolveSchema;
   },
-}>;
-
-/**
- * WorkspaceService manages the workspaces of jj. The operations return the message of jj in output.
- *
- * @generated from service mono.codexel.WorkspaceService
- */
-export declare const WorkspaceService: GenService<{
   /**
-   * @generated from rpc mono.codexel.WorkspaceService.ListRepositoryWorkspaces
+   * ListWorkspaces returns the workspaces of jj.
+   *
+   * @generated from rpc mono.codexel.RepositoryService.ListWorkspaces
    */
-  listRepositoryWorkspaces: {
+  listWorkspaces: {
     methodKind: "unary";
     input: typeof RequestListRepositoryWorkspacesSchema;
     output: typeof ResponseListRepositoryWorkspacesSchema;
   },
   /**
-   * AddRepositoryWorkspace creates the workspace in the sibling directory of the repository.
+   * AddWorkspace creates the workspace in the sibling directory of the repository.
    *
-   * @generated from rpc mono.codexel.WorkspaceService.AddRepositoryWorkspace
+   * @generated from rpc mono.codexel.RepositoryService.AddWorkspace
    */
-  addRepositoryWorkspace: {
+  addWorkspace: {
     methodKind: "unary";
     input: typeof RequestAddRepositoryWorkspaceSchema;
     output: typeof ResponseAddRepositoryWorkspaceSchema;
   },
   /**
-   * ForgetRepositoryWorkspace stops tracking the workspace. The directory is left. The workspace opened in Codexel
-   * can't be forgotten.
+   * ForgetWorkspace stops tracking the workspace. The directory is left. The workspace opened in Codexel can't be
+   * forgotten.
    *
-   * @generated from rpc mono.codexel.WorkspaceService.ForgetRepositoryWorkspace
+   * @generated from rpc mono.codexel.RepositoryService.ForgetWorkspace
    */
-  forgetRepositoryWorkspace: {
+  forgetWorkspace: {
     methodKind: "unary";
     input: typeof RequestForgetRepositoryWorkspaceSchema;
     output: typeof ResponseForgetRepositoryWorkspaceSchema;
   },
   /**
-   * RenameRepositoryWorkspace renames the workspace of the repository.
+   * RenameWorkspace renames the workspace of the repository.
    *
-   * @generated from rpc mono.codexel.WorkspaceService.RenameRepositoryWorkspace
+   * @generated from rpc mono.codexel.RepositoryService.RenameWorkspace
    */
-  renameRepositoryWorkspace: {
+  renameWorkspace: {
     methodKind: "unary";
     input: typeof RequestRenameRepositoryWorkspaceSchema;
     output: typeof ResponseRenameRepositoryWorkspaceSchema;
@@ -4475,23 +4435,17 @@ export declare const WorkspaceService: GenService<{
   /**
    * UpdateStale updates the stale working copy of the workspace.
    *
-   * @generated from rpc mono.codexel.WorkspaceService.UpdateStale
+   * @generated from rpc mono.codexel.RepositoryService.UpdateStale
    */
   updateStale: {
     methodKind: "unary";
     input: typeof RequestUpdateStaleSchema;
     output: typeof ResponseUpdateStaleSchema;
   },
-}>;
-
-/**
- * AliasService runs the aliases of jj configured by the user.
- *
- * @generated from service mono.codexel.AliasService
- */
-export declare const AliasService: GenService<{
   /**
-   * @generated from rpc mono.codexel.AliasService.ListAliases
+   * ListAliases returns the aliases of jj configured by the user.
+   *
+   * @generated from rpc mono.codexel.RepositoryService.ListAliases
    */
   listAliases: {
     methodKind: "unary";
@@ -4501,33 +4455,12 @@ export declare const AliasService: GenService<{
   /**
    * RunAlias runs the alias without the arguments. It returns stdout and stderr of jj in output.
    *
-   * @generated from rpc mono.codexel.AliasService.RunAlias
+   * @generated from rpc mono.codexel.RepositoryService.RunAlias
    */
   runAlias: {
     methodKind: "unary";
     input: typeof RequestRunAliasSchema;
     output: typeof ResponseRunAliasSchema;
-  },
-}>;
-
-/**
- * TranscriptService provides the timeline of the session of Claude Code from its transcript. It is experimental
- * because the format of the transcript is not public.
- *
- * @generated from service mono.codexel.TranscriptService
- */
-export declare const TranscriptService: GenService<{
-  /**
-   * WatchTranscript sends the theme and all entries at first, and then the theme and the new entries every time the
-   * transcript is appended. Until the transcript is created, it sends the empty theme.
-   * It returns unimplemented if the transcript is disabled by --no-transcript.
-   *
-   * @generated from rpc mono.codexel.TranscriptService.WatchTranscript
-   */
-  watchTranscript: {
-    methodKind: "server_streaming";
-    input: typeof RequestWatchTranscriptSchema;
-    output: typeof ResponseWatchTranscriptSchema;
   },
 }>;
 
@@ -4539,11 +4472,11 @@ export declare const TranscriptService: GenService<{
  */
 export declare const ReviewService: GenService<{
   /**
-   * ListReviews returns the reviews of the repository in descending order of the creation.
+   * List returns the reviews of the repository in descending order of the creation.
    *
-   * @generated from rpc mono.codexel.ReviewService.ListReviews
+   * @generated from rpc mono.codexel.ReviewService.List
    */
-  listReviews: {
+  list: {
     methodKind: "unary";
     input: typeof RequestListReviewsSchema;
     output: typeof ResponseListReviewsSchema;
@@ -4560,19 +4493,19 @@ export declare const ReviewService: GenService<{
     output: typeof ResponseListApprovedCommitsSchema;
   },
   /**
-   * @generated from rpc mono.codexel.ReviewService.GetReview
+   * @generated from rpc mono.codexel.ReviewService.Get
    */
-  getReview: {
+  get: {
     methodKind: "unary";
     input: typeof RequestGetReviewSchema;
     output: typeof ResponseGetReviewSchema;
   },
   /**
-   * StartReview starts the review of the changes. The first round is the current commits of the changes.
+   * Start starts the review of the changes. The first round is the current commits of the changes.
    *
-   * @generated from rpc mono.codexel.ReviewService.StartReview
+   * @generated from rpc mono.codexel.ReviewService.Start
    */
-  startReview: {
+  start: {
     methodKind: "unary";
     input: typeof RequestStartReviewSchema;
     output: typeof ResponseStartReviewSchema;

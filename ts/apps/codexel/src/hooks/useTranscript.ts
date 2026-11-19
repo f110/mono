@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Code, ConnectError, createClient } from '@connectrpc/connect'
-import { TranscriptService, type TranscriptEntry } from '../connect/codexel_pb.js'
+import { createClient } from '@connectrpc/connect'
+import { AgentService, type TranscriptEntry } from '../connect/codexel_pb.js'
 import { transport } from '../providers/AppProvider.tsx'
 
 const retryInterval = 3000
@@ -12,10 +12,9 @@ export type Transcript = {
 }
 
 // useTranscript follows the transcript of the session of Claude Code by WatchTranscript. It reconnects when the stream
-// ends. disabled is true if the server doesn't provide TranscriptService.
-export const useTranscript = (sessionId: string): { transcript: Transcript | undefined; disabled: boolean; error: Error | undefined } => {
+// ends.
+export const useTranscript = (sessionId: string): { transcript: Transcript | undefined; error: Error | undefined } => {
   const [transcript, setTranscript] = useState<Transcript>()
-  const [disabled, setDisabled] = useState(false)
   const [error, setError] = useState<Error>()
 
   useEffect(() => {
@@ -23,7 +22,7 @@ export const useTranscript = (sessionId: string): { transcript: Transcript | und
       return
     }
     const abort = new AbortController()
-    const client = createClient(TranscriptService, transport)
+    const client = createClient(AgentService, transport)
     const watch = async () => {
       while (!abort.signal.aborted) {
         // The stream sends all entries at first, so the entries are collected again on every connection.
@@ -38,10 +37,6 @@ export const useTranscript = (sessionId: string): { transcript: Transcript | und
           if (abort.signal.aborted) {
             return
           }
-          if (ConnectError.from(e).code === Code.Unimplemented) {
-            setDisabled(true)
-            return
-          }
           setError(e instanceof Error ? e : new Error(String(e)))
         }
         await new Promise((resolve) => setTimeout(resolve, retryInterval))
@@ -51,5 +46,5 @@ export const useTranscript = (sessionId: string): { transcript: Transcript | und
     return () => abort.abort()
   }, [sessionId])
 
-  return { transcript, disabled, error }
+  return { transcript, error }
 }

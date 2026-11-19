@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@connectrpc/connect-query'
 import { Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Stack, TextField, Typography } from '@mui/material'
-import { RevisionService, type Commit } from '../connect/codexel_pb.js'
+import { RepositoryService, type Commit } from '../connect/codexel_pb.js'
 
 // SplitDialog picks the files to move into the new revision before the revision.
 export const SplitDialog = ({
@@ -15,7 +15,7 @@ export const SplitDialog = ({
   onSubmit: (files: string[], description: string) => void
   onClose: () => void
 }) => {
-  const { data } = useQuery(RevisionService.method.getRevision, { path: repoPath, revision: commit.commitId }, { staleTime: Infinity })
+  const { data } = useQuery(RepositoryService.method.getRevision, { path: repoPath, revision: commit.commitId }, { staleTime: Infinity })
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [description, setDescription] = useState('')
   const files = data?.files ?? []

@@ -15,6 +15,7 @@ import (
 	"connectrpc.com/connect"
 	"go.f110.dev/xerrors"
 
+	"go.f110.dev/mono/go/claudecode"
 	"go.f110.dev/mono/go/codexel/api"
 	"go.f110.dev/mono/go/codexel/config"
 	"go.f110.dev/mono/go/codexel/review"
@@ -24,24 +25,14 @@ import (
 )
 
 // New returns the handler of the API and the frontend. claudeProjectsDir is the directory of the transcripts of Claude
-// Code. If it is empty, TranscriptService is disabled. MCP for the coding agents is served at /mcp. missingBinaries
-// are the binaries not found at startup.
+// Code. MCP for the coding agents is served at /mcp. missingBinaries are the binaries not found at startup.
 func New(herdrClient *herdr.Client, conf *config.File, reviews *review.Store, frontend fs.FS, claudeProjectsDir string, missingBinaries []string) http.Handler {
 	mux := http.NewServeMux()
 	reviewHandler := NewReviewHandler(conf, reviews, herdrClient)
 	mux.Handle(api.NewReviewServiceHandler(reviewHandler))
 	mux.Handle("/mcp", NewMCPHandler(reviewHandler))
-	mux.Handle(api.NewAgentServiceHandler(NewAgentHandler(herdrClient, conf)))
+	mux.Handle(api.NewAgentServiceHandler(NewAgentHandler(herdrClient, conf, claudeProjectsDir)))
 	mux.Handle(api.NewRepositoryServiceHandler(NewRepositoryHandler(conf)))
-	mux.Handle(api.NewRevisionServiceHandler(NewRevisionHandler(conf)))
-	mux.Handle(api.NewBookmarkServiceHandler(NewBookmarkHandler(conf)))
-	mux.Handle(api.NewGitServiceHandler(NewGitHandler(conf)))
-	mux.Handle(api.NewOperationServiceHandler(NewOperationHandler(conf)))
-	mux.Handle(api.NewFileServiceHandler(NewFileHandler(conf)))
-	mux.Handle(api.NewConflictServiceHandler(NewConflictHandler(conf)))
-	mux.Handle(api.NewWorkspaceServiceHandler(NewWorkspaceHandler(conf)))
-	mux.Handle(api.NewAliasServiceHandler(NewAliasHandler(conf)))
-	mux.Handle(api.NewTranscriptServiceHandler(NewTranscriptHandler(claudeProjectsDir)))
 	mux.Handle(api.NewSystemServiceHandler(NewSystemHandler(missingBinaries)))
 	mux.Handle("/", newFrontendHandler(frontend))
 	return mux
@@ -64,17 +55,19 @@ func newFrontendHandler(frontend fs.FS) http.Handler {
 }
 
 type AgentHandler struct {
-	herdr  *herdr.Client
-	config *config.File
+	herdr       *herdr.Client
+	config      *config.File
+	projectsDir string
 }
 
 var _ api.AgentServiceHandler = (*AgentHandler)(nil)
 
-func NewAgentHandler(c *herdr.Client, conf *config.File) *AgentHandler {
-	return &AgentHandler{herdr: c, config: conf}
+// NewAgentHandler returns the handler of the agents. projectsDir is the directory of the transcripts of Claude Code.
+func NewAgentHandler(c *herdr.Client, conf *config.File, projectsDir string) *AgentHandler {
+	return &AgentHandler{herdr: c, config: conf, projectsDir: projectsDir}
 }
 
-func (h *AgentHandler) ListAgents(ctx context.Context, _ *connect.Request[api.RequestListAgents]) (*connect.Response[api.ResponseListAgents], error) {
+func (h *AgentHandler) List(ctx context.Context, _ *connect.Request[api.RequestListAgents]) (*connect.Response[api.ResponseListAgents], error) {
 	agents, _, err := h.listAgents(ctx)
 	if err != nil {
 		return nil, err
@@ -82,10 +75,10 @@ func (h *AgentHandler) ListAgents(ctx context.Context, _ *connect.Request[api.Re
 	return connect.NewResponse(api.ResponseListAgents_builder{Agents: agents}.Build()), nil
 }
 
-// WatchAgents sends the agents every time herdr notifies the change of the panes or the status of the agents.
+// Watch sends the agents every time herdr notifies the change of the panes or the status of the agents.
 // The status of the agents can be subscribed only per pane, so the subscription is recreated after every change.
 // The repositories where the agents work are opened before sending so that the client can see them by the agents.
-func (h *AgentHandler) WatchAgents(ctx context.Context, _ *connect.Request[api.RequestWatchAgents], stream *connect.ServerStream[api.ResponseWatchAgents]) error {
+func (h *AgentHandler) Watch(ctx context.Context, _ *connect.Request[api.RequestWatchAgents], stream *connect.ServerStream[api.ResponseWatchAgents]) error {
 	for {
 		agents, panes, err := h.listAgents(ctx)
 		if err != nil {
@@ -154,7 +147,7 @@ func (h *AgentHandler) SendKeys(ctx context.Context, req *connect.Request[api.Re
 	return connect.NewResponse(&api.ResponseSendKeys{}), nil
 }
 
-func (h *AgentHandler) FocusAgent(ctx context.Context, req *connect.Request[api.RequestFocusAgent]) (*connect.Response[api.ResponseFocusAgent], error) {
+func (h *AgentHandler) Focus(ctx context.Context, req *connect.Request[api.RequestFocusAgent]) (*connect.Response[api.ResponseFocusAgent], error) {
 	if req.Msg.GetPaneId() == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("pane_id is required"))
 	}
@@ -176,7 +169,7 @@ func (h *AgentHandler) ListWorkspaces(ctx context.Context, _ *connect.Request[ap
 	return connect.NewResponse(api.ResponseListWorkspaces_builder{Workspaces: res}.Build()), nil
 }
 
-func (h *AgentHandler) StartAgent(ctx context.Context, req *connect.Request[api.RequestStartAgent]) (*connect.Response[api.ResponseStartAgent], error) {
+func (h *AgentHandler) Start(ctx context.Context, req *connect.Request[api.RequestStartAgent]) (*connect.Response[api.ResponseStartAgent], error) {
 	if req.Msg.GetKind() == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("kind is required"))
 	}
@@ -202,6 +195,57 @@ func (h *AgentHandler) StartAgent(ctx context.Context, req *connect.Request[api.
 		return nil, err
 	}
 	return connect.NewResponse(api.ResponseStartAgent_builder{Agent: toAgent(agent, workspaces)}.Build()), nil
+}
+
+// WatchTranscript reads the transcript of Claude Code in projectsDir periodically because Claude Code appends to it
+// during the session.
+func (h *AgentHandler) WatchTranscript(ctx context.Context, req *connect.Request[api.RequestWatchTranscript], stream *connect.ServerStream[api.ResponseWatchTranscript]) error {
+	sessionID := req.Msg.GetSessionId()
+	if sessionID == "" {
+		return connect.NewError(connect.CodeInvalidArgument, errors.New("session_id is required"))
+	}
+
+	ticker := time.NewTicker(transcriptPollInterval)
+	defer ticker.Stop()
+	var transcript *claudecode.Transcript
+	var title, lastPrompt string
+	sent := false
+	for {
+		if transcript == nil {
+			p, err := claudecode.FindTranscript(h.projectsDir, sessionID)
+			if err != nil {
+				return connect.NewError(connect.CodeInvalidArgument, err)
+			}
+			if p != "" {
+				transcript = claudecode.NewTranscript(p)
+			}
+		}
+		var entries []*claudecode.Entry
+		newTitle, newLastPrompt := title, lastPrompt
+		if transcript != nil {
+			var err error
+			entries, err = transcript.Update()
+			if err != nil {
+				return connect.NewError(connect.CodeInternal, err)
+			}
+			newTitle, newLastPrompt = transcript.Title(), transcript.LastPrompt()
+		}
+
+		if !sent || len(entries) > 0 || newTitle != title || newLastPrompt != lastPrompt {
+			title, lastPrompt = newTitle, newLastPrompt
+			res := api.ResponseWatchTranscript_builder{Title: new(title), LastPrompt: new(lastPrompt), Entries: toTranscriptEntries(entries)}.Build()
+			if err := stream.Send(res); err != nil {
+				return xerrors.WithStack(err)
+			}
+			sent = true
+		}
+
+		select {
+		case <-ticker.C:
+		case <-ctx.Done():
+			return nil
+		}
+	}
 }
 
 // createPane creates the tab in the workspace, or the new workspace if workspaceID is empty. The server of herdr is
@@ -231,6 +275,7 @@ func (h *AgentHandler) createPane(ctx context.Context, workspaceID, cwd string) 
 const (
 	startAgentRetryInterval = 200 * time.Millisecond
 	startAgentRetryTimeout  = 10 * time.Second
+	transcriptPollInterval  = 500 * time.Millisecond
 )
 
 // startAgent starts the agent in the pane. The shell of the new pane is not available for a while after the pane is
@@ -319,6 +364,36 @@ func toAgentStatus(s herdr.AgentStatus) api.AgentStatus {
 		return api.AgentStatus_AGENT_STATUS_DONE
 	default:
 		return api.AgentStatus_AGENT_STATUS_UNKNOWN
+	}
+}
+
+func toTranscriptEntries(entries []*claudecode.Entry) []*api.TranscriptEntry {
+	res := make([]*api.TranscriptEntry, 0, len(entries))
+	for _, v := range entries {
+		res = append(res, api.TranscriptEntry_builder{
+			Kind:      new(toTranscriptEntryKind(v.Kind)),
+			Time:      new(v.Time.UnixMilli()),
+			Text:      new(v.Text),
+			ToolName:  new(v.ToolName),
+			ToolUseId: new(v.ToolUseID),
+			IsError:   new(v.IsError),
+		}.Build())
+	}
+	return res
+}
+
+func toTranscriptEntryKind(k claudecode.EntryKind) api.TranscriptEntryKind {
+	switch k {
+	case claudecode.EntryKindUserPrompt:
+		return api.TranscriptEntryKind_TRANSCRIPT_ENTRY_KIND_USER_PROMPT
+	case claudecode.EntryKindAssistantText:
+		return api.TranscriptEntryKind_TRANSCRIPT_ENTRY_KIND_ASSISTANT_TEXT
+	case claudecode.EntryKindToolUse:
+		return api.TranscriptEntryKind_TRANSCRIPT_ENTRY_KIND_TOOL_USE
+	case claudecode.EntryKindToolResult:
+		return api.TranscriptEntryKind_TRANSCRIPT_ENTRY_KIND_TOOL_RESULT
+	default:
+		return api.TranscriptEntryKind_TRANSCRIPT_ENTRY_KIND_UNSPECIFIED
 	}
 }
 

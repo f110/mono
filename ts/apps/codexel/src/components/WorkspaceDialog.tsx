@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@connectrpc/connect-query'
 import { Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Stack, TextField, Typography } from '@mui/material'
-import { WorkspaceService, type Commit } from '../connect/codexel_pb.js'
+import { RepositoryService, type Commit } from '../connect/codexel_pb.js'
 
 // WorkspaceDialog manages the workspaces of the repository. The workspace is opened as another repository.
 export const WorkspaceDialog = ({
@@ -24,7 +24,7 @@ export const WorkspaceDialog = ({
   onUpdateStale: () => void
   onClose: () => void
 }) => {
-  const { data } = useQuery(WorkspaceService.method.listRepositoryWorkspaces, { path: repoPath })
+  const { data } = useQuery(RepositoryService.method.listWorkspaces, { path: repoPath })
   const [newName, setNewName] = useState('')
   const [rename, setRename] = useState('')
   const workspaces = data?.workspaces ?? []

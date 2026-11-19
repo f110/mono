@@ -280,7 +280,7 @@ const samePosition = (a: LinePosition | undefined, b: LinePosition | undefined) 
 // the rounds.
 export const ReviewPage = () => {
   const { reviewId } = useParams({ from: '/reviews/$reviewId' })
-  const { data, error, refetch } = useQuery(ReviewService.method.getReview, { id: reviewId }, { refetchInterval: reviewRefreshInterval })
+  const { data, error, refetch } = useQuery(ReviewService.method.get, { id: reviewId }, { refetchInterval: reviewRefreshInterval })
   const review = data?.review
   const [fromRound, setFromRound] = useState(0)
   const [selectedToRound, setToRound] = useState(0)

@@ -48,7 +48,7 @@ Refs: #121, #122
 | `go/codexel/static` | embed したフロントエンド (`//go:embed`) |
 | `go/codexel/review` | レビューの保存と、リビジョン書き換え時のコメントの追従 |
 | `go/herdr` | herdr ソケット API のクライアント。Codexel 以外からも使える汎用クライアントにする |
-| `go/claudecode` | Claude Code のトランスクリプトのリーダー。形式に依存するコードはここだけに置く (実験的、#129) |
+| `go/claudecode` | Claude Code のトランスクリプトのリーダー。形式に依存するコードはここだけに置く |
 | `go/jujutsu` | jj のコマンドビルダーと出力パーサー (log / diff / bookmark / op log ...) と、`go/cmd/jj-pr` から切り出した PR 作成ロジック (§7.1)。純粋関数と Runner に分ける |
 | `proto/codexel` | API 定義 |
 | `ts/apps/codexel` | フロントエンド (React + MUI + Connect、`ts/apps/issue` と同じ構成) |
@@ -278,12 +278,9 @@ trunk から連続したスタック (`ancestors(latest(<default>@origin) & remo
 
 | サービス | 主な RPC |
 |---|---|
-| `AgentService` | `ListAgents`, `WatchAgents` (stream), `ReadOutput`, `SendPrompt`, `SendKeys`, `FocusAgent`, `ListWorkspaces`, `StartAgent` |
-| `TranscriptService` | `WatchTranscript` (stream)。実験的 (#129)。`--no-transcript` で無効にすると unimplemented を返す |
-| `RepositoryService` | `ListRepositories`, `OpenRepository`, `CloseRepository`, `WatchRepository` (stream, op ID の変化) |
-| `RevisionService` | `Log`, `GetRevision`, `Diff`, `DiffRange`, `Files`, `FileTree`, `FileHistory`, ... と各変更操作 (§4.2) |
-| `BookmarkService` / `GitService` / `OperationService` / `WorkspaceService` | §4.2 の各分類 |
-| `ReviewService` | `ListReviews`, `GetReview`, `StartReview`, `AddComment`, `EditComment`, `DeleteComment`, `Reply`, `ResolveComment`, `Finish`, `StartNextRound`, `RoundDiff`, `SetViewed` |
+| `AgentService` | `List`, `Watch` (stream), `ReadOutput`, `SendPrompt`, `SendKeys`, `Focus`, `ListWorkspaces`, `Start`, `WatchTranscript` (stream) |
+| `RepositoryService` | `List`, `Open`, `Close`, `Watch` (stream, op ID の変化), `Log`, `GetRevision`, `Diff`, `DiffRange`, `Files`, `FileTree`, `FileHistory`, ... と §4.2 の各操作 (リビジョン、ブックマーク、Git、オペレーション、ファイル、コンフリクト、ワークスペース、エイリアス) |
+| `ReviewService` | `List`, `Get`, `Start`, `AddComment`, `EditComment`, `DeleteComment`, `Reply`, `ResolveComment`, `Finish`, `StartNextRound`, `RoundDiff`, `SetViewed` |
 | `PullRequestService` | `ListTemplates`, `Submit` |
 | `SystemService` | `GetStatus` (起動時に PATH に見つからなかった `herdr` と `jj`) |
 

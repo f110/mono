@@ -16,7 +16,7 @@ export const useAgents = (): { agents: Agent[] | undefined; error: Error | undef
     const watch = async () => {
       while (!abort.signal.aborted) {
         try {
-          for await (const res of client.watchAgents({}, { signal: abort.signal })) {
+          for await (const res of client.watch({}, { signal: abort.signal })) {
             setAgents(res.agents)
             setError(undefined)
           }

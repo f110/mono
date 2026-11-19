@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@connectrpc/connect-query'
 import { Alert, Box, Button, ButtonGroup, Stack, TextField, Typography } from '@mui/material'
-import { ConflictService, ResolveSide, type ConflictedCommit, type ConflictedFile } from '../connect/codexel_pb.js'
+import { RepositoryService, ResolveSide, type ConflictedCommit, type ConflictedFile } from '../connect/codexel_pb.js'
 import { composeResolution, parseConflict } from '../lib/conflict.ts'
 
 const sideNames = ['A', 'B', 'C', 'D', 'E', 'F']
@@ -23,7 +23,7 @@ export const MergeEditor = ({
   onSave: (content: string) => void
   onEdit: () => void
 }) => {
-  const { data, error } = useQuery(ConflictService.method.getConflict, { path: repoPath, revision: commit.commitId, file: file.path })
+  const { data, error } = useQuery(RepositoryService.method.getConflict, { path: repoPath, revision: commit.commitId, file: file.path })
   const segments = useMemo(() => (data ? parseConflict(data.content) : []), [data])
   const conflicts = segments.filter((s) => s.kind === 'conflict')
   const [resolutions, setResolutions] = useState<string[]>([])

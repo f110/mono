@@ -18,18 +18,10 @@ import {
   Typography,
 } from '@mui/material'
 import {
-  AliasService,
-  BookmarkService,
-  ConflictService,
-  FileService,
-  GitService,
-  OperationService,
   RebaseSource,
   RebaseTarget,
   RepositoryService,
   ReviewService,
-  RevisionService,
-  WorkspaceService,
   type Commit,
 } from '../connect/codexel_pb.js'
 import { useAgents } from '../hooks/useAgents.ts'
@@ -60,15 +52,7 @@ import { WorkspaceDialog } from './WorkspaceDialog.tsx'
 // it is ambiguous for the divergent revisions.
 const revisionKey = (c: Commit) => (c.divergent || c.hidden ? c.commitId : c.changeId)
 
-const client = createClient(RevisionService, transport)
-const bookmarkClient = createClient(BookmarkService, transport)
-const gitClient = createClient(GitService, transport)
-const operationClient = createClient(OperationService, transport)
-const conflictClient = createClient(ConflictService, transport)
-const fileClient = createClient(FileService, transport)
 const repositoryClient = createClient(RepositoryService, transport)
-const workspaceClient = createClient(WorkspaceService, transport)
-const aliasClient = createClient(AliasService, transport)
 const reviewClient = createClient(ReviewService, transport)
 
 // operationLimit is the number of the operations shown in the operation log.
@@ -129,7 +113,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   const [workspaceOpen, setWorkspaceOpen] = useState(false)
   const [divergent, setDivergent] = useState<Commit>()
   const [paletteOpen, setPaletteOpen] = useState(false)
-  const { data: aliasData } = useQuery(AliasService.method.listAliases, { path }, { enabled: paletteOpen })
+  const { data: aliasData } = useQuery(RepositoryService.method.listAliases, { path }, { enabled: paletteOpen })
   const [restoringFile, setRestoringFile] = useState<{ commit: Commit; file: string }>()
   const [treeTarget, setTreeTarget] = useState<Commit>()
   const [treeExpanded, setTreeExpanded] = useState<Set<string>>(new Set())
@@ -153,21 +137,21 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   const { agents } = useAgents()
   const approved = useApprovedCommits(path, operation)
   const reviews = useReviews(path)
-  const { data, error, refetch } = useQuery(RevisionService.method.log, { path, revset })
-  const { data: bookmarkData, refetch: refetchBookmarks } = useQuery(BookmarkService.method.listBookmarks, { path })
+  const { data, error, refetch } = useQuery(RepositoryService.method.log, { path, revset })
+  const { data: bookmarkData, refetch: refetchBookmarks } = useQuery(RepositoryService.method.listBookmarks, { path })
   const bookmarks = bookmarkData?.bookmarks ?? []
-  const { data: opData, refetch: refetchOperations } = useQuery(OperationService.method.listOperations, { path, limit: operationLimit }, { enabled: view === 'oplog' })
+  const { data: opData, refetch: refetchOperations } = useQuery(RepositoryService.method.listOperations, { path, limit: operationLimit }, { enabled: view === 'oplog' })
   const operations = opData?.operations ?? []
   const { data: evologData } = useQuery(
-    RevisionService.method.evolog,
+    RepositoryService.method.evolog,
     { path, revision: evologTarget?.commitId ?? '' },
     { enabled: view === 'evolog' && evologTarget !== undefined },
   )
   const evolog = evologData?.entries ?? []
-  const { data: conflictData, refetch: refetchConflicts } = useQuery(ConflictService.method.listConflicts, { path }, { enabled: view === 'conflicts' })
+  const { data: conflictData, refetch: refetchConflicts } = useQuery(RepositoryService.method.listConflicts, { path }, { enabled: view === 'conflicts' })
   const conflicts = useMemo(() => conflictEntries(conflictData?.commits ?? []), [conflictData])
   const { data: filesData } = useQuery(
-    FileService.method.listFiles,
+    RepositoryService.method.listFiles,
     { path, revision: treeTarget?.commitId ?? '' },
     { enabled: view === 'files' && treeTarget !== undefined, staleTime: Infinity },
   )
@@ -249,29 +233,29 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   const targets = useCallback((): Commit[] => (checkedCommits.length > 0 ? checkedCommits : selectedCommit ? [selectedCommit] : []), [checkedCommits, selectedCommit])
 
   const newRevision = useCallback(
-    (cs: Commit[]) => run(() => client.new({ path, revisions: cs.map((c) => c.commitId) }), true),
+    (cs: Commit[]) => run(() => repositoryClient.new({ path, revisions: cs.map((c) => c.commitId) }), true),
     [path, run],
   )
-  const edit = useCallback((c: Commit) => run(() => client.edit({ path, revision: c.commitId }), true), [path, run])
+  const edit = useCallback((c: Commit) => run(() => repositoryClient.edit({ path, revision: c.commitId }), true), [path, run])
   const startDescribe = useCallback(
     async (c: Commit) => {
-      const res = await client.getRevision({ path, revision: c.commitId })
+      const res = await repositoryClient.getRevision({ path, revision: c.commitId })
       setEditing({ kind: 'describe', commit: c, initial: res.description })
     },
     [path],
   )
   const startCommit = useCallback(async () => {
     const wc = commits.find((c) => c.currentWorkingCopy)
-    const res = wc ? await client.getRevision({ path, revision: wc.commitId }) : undefined
+    const res = wc ? await repositoryClient.getRevision({ path, revision: wc.commitId }) : undefined
     setEditing({ kind: 'commit', initial: res?.description ?? '' })
   }, [commits, path])
-  const undo = useCallback(() => run(() => client.undo({ path }), false), [path, run])
+  const undo = useCallback(() => run(() => repositoryClient.undo({ path }), false), [path, run])
   const navigate = useNavigate()
   // startReview starts the review of the revisions in order from the oldest because the log shows the newest first.
   const startReview = useCallback(
     async (cs: Commit[]) => {
       try {
-        const res = await reviewClient.startReview({ path, changeIds: cs.map((c) => c.changeId).reverse() })
+        const res = await reviewClient.start({ path, changeIds: cs.map((c) => c.changeId).reverse() })
         navigate({ to: '/reviews/$reviewId', params: { reviewId: res.review!.id } })
       } catch (e) {
         setMessage({ text: e instanceof Error ? e.message : String(e), error: true })
@@ -288,7 +272,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
         return
       }
       const src = commits[selected]
-      run(() => client.rebase({ path, revisions: [src.commitId], source: RebaseSource.REVISIONS, destinations: [s.destination], target: s.target }), false)
+      run(() => repositoryClient.rebase({ path, revisions: [src.commitId], source: RebaseSource.REVISIONS, destinations: [s.destination], target: s.target }), false)
     },
     [commits, selected, path, run],
   )
@@ -302,18 +286,18 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
       setMode(undefined)
       const revisions = m.sources.map((c) => c.commitId)
       if (m.kind === 'rebase') {
-        run(() => client.rebase({ path, revisions, source: m.source, destinations: [destination.commitId], target: m.target }), false)
+        run(() => repositoryClient.rebase({ path, revisions, source: m.source, destinations: [destination.commitId], target: m.target }), false)
         return
       }
       let description = ''
       if (m.combine) {
-        const descriptions = await Promise.all([destination, ...m.sources].map((c) => client.getRevision({ path, revision: c.commitId })))
+        const descriptions = await Promise.all([destination, ...m.sources].map((c) => repositoryClient.getRevision({ path, revision: c.commitId })))
         description = descriptions
           .map((d) => d.description.trim())
           .filter((d) => d !== '')
           .join('\n\n')
       }
-      run(() => client.squash({ path, revisions, into: destination.commitId, description }), false)
+      run(() => repositoryClient.squash({ path, revisions, into: destination.commitId, description }), false)
     },
     [selectedCommit, path, run],
   )
@@ -402,17 +386,17 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
             break
           case 'd':
             if (b && b.remote === '') {
-              run(() => bookmarkClient.deleteBookmark({ path, name: b.name }), false)
+              run(() => repositoryClient.deleteBookmark({ path, name: b.name }), false)
             }
             break
           case 'f':
             if (b && b.remote === '') {
-              run(() => bookmarkClient.forgetBookmark({ path, name: b.name }), false)
+              run(() => repositoryClient.forgetBookmark({ path, name: b.name }), false)
             }
             break
           case 't':
             if (b && b.remote !== '') {
-              run(() => (b.tracked ? bookmarkClient.untrackBookmark : bookmarkClient.trackBookmark)({ path, name: b.name, remote: b.remote }), false)
+              run(() => (b.tracked ? repositoryClient.untrackBookmark : repositoryClient.trackBookmark)({ path, name: b.name, remote: b.remote }), false)
             }
             break
           case 'u':
@@ -489,7 +473,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           }
           break
         case 'f':
-          run(() => gitClient.fetch({ path }), false)
+          run(() => repositoryClient.fetch({ path }), false)
           break
         case 'p':
           setPushing(true)
@@ -714,16 +698,16 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
               file={conflicts[conflictSelected].file}
               onResolve={(side) => {
                 const e = conflicts[conflictSelected]
-                run(() => conflictClient.resolve({ path, revision: e.commit.commitId, file: e.file.path, side }), false)
+                run(() => repositoryClient.resolve({ path, revision: e.commit.commitId, file: e.file.path, side }), false)
               }}
               onSave={(content) => {
                 const e = conflicts[conflictSelected]
                 run(async () => {
-                  await fileClient.writeFile({ path, file: e.file.path, content: new TextEncoder().encode(content) })
+                  await repositoryClient.writeFile({ path, file: e.file.path, content: new TextEncoder().encode(content) })
                   return { output: `Saved ${e.file.path}` }
                 }, false)
               }}
-              onEdit={() => run(() => client.edit({ path, revision: conflicts[conflictSelected].commit.commitId }), true)}
+              onEdit={() => run(() => repositoryClient.edit({ path, revision: conflicts[conflictSelected].commit.commitId }), true)}
             />
           )}
           {view === 'evolog' && (
@@ -763,7 +747,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           onClick={() => {
             const id = opMenu!.id
             setOpMenu(undefined)
-            run(() => operationClient.revertOperation({ path, id }), false)
+            run(() => repositoryClient.revertOperation({ path, id }), false)
           }}
         >
           Revert this operation
@@ -790,7 +774,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
             onClick={() => {
               const id = restoring!
               setRestoring(undefined)
-              run(() => operationClient.restoreOperation({ path, id }), true)
+              run(() => repositoryClient.restoreOperation({ path, id }), true)
             }}
           >
             Restore
@@ -817,9 +801,9 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
             const e = editing
             setEditing(undefined)
             if (e.kind === 'describe') {
-              run(() => client.describe({ path, revision: e.commit.commitId, description }), false)
+              run(() => repositoryClient.describe({ path, revision: e.commit.commitId, description }), false)
             } else {
-              run(() => client.commit({ path, description }), true)
+              run(() => repositoryClient.commit({ path, description }), true)
             }
           }}
         />
@@ -843,7 +827,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
             onClick={() => {
               const cs = abandoning ?? []
               setAbandoning(undefined)
-              run(() => client.abandon({ path, revisions: cs.map((c) => c.commitId) }), true)
+              run(() => repositoryClient.abandon({ path, revisions: cs.map((c) => c.commitId) }), true)
             }}
           >
             Abandon
@@ -860,7 +844,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
             const c = settingBookmark
             setSettingBookmark(undefined)
             const exists = bookmarks.some((b) => b.remote === '' && b.name === name)
-            run(() => (exists ? bookmarkClient.moveBookmark : bookmarkClient.setBookmark)({ path, name, revision: c.commitId }), false)
+            run(() => (exists ? repositoryClient.moveBookmark : repositoryClient.setBookmark)({ path, name, revision: c.commitId }), false)
           }}
         />
       )}
@@ -884,7 +868,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
             autoFocus
             onClick={() => {
               setPushing(false)
-              run(() => gitClient.push({ path }), false)
+              run(() => repositoryClient.push({ path }), false)
             }}
           >
             Push
@@ -915,7 +899,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
               : []),
             { label: 'Commit the working copy', shortcut: 'c', run: () => startCommit() },
             { label: 'Undo', shortcut: 'u', run: () => undo() },
-            { label: 'Git fetch', shortcut: 'f', run: () => run(() => gitClient.fetch({ path }), false) },
+            { label: 'Git fetch', shortcut: 'f', run: () => run(() => repositoryClient.fetch({ path }), false) },
             { label: 'Git push', shortcut: 'p', run: () => setPushing(true) },
             { label: 'Show the log', shortcut: '1', run: () => setView('log') },
             { label: 'Show the bookmarks', shortcut: '2', run: () => setView('bookmarks') },
@@ -932,7 +916,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
             { label: 'Toggle the theme', shortcut: 't', run: () => pressKey('t') },
             ...(aliasData?.aliases ?? []).map((a) => ({
               label: `Run alias: ${a.name} (jj ${a.args.join(' ')})`,
-              run: () => run(() => aliasClient.runAlias({ path, name: a.name }), false),
+              run: () => run(() => repositoryClient.runAlias({ path, name: a.name }), false),
             })),
           ]}
         />
@@ -946,7 +930,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           onKeep={(keep, abandon) => {
             setDivergent(undefined)
             setSelectedKey(keep.changeId)
-            run(() => client.abandon({ path, revisions: abandon.map((c) => c.commitId) }), false)
+            run(() => repositoryClient.abandon({ path, revisions: abandon.map((c) => c.commitId) }), false)
           }}
         />
       )}
@@ -959,7 +943,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           onOpen={async (root) => {
             setWorkspaceOpen(false)
             try {
-              const res = await repositoryClient.openRepository({ path: root })
+              const res = await repositoryClient.open({ path: root })
               onOpenRepository(res.repository?.path ?? root)
             } catch (e) {
               setMessage({ text: e instanceof Error ? e.message : String(e), error: true })
@@ -968,23 +952,23 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           onAdd={(name) => {
             setWorkspaceOpen(false)
             run(async () => {
-              const res = await workspaceClient.addRepositoryWorkspace({ path, name, revision: selectedCommit!.commitId })
-              const opened = await repositoryClient.openRepository({ path: res.root })
+              const res = await repositoryClient.addWorkspace({ path, name, revision: selectedCommit!.commitId })
+              const opened = await repositoryClient.open({ path: res.root })
               onOpenRepository(opened.repository?.path ?? res.root)
               return res
             }, false)
           }}
           onForget={(name) => {
             setWorkspaceOpen(false)
-            run(() => workspaceClient.forgetRepositoryWorkspace({ path, name }), false)
+            run(() => repositoryClient.forgetWorkspace({ path, name }), false)
           }}
           onRename={(name) => {
             setWorkspaceOpen(false)
-            run(() => workspaceClient.renameRepositoryWorkspace({ path, name }), false)
+            run(() => repositoryClient.renameWorkspace({ path, name }), false)
           }}
           onUpdateStale={() => {
             setWorkspaceOpen(false)
-            run(() => workspaceClient.updateStale({ path }), false)
+            run(() => repositoryClient.updateStale({ path }), false)
           }}
         />
       )}
@@ -997,7 +981,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           onSubmit={(files, description) => {
             const c = splitting
             setSplitting(undefined)
-            run(() => client.split({ path, revision: c.commitId, description, files }), false)
+            run(() => repositoryClient.split({ path, revision: c.commitId, description, files }), false)
           }}
         />
       )}
@@ -1014,7 +998,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
             onClick={() => {
               const r = restoringFile!
               setRestoringFile(undefined)
-              run(() => client.restore({ path, revision: r.commit.commitId, files: [r.file] }), false)
+              run(() => repositoryClient.restore({ path, revision: r.commit.commitId, files: [r.file] }), false)
             }}
           >
             Restore

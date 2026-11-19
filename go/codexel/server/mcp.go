@@ -41,7 +41,7 @@ type reviewInput struct {
 // NewMCPHandler returns the HTTP handler which serves MCP for the coding agents. The operations are done by the agent.
 func NewMCPHandler(h *ReviewHandler) http.Handler {
 	s := mcp.NewServer(&mcp.Implementation{Name: "codexel", Version: "v0.1.0"}, nil)
-	addTool(s, "list_reviews", "List the code reviews in Codexel. The comments are included", h.ListReviews, func(in listReviewsInput) (*api.RequestListReviews, error) {
+	addTool(s, "list_reviews", "List the code reviews in Codexel. The comments are included", h.List, func(in listReviewsInput) (*api.RequestListReviews, error) {
 		return api.RequestListReviews_builder{Path: &in.Path}.Build(), nil
 	})
 	addTool(s, "list_review_comments", "List the unresolved comments of the code review. change_id, path, side, start_line and end_line are the target. "+
@@ -75,7 +75,7 @@ type listCommentsRequest struct {
 
 // listComments returns the comments of the review. The resolved comments are excluded unless includeResolved.
 func (h *ReviewHandler) listComments(ctx context.Context, req *connect.Request[listCommentsRequest]) (*connect.Response[api.ResponseGetReview], error) {
-	res, err := h.GetReview(ctx, connect.NewRequest(api.RequestGetReview_builder{Id: &req.Msg.reviewID}.Build()))
+	res, err := h.Get(ctx, connect.NewRequest(api.RequestGetReview_builder{Id: &req.Msg.reviewID}.Build()))
 	if err != nil {
 		return nil, err
 	}

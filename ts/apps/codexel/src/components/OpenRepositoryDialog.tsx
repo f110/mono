@@ -21,7 +21,7 @@ export const OpenRepositoryDialog = ({
   onClose: () => void
   onOpened: (repo: Repository) => void
 }) => {
-  const openRepository = useMutation(RepositoryService.method.openRepository)
+  const openRepository = useMutation(RepositoryService.method.open)
   const [path, setPath] = useState('')
 
   const submit = (p: string) => {

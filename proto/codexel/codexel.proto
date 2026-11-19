@@ -9,19 +9,153 @@ option go_package                 = "go.f110.dev/mono/go/codexel/api";
 
 // AgentService provides the coding agents running in herdr.
 service AgentService {
-  rpc ListAgents(RequestListAgents) returns (ResponseListAgents);
-  // WatchAgents sends all agents at first and every time the agents change.
-  rpc WatchAgents(RequestWatchAgents) returns (stream ResponseWatchAgents);
+  rpc List(RequestListAgents) returns (ResponseListAgents);
+  // Watch sends all agents at first and every time the agents change.
+  rpc Watch(RequestWatchAgents) returns (stream ResponseWatchAgents);
   // ReadOutput returns the recent terminal output of the agent including ANSI escape sequences.
   rpc ReadOutput(RequestReadOutput) returns (ResponseReadOutput);
   rpc SendPrompt(RequestSendPrompt) returns (ResponseSendPrompt);
   rpc SendKeys(RequestSendKeys) returns (ResponseSendKeys);
-  // FocusAgent moves the focus of herdr to the agent.
-  rpc FocusAgent(RequestFocusAgent) returns (ResponseFocusAgent);
+  // Focus moves the focus of herdr to the agent.
+  rpc Focus(RequestFocusAgent) returns (ResponseFocusAgent);
   rpc ListWorkspaces(RequestListWorkspaces) returns (ResponseListWorkspaces);
-  // StartAgent creates a new tab in the workspace and starts the agent in it. If workspace_id is empty, it creates a new
+  // Start creates a new tab in the workspace and starts the agent in it. If workspace_id is empty, it creates a new
   // workspace and starts the agent in it. The server of herdr is started if it is not running.
-  rpc StartAgent(RequestStartAgent) returns (ResponseStartAgent);
+  rpc Start(RequestStartAgent) returns (ResponseStartAgent);
+  // WatchTranscript sends the timeline of the session of Claude Code from its transcript. It sends the theme and all
+  // entries at first, and then the theme and the new entries every time the transcript is appended. Until the
+  // transcript is created, it sends the empty theme.
+  rpc WatchTranscript(RequestWatchTranscript) returns (stream ResponseWatchTranscript);
+}
+
+// RepositoryService manages the repositories opened in Codexel and runs jj in them. The repositories are saved in the
+// config file. The operations which change the repository return the message of jj in output.
+service RepositoryService {
+  rpc List(RequestListRepositories) returns (ResponseListRepositories);
+  // Open opens the workspace which contains the path.
+  rpc Open(RequestOpenRepository) returns (ResponseOpenRepository);
+  rpc Close(RequestCloseRepository) returns (ResponseCloseRepository);
+  // Watch sends the ID of the operation at first and every time the operation changes. The working copy is
+  // snapshotted periodically while watching.
+  rpc Watch(RequestWatchRepository) returns (stream ResponseWatchRepository);
+
+  rpc Log(RequestLog) returns (ResponseLog);
+  // GetRevision returns the commit with the whole description and the diff of the revision.
+  rpc GetRevision(RequestGetRevision) returns (ResponseGetRevision);
+  // New creates the new revision on the revisions.
+  rpc New(RequestNew) returns (ResponseNew);
+  // Edit makes the revision the working copy.
+  rpc Edit(RequestEdit) returns (ResponseEdit);
+  rpc Abandon(RequestAbandon) returns (ResponseAbandon);
+  rpc Describe(RequestDescribe) returns (ResponseDescribe);
+  // Commit describes the working copy and creates the new working copy on it.
+  rpc Commit(RequestCommit) returns (ResponseCommit);
+  // Undo undoes the last operation.
+  rpc Undo(RequestUndo) returns (ResponseUndo);
+  rpc Rebase(RequestRebase) returns (ResponseRebase);
+  // Squash moves the changes of the revisions into the destination.
+  rpc Squash(RequestSquash) returns (ResponseSquash);
+  // Evolog returns the versions of the revision from the newest.
+  rpc Evolog(RequestEvolog) returns (ResponseEvolog);
+  // Split moves the files into the new revision before the revision.
+  rpc Split(RequestSplit) returns (ResponseSplit);
+  // Restore discards the changes of the files in the revision.
+  rpc Restore(RequestRestore) returns (ResponseRestore);
+  // DiffRange returns the diff between two revisions.
+  rpc DiffRange(RequestDiffRange) returns (ResponseDiffRange);
+  // ListAgentCommits returns the commits which have the Agent and the Agent-Session trailers of the agent in the
+  // repository of the working directory of the agent. The repository must be opened.
+  rpc ListAgentCommits(RequestListAgentCommits) returns (ResponseListAgentCommits);
+
+  rpc ListBookmarks(RequestListBookmarks) returns (ResponseListBookmarks);
+  // SetBookmark creates the bookmark or moves it to the revision.
+  rpc SetBookmark(RequestSetBookmark) returns (ResponseSetBookmark);
+  // MoveBookmark moves the bookmark to the revision even if it moves backwards or sideways.
+  rpc MoveBookmark(RequestMoveBookmark) returns (ResponseMoveBookmark);
+  // DeleteBookmark deletes the bookmark. The tracked remote bookmarks are deleted on the next push.
+  rpc DeleteBookmark(RequestDeleteBookmark) returns (ResponseDeleteBookmark);
+  // ForgetBookmark forgets the bookmark without deleting the remote bookmarks.
+  rpc ForgetBookmark(RequestForgetBookmark) returns (ResponseForgetBookmark);
+  rpc TrackBookmark(RequestTrackBookmark) returns (ResponseTrackBookmark);
+  rpc UntrackBookmark(RequestUntrackBookmark) returns (ResponseUntrackBookmark);
+
+  rpc Fetch(RequestFetch) returns (ResponseFetch);
+  // Push pushes the bookmark. The bookmarks of revsets.git-push are pushed if bookmark is empty.
+  rpc Push(RequestPush) returns (ResponsePush);
+
+  // ListOperations returns the operations from the newest.
+  rpc ListOperations(RequestListOperations) returns (ResponseListOperations);
+  // RevertOperation creates the operation which reverts the operation.
+  rpc RevertOperation(RequestRevertOperation) returns (ResponseRevertOperation);
+  // RestoreOperation restores the repository to the state at the operation.
+  rpc RestoreOperation(RequestRestoreOperation) returns (ResponseRestoreOperation);
+
+  // GetFile returns the content of the file at the revision.
+  rpc GetFile(RequestGetFile) returns (ResponseGetFile);
+  // ListFiles returns the paths of all files at the revision.
+  rpc ListFiles(RequestListFiles) returns (ResponseListFiles);
+  // WriteFile writes the file of the working copy. The path must be in the workspace.
+  rpc WriteFile(RequestWriteFile) returns (ResponseWriteFile);
+
+  // ListConflicts returns the conflicts of the mutable revisions.
+  rpc ListConflicts(RequestListConflicts) returns (ResponseListConflicts);
+  // GetConflict returns the conflicted file with the markers of the snapshot style which has the whole content of
+  // each side.
+  rpc GetConflict(RequestGetConflict) returns (ResponseGetConflict);
+  // Resolve resolves the conflict of two sides by taking one side.
+  rpc Resolve(RequestResolve) returns (ResponseResolve);
+
+  // ListWorkspaces returns the workspaces of jj.
+  rpc ListWorkspaces(RequestListRepositoryWorkspaces) returns (ResponseListRepositoryWorkspaces);
+  // AddWorkspace creates the workspace in the sibling directory of the repository.
+  rpc AddWorkspace(RequestAddRepositoryWorkspace) returns (ResponseAddRepositoryWorkspace);
+  // ForgetWorkspace stops tracking the workspace. The directory is left. The workspace opened in Codexel can't be
+  // forgotten.
+  rpc ForgetWorkspace(RequestForgetRepositoryWorkspace) returns (ResponseForgetRepositoryWorkspace);
+  // RenameWorkspace renames the workspace of the repository.
+  rpc RenameWorkspace(RequestRenameRepositoryWorkspace) returns (ResponseRenameRepositoryWorkspace);
+  // UpdateStale updates the stale working copy of the workspace.
+  rpc UpdateStale(RequestUpdateStale) returns (ResponseUpdateStale);
+
+  // ListAliases returns the aliases of jj configured by the user.
+  rpc ListAliases(RequestListAliases) returns (ResponseListAliases);
+  // RunAlias runs the alias without the arguments. It returns stdout and stderr of jj in output.
+  rpc RunAlias(RequestRunAlias) returns (ResponseRunAlias);
+}
+
+// ReviewService provides the reviews of the changes. The changes are identified by the change IDs, so the comments
+// follow the changes after the agent rewrites them.
+service ReviewService {
+  // List returns the reviews of the repository in descending order of the creation.
+  rpc List(RequestListReviews) returns (ResponseListReviews);
+  // ListApprovedCommits returns the commits approved in the reviews of the repository. The commit rewritten after the
+  // approval is included if the change of it is not changed including the description (e.g. rebased).
+  rpc ListApprovedCommits(RequestListApprovedCommits) returns (ResponseListApprovedCommits);
+  rpc Get(RequestGetReview) returns (ResponseGetReview);
+  // Start starts the review of the changes. The first round is the current commits of the changes.
+  rpc Start(RequestStartReview) returns (ResponseStartReview);
+  rpc AddComment(RequestAddComment) returns (ResponseAddComment);
+  rpc EditComment(RequestEditComment) returns (ResponseEditComment);
+  rpc DeleteComment(RequestDeleteComment) returns (ResponseDeleteComment);
+  rpc Reply(RequestReply) returns (ResponseReply);
+  rpc ResolveComment(RequestResolveComment) returns (ResponseResolveComment);
+  // Finish finishes the round. The review is approved if all comments are resolved. Otherwise the agents which created
+  // the changes are told that the review is finished.
+  rpc Finish(RequestFinish) returns (ResponseFinish);
+  // StartNextRound starts the next round with the current commits of the changes after the agent addresses the
+  // comments. The comments are moved to the lines of the anchors.
+  rpc StartNextRound(RequestStartNextRound) returns (ResponseStartNextRound);
+  // RoundDiff returns the diff of the change between the rounds.
+  rpc RoundDiff(RequestRoundDiff) returns (ResponseRoundDiff);
+  // SetViewed marks the file of the change as viewed or not viewed. The marks of the files changed in the next round
+  // are removed.
+  rpc SetViewed(RequestSetViewed) returns (ResponseSetViewed);
+}
+
+// SystemService provides the status of Codexel itself.
+service SystemService {
+  // GetStatus returns the status found at startup.
+  rpc GetStatus(RequestGetStatus) returns (ResponseGetStatus);
 }
 
 enum AgentStatus {
@@ -115,49 +249,6 @@ message RequestStartAgent {
 
 message ResponseStartAgent {
   Agent agent = 1;
-}
-
-// RepositoryService manages the repositories opened in Codexel. The repositories are saved in the config file.
-service RepositoryService {
-  rpc ListRepositories(RequestListRepositories) returns (ResponseListRepositories);
-  // OpenRepository opens the workspace which contains the path.
-  rpc OpenRepository(RequestOpenRepository) returns (ResponseOpenRepository);
-  rpc CloseRepository(RequestCloseRepository) returns (ResponseCloseRepository);
-  // WatchRepository sends the ID of the operation at first and every time the operation changes. The working copy is
-  // snapshotted periodically while watching.
-  rpc WatchRepository(RequestWatchRepository) returns (stream ResponseWatchRepository);
-}
-
-// RevisionService provides the revisions of the repository.
-service RevisionService {
-  rpc Log(RequestLog) returns (ResponseLog);
-  // GetRevision returns the commit with the whole description and the diff of the revision.
-  rpc GetRevision(RequestGetRevision) returns (ResponseGetRevision);
-  // The operations below return the message of jj in output.
-  // New creates the new revision on the revisions.
-  rpc New(RequestNew) returns (ResponseNew);
-  // Edit makes the revision the working copy.
-  rpc Edit(RequestEdit) returns (ResponseEdit);
-  rpc Abandon(RequestAbandon) returns (ResponseAbandon);
-  rpc Describe(RequestDescribe) returns (ResponseDescribe);
-  // Commit describes the working copy and creates the new working copy on it.
-  rpc Commit(RequestCommit) returns (ResponseCommit);
-  // Undo undoes the last operation.
-  rpc Undo(RequestUndo) returns (ResponseUndo);
-  rpc Rebase(RequestRebase) returns (ResponseRebase);
-  // Squash moves the changes of the revisions into the destination.
-  rpc Squash(RequestSquash) returns (ResponseSquash);
-  // Evolog returns the versions of the revision from the newest.
-  rpc Evolog(RequestEvolog) returns (ResponseEvolog);
-  // Split moves the files into the new revision before the revision.
-  rpc Split(RequestSplit) returns (ResponseSplit);
-  // Restore discards the changes of the files in the revision.
-  rpc Restore(RequestRestore) returns (ResponseRestore);
-  // DiffRange returns the diff between two revisions.
-  rpc DiffRange(RequestDiffRange) returns (ResponseDiffRange);
-  // ListAgentCommits returns the commits which have the Agent and the Agent-Session trailers of the agent in the
-  // repository of the working directory of the agent. The repository must be opened.
-  rpc ListAgentCommits(RequestListAgentCommits) returns (ResponseListAgentCommits);
 }
 
 message Repository {
@@ -410,28 +501,6 @@ message ResponseSquash {
   string output = 1;
 }
 
-// BookmarkService manages the bookmarks. The operations return the message of jj in output.
-service BookmarkService {
-  rpc ListBookmarks(RequestListBookmarks) returns (ResponseListBookmarks);
-  // SetBookmark creates the bookmark or moves it to the revision.
-  rpc SetBookmark(RequestSetBookmark) returns (ResponseSetBookmark);
-  // MoveBookmark moves the bookmark to the revision even if it moves backwards or sideways.
-  rpc MoveBookmark(RequestMoveBookmark) returns (ResponseMoveBookmark);
-  // DeleteBookmark deletes the bookmark. The tracked remote bookmarks are deleted on the next push.
-  rpc DeleteBookmark(RequestDeleteBookmark) returns (ResponseDeleteBookmark);
-  // ForgetBookmark forgets the bookmark without deleting the remote bookmarks.
-  rpc ForgetBookmark(RequestForgetBookmark) returns (ResponseForgetBookmark);
-  rpc TrackBookmark(RequestTrackBookmark) returns (ResponseTrackBookmark);
-  rpc UntrackBookmark(RequestUntrackBookmark) returns (ResponseUntrackBookmark);
-}
-
-// GitService runs the operations with the remote repositories. The operations return the message of jj in output.
-service GitService {
-  rpc Fetch(RequestFetch) returns (ResponseFetch);
-  // Push pushes the bookmark. The bookmarks of revsets.git-push are pushed if bookmark is empty.
-  rpc Push(RequestPush) returns (ResponsePush);
-}
-
 message Bookmark {
   string name = 1;
   // remote is empty for the local bookmark.
@@ -533,16 +602,6 @@ message ResponsePush {
   string output = 1;
 }
 
-// OperationService provides the operation log. The operations return the message of jj in output.
-service OperationService {
-  // ListOperations returns the operations from the newest.
-  rpc ListOperations(RequestListOperations) returns (ResponseListOperations);
-  // RevertOperation creates the operation which reverts the operation.
-  rpc RevertOperation(RequestRevertOperation) returns (ResponseRevertOperation);
-  // RestoreOperation restores the repository to the state at the operation.
-  rpc RestoreOperation(RequestRestoreOperation) returns (ResponseRestoreOperation);
-}
-
 message Operation {
   string id          = 1;
   string description = 2;
@@ -599,16 +658,6 @@ message ResponseEvolog {
   repeated EvologEntry entries = 1;
 }
 
-// FileService provides the files at the revision.
-service FileService {
-  // GetFile returns the content of the file at the revision.
-  rpc GetFile(RequestGetFile) returns (ResponseGetFile);
-  // ListFiles returns the paths of all files at the revision.
-  rpc ListFiles(RequestListFiles) returns (ResponseListFiles);
-  // WriteFile writes the file of the working copy. The path must be in the workspace.
-  rpc WriteFile(RequestWriteFile) returns (ResponseWriteFile);
-}
-
 message RequestGetFile {
   string path     = 1;
   string revision = 2;
@@ -637,16 +686,6 @@ message RequestWriteFile {
 }
 
 message ResponseWriteFile {}
-
-// ConflictService provides the conflicts of the mutable revisions.
-service ConflictService {
-  rpc ListConflicts(RequestListConflicts) returns (ResponseListConflicts);
-  // GetConflict returns the conflicted file with the markers of the snapshot style which has the whole content of each
-  // side.
-  rpc GetConflict(RequestGetConflict) returns (ResponseGetConflict);
-  // Resolve resolves the conflict of two sides by taking one side. It returns the message of jj in output.
-  rpc Resolve(RequestResolve) returns (ResponseResolve);
-}
 
 message ConflictedFile {
   string path = 1;
@@ -720,20 +759,6 @@ message RequestRestore {
 
 message ResponseRestore {
   string output = 1;
-}
-
-// WorkspaceService manages the workspaces of jj. The operations return the message of jj in output.
-service WorkspaceService {
-  rpc ListRepositoryWorkspaces(RequestListRepositoryWorkspaces) returns (ResponseListRepositoryWorkspaces);
-  // AddRepositoryWorkspace creates the workspace in the sibling directory of the repository.
-  rpc AddRepositoryWorkspace(RequestAddRepositoryWorkspace) returns (ResponseAddRepositoryWorkspace);
-  // ForgetRepositoryWorkspace stops tracking the workspace. The directory is left. The workspace opened in Codexel
-  // can't be forgotten.
-  rpc ForgetRepositoryWorkspace(RequestForgetRepositoryWorkspace) returns (ResponseForgetRepositoryWorkspace);
-  // RenameRepositoryWorkspace renames the workspace of the repository.
-  rpc RenameRepositoryWorkspace(RequestRenameRepositoryWorkspace) returns (ResponseRenameRepositoryWorkspace);
-  // UpdateStale updates the stale working copy of the workspace.
-  rpc UpdateStale(RequestUpdateStale) returns (ResponseUpdateStale);
 }
 
 message RepositoryWorkspace {
@@ -811,13 +836,6 @@ message ResponseListAgentCommits {
   repeated Commit commits    = 2;
 }
 
-// AliasService runs the aliases of jj configured by the user.
-service AliasService {
-  rpc ListAliases(RequestListAliases) returns (ResponseListAliases);
-  // RunAlias runs the alias without the arguments. It returns stdout and stderr of jj in output.
-  rpc RunAlias(RequestRunAlias) returns (ResponseRunAlias);
-}
-
 message Alias {
   string          name = 1;
   repeated string args = 2;
@@ -838,15 +856,6 @@ message RequestRunAlias {
 
 message ResponseRunAlias {
   string output = 1;
-}
-
-// TranscriptService provides the timeline of the session of Claude Code from its transcript. It is experimental
-// because the format of the transcript is not public.
-service TranscriptService {
-  // WatchTranscript sends the theme and all entries at first, and then the theme and the new entries every time the
-  // transcript is appended. Until the transcript is created, it sends the empty theme.
-  // It returns unimplemented if the transcript is disabled by --no-transcript.
-  rpc WatchTranscript(RequestWatchTranscript) returns (stream ResponseWatchTranscript);
 }
 
 enum TranscriptEntryKind {
@@ -879,35 +888,6 @@ message ResponseWatchTranscript {
   string                   title       = 1;
   string                   last_prompt = 2;
   repeated TranscriptEntry entries     = 3;
-}
-
-// ReviewService provides the reviews of the changes. The changes are identified by the change IDs, so the comments
-// follow the changes after the agent rewrites them.
-service ReviewService {
-  // ListReviews returns the reviews of the repository in descending order of the creation.
-  rpc ListReviews(RequestListReviews) returns (ResponseListReviews);
-  // ListApprovedCommits returns the commits approved in the reviews of the repository. The commit rewritten after the
-  // approval is included if the change of it is not changed including the description (e.g. rebased).
-  rpc ListApprovedCommits(RequestListApprovedCommits) returns (ResponseListApprovedCommits);
-  rpc GetReview(RequestGetReview) returns (ResponseGetReview);
-  // StartReview starts the review of the changes. The first round is the current commits of the changes.
-  rpc StartReview(RequestStartReview) returns (ResponseStartReview);
-  rpc AddComment(RequestAddComment) returns (ResponseAddComment);
-  rpc EditComment(RequestEditComment) returns (ResponseEditComment);
-  rpc DeleteComment(RequestDeleteComment) returns (ResponseDeleteComment);
-  rpc Reply(RequestReply) returns (ResponseReply);
-  rpc ResolveComment(RequestResolveComment) returns (ResponseResolveComment);
-  // Finish finishes the round. The review is approved if all comments are resolved. Otherwise the agents which created
-  // the changes are told that the review is finished.
-  rpc Finish(RequestFinish) returns (ResponseFinish);
-  // StartNextRound starts the next round with the current commits of the changes after the agent addresses the
-  // comments. The comments are moved to the lines of the anchors.
-  rpc StartNextRound(RequestStartNextRound) returns (ResponseStartNextRound);
-  // RoundDiff returns the diff of the change between the rounds.
-  rpc RoundDiff(RequestRoundDiff) returns (ResponseRoundDiff);
-  // SetViewed marks the file of the change as viewed or not viewed. The marks of the files changed in the next round
-  // are removed.
-  rpc SetViewed(RequestSetViewed) returns (ResponseSetViewed);
 }
 
 enum ReviewState {
@@ -1127,12 +1107,6 @@ message RequestSetViewed {
 
 message ResponseSetViewed {
   Review review = 1;
-}
-
-// SystemService provides the status of Codexel itself.
-service SystemService {
-  // GetStatus returns the status found at startup.
-  rpc GetStatus(RequestGetStatus) returns (ResponseGetStatus);
 }
 
 message RequestGetStatus {}

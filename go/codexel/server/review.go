@@ -46,7 +46,7 @@ func authorFrom(ctx context.Context) string {
 	return review.AuthorUser
 }
 
-func (h *ReviewHandler) ListReviews(_ context.Context, req *connect.Request[api.RequestListReviews]) (*connect.Response[api.ResponseListReviews], error) {
+func (h *ReviewHandler) List(_ context.Context, req *connect.Request[api.RequestListReviews]) (*connect.Response[api.ResponseListReviews], error) {
 	reviews, err := h.store.List(req.Msg.GetPath())
 	if err != nil {
 		return nil, toReviewError(err)
@@ -74,7 +74,7 @@ func (h *ReviewHandler) ListApprovedCommits(ctx context.Context, req *connect.Re
 	return connect.NewResponse(api.ResponseListApprovedCommits_builder{CommitIds: commits}.Build()), nil
 }
 
-func (h *ReviewHandler) GetReview(_ context.Context, req *connect.Request[api.RequestGetReview]) (*connect.Response[api.ResponseGetReview], error) {
+func (h *ReviewHandler) Get(_ context.Context, req *connect.Request[api.RequestGetReview]) (*connect.Response[api.ResponseGetReview], error) {
 	r, err := h.store.Get(req.Msg.GetId())
 	if err != nil {
 		return nil, toReviewError(err)
@@ -82,7 +82,7 @@ func (h *ReviewHandler) GetReview(_ context.Context, req *connect.Request[api.Re
 	return connect.NewResponse(api.ResponseGetReview_builder{Review: toReview(r)}.Build()), nil
 }
 
-func (h *ReviewHandler) StartReview(ctx context.Context, req *connect.Request[api.RequestStartReview]) (*connect.Response[api.ResponseStartReview], error) {
+func (h *ReviewHandler) Start(ctx context.Context, req *connect.Request[api.RequestStartReview]) (*connect.Response[api.ResponseStartReview], error) {
 	repo, err := openedRepository(h.config, req.Msg.GetPath())
 	if err != nil {
 		return nil, err

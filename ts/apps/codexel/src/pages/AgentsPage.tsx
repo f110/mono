@@ -24,7 +24,7 @@ import { ApprovedBadge } from '../components/ApprovedBadge.tsx'
 import { RevisionDetail } from '../components/RevisionDetail.tsx'
 import { StartAgentDialog } from '../components/StartAgentDialog.tsx'
 import { TranscriptTimeline } from '../components/TranscriptTimeline.tsx'
-import { AgentService, AgentStatus, ReviewService, RevisionService, type Agent } from '../connect/codexel_pb.js'
+import { AgentService, AgentStatus, RepositoryService, ReviewService, type Agent } from '../connect/codexel_pb.js'
 import { useAgents } from '../hooks/useAgents.ts'
 import { useApprovedCommits } from '../hooks/useApprovedCommits.ts'
 import { useDiffNavigation } from '../hooks/useDiffNavigation.ts'
@@ -77,7 +77,7 @@ const groupByStatus = (agents: Agent[]): [AgentStatus, Agent[]][] => {
 // AgentCommits lists the commits created by the session of the agent and shows the description and the diff of the
 // selected one. The list is read again every time the repository changes.
 const AgentCommits = ({ agent }: { agent: Agent }) => {
-  const { data, error, refetch } = useQuery(RevisionService.method.listAgentCommits, { cwd: agent.cwd, kind: agent.kind, sessionId: agent.sessionId })
+  const { data, error, refetch } = useQuery(RepositoryService.method.listAgentCommits, { cwd: agent.cwd, kind: agent.kind, sessionId: agent.sessionId })
   const path = data?.repository?.path
   const operation = useOperation(path)
   const approved = useApprovedCommits(path, operation)
@@ -106,7 +106,7 @@ const AgentCommits = ({ agent }: { agent: Agent }) => {
   const startReview = async () => {
     if (!path) return
     try {
-      const res = await reviewClient.startReview({ path, changeIds: commits.map((c) => c.changeId).reverse() })
+      const res = await reviewClient.start({ path, changeIds: commits.map((c) => c.changeId).reverse() })
       navigate({ to: '/reviews/$reviewId', params: { reviewId: res.review!.id } })
     } catch (e) {
       setReviewError(e instanceof Error ? e.message : String(e))
@@ -165,13 +165,12 @@ const AgentDetail = ({ agent }: { agent: Agent }) => {
 
   const sendPrompt = useMutation(AgentService.method.sendPrompt)
   const sendKeys = useMutation(AgentService.method.sendKeys)
-  const focus = useMutation(AgentService.method.focusAgent)
+  const focus = useMutation(AgentService.method.focus)
   const [prompt, setPrompt] = useState('')
   const [tab, setTab] = useState<'output' | 'commits' | 'timeline'>('output')
   // The transcript is available only for Claude Code.
   const hasTranscript = agent.kind === 'claude' && agent.sessionId !== ''
-  const { transcript, disabled: transcriptDisabled, error: transcriptError } = useTranscript(hasTranscript ? agent.sessionId : '')
-  const showTimeline = hasTranscript && !transcriptDisabled
+  const { transcript, error: transcriptError } = useTranscript(hasTranscript ? agent.sessionId : '')
 
   const submit = () => {
     if (!prompt) {
@@ -188,7 +187,7 @@ const AgentDetail = ({ agent }: { agent: Agent }) => {
     )
   }
   const shownError = error ?? sendPrompt.error ?? sendKeys.error ?? focus.error ?? transcriptError
-  const shownTab = tab === 'timeline' && !showTimeline ? 'output' : tab
+  const shownTab = tab === 'timeline' && !hasTranscript ? 'output' : tab
 
   return (
     <Stack sx={{ height: '100%', minWidth: 0 }}>
@@ -205,7 +204,7 @@ const AgentDetail = ({ agent }: { agent: Agent }) => {
           Focus in herdr
         </Button>
       </Stack>
-      {showTimeline && transcript?.title && (
+      {hasTranscript && transcript?.title && (
         <Stack sx={{ px: 1, pb: 1, minWidth: 0 }}>
           <Typography variant="body2" noWrap title="Theme of the session">
             {transcript.title}
@@ -221,7 +220,7 @@ const AgentDetail = ({ agent }: { agent: Agent }) => {
       <Tabs value={shownTab} onChange={(_, v) => setTab(v)} sx={{ minHeight: 36, borderBottom: 1, borderColor: 'divider' }}>
         <Tab value="output" label="Output" sx={{ minHeight: 36 }} />
         <Tab value="commits" label="Commits" disabled={!agent.sessionId} sx={{ minHeight: 36 }} />
-        {showTimeline && <Tab value="timeline" label="Timeline (experimental)" sx={{ minHeight: 36 }} />}
+        {hasTranscript && <Tab value="timeline" label="Timeline" sx={{ minHeight: 36 }} />}
       </Tabs>
       <Box sx={{ flex: 1, minHeight: 0 }}>
         {shownTab === 'output' && <AgentOutput text={data?.text ?? ''} />}

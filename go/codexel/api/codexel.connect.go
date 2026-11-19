@@ -24,24 +24,6 @@ const (
 	AgentServiceName = "mono.codexel.AgentService"
 	// RepositoryServiceName is the fully-qualified name of the RepositoryService service.
 	RepositoryServiceName = "mono.codexel.RepositoryService"
-	// RevisionServiceName is the fully-qualified name of the RevisionService service.
-	RevisionServiceName = "mono.codexel.RevisionService"
-	// BookmarkServiceName is the fully-qualified name of the BookmarkService service.
-	BookmarkServiceName = "mono.codexel.BookmarkService"
-	// GitServiceName is the fully-qualified name of the GitService service.
-	GitServiceName = "mono.codexel.GitService"
-	// OperationServiceName is the fully-qualified name of the OperationService service.
-	OperationServiceName = "mono.codexel.OperationService"
-	// FileServiceName is the fully-qualified name of the FileService service.
-	FileServiceName = "mono.codexel.FileService"
-	// ConflictServiceName is the fully-qualified name of the ConflictService service.
-	ConflictServiceName = "mono.codexel.ConflictService"
-	// WorkspaceServiceName is the fully-qualified name of the WorkspaceService service.
-	WorkspaceServiceName = "mono.codexel.WorkspaceService"
-	// AliasServiceName is the fully-qualified name of the AliasService service.
-	AliasServiceName = "mono.codexel.AliasService"
-	// TranscriptServiceName is the fully-qualified name of the TranscriptService service.
-	TranscriptServiceName = "mono.codexel.TranscriptService"
 	// ReviewServiceName is the fully-qualified name of the ReviewService service.
 	ReviewServiceName = "mono.codexel.ReviewService"
 	// SystemServiceName is the fully-qualified name of the SystemService service.
@@ -56,152 +38,156 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// AgentServiceListAgentsProcedure is the fully-qualified name of the AgentService's ListAgents RPC.
-	AgentServiceListAgentsProcedure = "/mono.codexel.AgentService/ListAgents"
-	// AgentServiceWatchAgentsProcedure is the fully-qualified name of the AgentService's WatchAgents
-	// RPC.
-	AgentServiceWatchAgentsProcedure = "/mono.codexel.AgentService/WatchAgents"
+	// AgentServiceListProcedure is the fully-qualified name of the AgentService's List RPC.
+	AgentServiceListProcedure = "/mono.codexel.AgentService/List"
+	// AgentServiceWatchProcedure is the fully-qualified name of the AgentService's Watch RPC.
+	AgentServiceWatchProcedure = "/mono.codexel.AgentService/Watch"
 	// AgentServiceReadOutputProcedure is the fully-qualified name of the AgentService's ReadOutput RPC.
 	AgentServiceReadOutputProcedure = "/mono.codexel.AgentService/ReadOutput"
 	// AgentServiceSendPromptProcedure is the fully-qualified name of the AgentService's SendPrompt RPC.
 	AgentServiceSendPromptProcedure = "/mono.codexel.AgentService/SendPrompt"
 	// AgentServiceSendKeysProcedure is the fully-qualified name of the AgentService's SendKeys RPC.
 	AgentServiceSendKeysProcedure = "/mono.codexel.AgentService/SendKeys"
-	// AgentServiceFocusAgentProcedure is the fully-qualified name of the AgentService's FocusAgent RPC.
-	AgentServiceFocusAgentProcedure = "/mono.codexel.AgentService/FocusAgent"
+	// AgentServiceFocusProcedure is the fully-qualified name of the AgentService's Focus RPC.
+	AgentServiceFocusProcedure = "/mono.codexel.AgentService/Focus"
 	// AgentServiceListWorkspacesProcedure is the fully-qualified name of the AgentService's
 	// ListWorkspaces RPC.
 	AgentServiceListWorkspacesProcedure = "/mono.codexel.AgentService/ListWorkspaces"
-	// AgentServiceStartAgentProcedure is the fully-qualified name of the AgentService's StartAgent RPC.
-	AgentServiceStartAgentProcedure = "/mono.codexel.AgentService/StartAgent"
-	// RepositoryServiceListRepositoriesProcedure is the fully-qualified name of the RepositoryService's
-	// ListRepositories RPC.
-	RepositoryServiceListRepositoriesProcedure = "/mono.codexel.RepositoryService/ListRepositories"
-	// RepositoryServiceOpenRepositoryProcedure is the fully-qualified name of the RepositoryService's
-	// OpenRepository RPC.
-	RepositoryServiceOpenRepositoryProcedure = "/mono.codexel.RepositoryService/OpenRepository"
-	// RepositoryServiceCloseRepositoryProcedure is the fully-qualified name of the RepositoryService's
-	// CloseRepository RPC.
-	RepositoryServiceCloseRepositoryProcedure = "/mono.codexel.RepositoryService/CloseRepository"
-	// RepositoryServiceWatchRepositoryProcedure is the fully-qualified name of the RepositoryService's
-	// WatchRepository RPC.
-	RepositoryServiceWatchRepositoryProcedure = "/mono.codexel.RepositoryService/WatchRepository"
-	// RevisionServiceLogProcedure is the fully-qualified name of the RevisionService's Log RPC.
-	RevisionServiceLogProcedure = "/mono.codexel.RevisionService/Log"
-	// RevisionServiceGetRevisionProcedure is the fully-qualified name of the RevisionService's
-	// GetRevision RPC.
-	RevisionServiceGetRevisionProcedure = "/mono.codexel.RevisionService/GetRevision"
-	// RevisionServiceNewProcedure is the fully-qualified name of the RevisionService's New RPC.
-	RevisionServiceNewProcedure = "/mono.codexel.RevisionService/New"
-	// RevisionServiceEditProcedure is the fully-qualified name of the RevisionService's Edit RPC.
-	RevisionServiceEditProcedure = "/mono.codexel.RevisionService/Edit"
-	// RevisionServiceAbandonProcedure is the fully-qualified name of the RevisionService's Abandon RPC.
-	RevisionServiceAbandonProcedure = "/mono.codexel.RevisionService/Abandon"
-	// RevisionServiceDescribeProcedure is the fully-qualified name of the RevisionService's Describe
-	// RPC.
-	RevisionServiceDescribeProcedure = "/mono.codexel.RevisionService/Describe"
-	// RevisionServiceCommitProcedure is the fully-qualified name of the RevisionService's Commit RPC.
-	RevisionServiceCommitProcedure = "/mono.codexel.RevisionService/Commit"
-	// RevisionServiceUndoProcedure is the fully-qualified name of the RevisionService's Undo RPC.
-	RevisionServiceUndoProcedure = "/mono.codexel.RevisionService/Undo"
-	// RevisionServiceRebaseProcedure is the fully-qualified name of the RevisionService's Rebase RPC.
-	RevisionServiceRebaseProcedure = "/mono.codexel.RevisionService/Rebase"
-	// RevisionServiceSquashProcedure is the fully-qualified name of the RevisionService's Squash RPC.
-	RevisionServiceSquashProcedure = "/mono.codexel.RevisionService/Squash"
-	// RevisionServiceEvologProcedure is the fully-qualified name of the RevisionService's Evolog RPC.
-	RevisionServiceEvologProcedure = "/mono.codexel.RevisionService/Evolog"
-	// RevisionServiceSplitProcedure is the fully-qualified name of the RevisionService's Split RPC.
-	RevisionServiceSplitProcedure = "/mono.codexel.RevisionService/Split"
-	// RevisionServiceRestoreProcedure is the fully-qualified name of the RevisionService's Restore RPC.
-	RevisionServiceRestoreProcedure = "/mono.codexel.RevisionService/Restore"
-	// RevisionServiceDiffRangeProcedure is the fully-qualified name of the RevisionService's DiffRange
-	// RPC.
-	RevisionServiceDiffRangeProcedure = "/mono.codexel.RevisionService/DiffRange"
-	// RevisionServiceListAgentCommitsProcedure is the fully-qualified name of the RevisionService's
-	// ListAgentCommits RPC.
-	RevisionServiceListAgentCommitsProcedure = "/mono.codexel.RevisionService/ListAgentCommits"
-	// BookmarkServiceListBookmarksProcedure is the fully-qualified name of the BookmarkService's
-	// ListBookmarks RPC.
-	BookmarkServiceListBookmarksProcedure = "/mono.codexel.BookmarkService/ListBookmarks"
-	// BookmarkServiceSetBookmarkProcedure is the fully-qualified name of the BookmarkService's
-	// SetBookmark RPC.
-	BookmarkServiceSetBookmarkProcedure = "/mono.codexel.BookmarkService/SetBookmark"
-	// BookmarkServiceMoveBookmarkProcedure is the fully-qualified name of the BookmarkService's
-	// MoveBookmark RPC.
-	BookmarkServiceMoveBookmarkProcedure = "/mono.codexel.BookmarkService/MoveBookmark"
-	// BookmarkServiceDeleteBookmarkProcedure is the fully-qualified name of the BookmarkService's
-	// DeleteBookmark RPC.
-	BookmarkServiceDeleteBookmarkProcedure = "/mono.codexel.BookmarkService/DeleteBookmark"
-	// BookmarkServiceForgetBookmarkProcedure is the fully-qualified name of the BookmarkService's
-	// ForgetBookmark RPC.
-	BookmarkServiceForgetBookmarkProcedure = "/mono.codexel.BookmarkService/ForgetBookmark"
-	// BookmarkServiceTrackBookmarkProcedure is the fully-qualified name of the BookmarkService's
-	// TrackBookmark RPC.
-	BookmarkServiceTrackBookmarkProcedure = "/mono.codexel.BookmarkService/TrackBookmark"
-	// BookmarkServiceUntrackBookmarkProcedure is the fully-qualified name of the BookmarkService's
-	// UntrackBookmark RPC.
-	BookmarkServiceUntrackBookmarkProcedure = "/mono.codexel.BookmarkService/UntrackBookmark"
-	// GitServiceFetchProcedure is the fully-qualified name of the GitService's Fetch RPC.
-	GitServiceFetchProcedure = "/mono.codexel.GitService/Fetch"
-	// GitServicePushProcedure is the fully-qualified name of the GitService's Push RPC.
-	GitServicePushProcedure = "/mono.codexel.GitService/Push"
-	// OperationServiceListOperationsProcedure is the fully-qualified name of the OperationService's
-	// ListOperations RPC.
-	OperationServiceListOperationsProcedure = "/mono.codexel.OperationService/ListOperations"
-	// OperationServiceRevertOperationProcedure is the fully-qualified name of the OperationService's
-	// RevertOperation RPC.
-	OperationServiceRevertOperationProcedure = "/mono.codexel.OperationService/RevertOperation"
-	// OperationServiceRestoreOperationProcedure is the fully-qualified name of the OperationService's
-	// RestoreOperation RPC.
-	OperationServiceRestoreOperationProcedure = "/mono.codexel.OperationService/RestoreOperation"
-	// FileServiceGetFileProcedure is the fully-qualified name of the FileService's GetFile RPC.
-	FileServiceGetFileProcedure = "/mono.codexel.FileService/GetFile"
-	// FileServiceListFilesProcedure is the fully-qualified name of the FileService's ListFiles RPC.
-	FileServiceListFilesProcedure = "/mono.codexel.FileService/ListFiles"
-	// FileServiceWriteFileProcedure is the fully-qualified name of the FileService's WriteFile RPC.
-	FileServiceWriteFileProcedure = "/mono.codexel.FileService/WriteFile"
-	// ConflictServiceListConflictsProcedure is the fully-qualified name of the ConflictService's
-	// ListConflicts RPC.
-	ConflictServiceListConflictsProcedure = "/mono.codexel.ConflictService/ListConflicts"
-	// ConflictServiceGetConflictProcedure is the fully-qualified name of the ConflictService's
-	// GetConflict RPC.
-	ConflictServiceGetConflictProcedure = "/mono.codexel.ConflictService/GetConflict"
-	// ConflictServiceResolveProcedure is the fully-qualified name of the ConflictService's Resolve RPC.
-	ConflictServiceResolveProcedure = "/mono.codexel.ConflictService/Resolve"
-	// WorkspaceServiceListRepositoryWorkspacesProcedure is the fully-qualified name of the
-	// WorkspaceService's ListRepositoryWorkspaces RPC.
-	WorkspaceServiceListRepositoryWorkspacesProcedure = "/mono.codexel.WorkspaceService/ListRepositoryWorkspaces"
-	// WorkspaceServiceAddRepositoryWorkspaceProcedure is the fully-qualified name of the
-	// WorkspaceService's AddRepositoryWorkspace RPC.
-	WorkspaceServiceAddRepositoryWorkspaceProcedure = "/mono.codexel.WorkspaceService/AddRepositoryWorkspace"
-	// WorkspaceServiceForgetRepositoryWorkspaceProcedure is the fully-qualified name of the
-	// WorkspaceService's ForgetRepositoryWorkspace RPC.
-	WorkspaceServiceForgetRepositoryWorkspaceProcedure = "/mono.codexel.WorkspaceService/ForgetRepositoryWorkspace"
-	// WorkspaceServiceRenameRepositoryWorkspaceProcedure is the fully-qualified name of the
-	// WorkspaceService's RenameRepositoryWorkspace RPC.
-	WorkspaceServiceRenameRepositoryWorkspaceProcedure = "/mono.codexel.WorkspaceService/RenameRepositoryWorkspace"
-	// WorkspaceServiceUpdateStaleProcedure is the fully-qualified name of the WorkspaceService's
-	// UpdateStale RPC.
-	WorkspaceServiceUpdateStaleProcedure = "/mono.codexel.WorkspaceService/UpdateStale"
-	// AliasServiceListAliasesProcedure is the fully-qualified name of the AliasService's ListAliases
-	// RPC.
-	AliasServiceListAliasesProcedure = "/mono.codexel.AliasService/ListAliases"
-	// AliasServiceRunAliasProcedure is the fully-qualified name of the AliasService's RunAlias RPC.
-	AliasServiceRunAliasProcedure = "/mono.codexel.AliasService/RunAlias"
-	// TranscriptServiceWatchTranscriptProcedure is the fully-qualified name of the TranscriptService's
+	// AgentServiceStartProcedure is the fully-qualified name of the AgentService's Start RPC.
+	AgentServiceStartProcedure = "/mono.codexel.AgentService/Start"
+	// AgentServiceWatchTranscriptProcedure is the fully-qualified name of the AgentService's
 	// WatchTranscript RPC.
-	TranscriptServiceWatchTranscriptProcedure = "/mono.codexel.TranscriptService/WatchTranscript"
-	// ReviewServiceListReviewsProcedure is the fully-qualified name of the ReviewService's ListReviews
+	AgentServiceWatchTranscriptProcedure = "/mono.codexel.AgentService/WatchTranscript"
+	// RepositoryServiceListProcedure is the fully-qualified name of the RepositoryService's List RPC.
+	RepositoryServiceListProcedure = "/mono.codexel.RepositoryService/List"
+	// RepositoryServiceOpenProcedure is the fully-qualified name of the RepositoryService's Open RPC.
+	RepositoryServiceOpenProcedure = "/mono.codexel.RepositoryService/Open"
+	// RepositoryServiceCloseProcedure is the fully-qualified name of the RepositoryService's Close RPC.
+	RepositoryServiceCloseProcedure = "/mono.codexel.RepositoryService/Close"
+	// RepositoryServiceWatchProcedure is the fully-qualified name of the RepositoryService's Watch RPC.
+	RepositoryServiceWatchProcedure = "/mono.codexel.RepositoryService/Watch"
+	// RepositoryServiceLogProcedure is the fully-qualified name of the RepositoryService's Log RPC.
+	RepositoryServiceLogProcedure = "/mono.codexel.RepositoryService/Log"
+	// RepositoryServiceGetRevisionProcedure is the fully-qualified name of the RepositoryService's
+	// GetRevision RPC.
+	RepositoryServiceGetRevisionProcedure = "/mono.codexel.RepositoryService/GetRevision"
+	// RepositoryServiceNewProcedure is the fully-qualified name of the RepositoryService's New RPC.
+	RepositoryServiceNewProcedure = "/mono.codexel.RepositoryService/New"
+	// RepositoryServiceEditProcedure is the fully-qualified name of the RepositoryService's Edit RPC.
+	RepositoryServiceEditProcedure = "/mono.codexel.RepositoryService/Edit"
+	// RepositoryServiceAbandonProcedure is the fully-qualified name of the RepositoryService's Abandon
 	// RPC.
-	ReviewServiceListReviewsProcedure = "/mono.codexel.ReviewService/ListReviews"
+	RepositoryServiceAbandonProcedure = "/mono.codexel.RepositoryService/Abandon"
+	// RepositoryServiceDescribeProcedure is the fully-qualified name of the RepositoryService's
+	// Describe RPC.
+	RepositoryServiceDescribeProcedure = "/mono.codexel.RepositoryService/Describe"
+	// RepositoryServiceCommitProcedure is the fully-qualified name of the RepositoryService's Commit
+	// RPC.
+	RepositoryServiceCommitProcedure = "/mono.codexel.RepositoryService/Commit"
+	// RepositoryServiceUndoProcedure is the fully-qualified name of the RepositoryService's Undo RPC.
+	RepositoryServiceUndoProcedure = "/mono.codexel.RepositoryService/Undo"
+	// RepositoryServiceRebaseProcedure is the fully-qualified name of the RepositoryService's Rebase
+	// RPC.
+	RepositoryServiceRebaseProcedure = "/mono.codexel.RepositoryService/Rebase"
+	// RepositoryServiceSquashProcedure is the fully-qualified name of the RepositoryService's Squash
+	// RPC.
+	RepositoryServiceSquashProcedure = "/mono.codexel.RepositoryService/Squash"
+	// RepositoryServiceEvologProcedure is the fully-qualified name of the RepositoryService's Evolog
+	// RPC.
+	RepositoryServiceEvologProcedure = "/mono.codexel.RepositoryService/Evolog"
+	// RepositoryServiceSplitProcedure is the fully-qualified name of the RepositoryService's Split RPC.
+	RepositoryServiceSplitProcedure = "/mono.codexel.RepositoryService/Split"
+	// RepositoryServiceRestoreProcedure is the fully-qualified name of the RepositoryService's Restore
+	// RPC.
+	RepositoryServiceRestoreProcedure = "/mono.codexel.RepositoryService/Restore"
+	// RepositoryServiceDiffRangeProcedure is the fully-qualified name of the RepositoryService's
+	// DiffRange RPC.
+	RepositoryServiceDiffRangeProcedure = "/mono.codexel.RepositoryService/DiffRange"
+	// RepositoryServiceListAgentCommitsProcedure is the fully-qualified name of the RepositoryService's
+	// ListAgentCommits RPC.
+	RepositoryServiceListAgentCommitsProcedure = "/mono.codexel.RepositoryService/ListAgentCommits"
+	// RepositoryServiceListBookmarksProcedure is the fully-qualified name of the RepositoryService's
+	// ListBookmarks RPC.
+	RepositoryServiceListBookmarksProcedure = "/mono.codexel.RepositoryService/ListBookmarks"
+	// RepositoryServiceSetBookmarkProcedure is the fully-qualified name of the RepositoryService's
+	// SetBookmark RPC.
+	RepositoryServiceSetBookmarkProcedure = "/mono.codexel.RepositoryService/SetBookmark"
+	// RepositoryServiceMoveBookmarkProcedure is the fully-qualified name of the RepositoryService's
+	// MoveBookmark RPC.
+	RepositoryServiceMoveBookmarkProcedure = "/mono.codexel.RepositoryService/MoveBookmark"
+	// RepositoryServiceDeleteBookmarkProcedure is the fully-qualified name of the RepositoryService's
+	// DeleteBookmark RPC.
+	RepositoryServiceDeleteBookmarkProcedure = "/mono.codexel.RepositoryService/DeleteBookmark"
+	// RepositoryServiceForgetBookmarkProcedure is the fully-qualified name of the RepositoryService's
+	// ForgetBookmark RPC.
+	RepositoryServiceForgetBookmarkProcedure = "/mono.codexel.RepositoryService/ForgetBookmark"
+	// RepositoryServiceTrackBookmarkProcedure is the fully-qualified name of the RepositoryService's
+	// TrackBookmark RPC.
+	RepositoryServiceTrackBookmarkProcedure = "/mono.codexel.RepositoryService/TrackBookmark"
+	// RepositoryServiceUntrackBookmarkProcedure is the fully-qualified name of the RepositoryService's
+	// UntrackBookmark RPC.
+	RepositoryServiceUntrackBookmarkProcedure = "/mono.codexel.RepositoryService/UntrackBookmark"
+	// RepositoryServiceFetchProcedure is the fully-qualified name of the RepositoryService's Fetch RPC.
+	RepositoryServiceFetchProcedure = "/mono.codexel.RepositoryService/Fetch"
+	// RepositoryServicePushProcedure is the fully-qualified name of the RepositoryService's Push RPC.
+	RepositoryServicePushProcedure = "/mono.codexel.RepositoryService/Push"
+	// RepositoryServiceListOperationsProcedure is the fully-qualified name of the RepositoryService's
+	// ListOperations RPC.
+	RepositoryServiceListOperationsProcedure = "/mono.codexel.RepositoryService/ListOperations"
+	// RepositoryServiceRevertOperationProcedure is the fully-qualified name of the RepositoryService's
+	// RevertOperation RPC.
+	RepositoryServiceRevertOperationProcedure = "/mono.codexel.RepositoryService/RevertOperation"
+	// RepositoryServiceRestoreOperationProcedure is the fully-qualified name of the RepositoryService's
+	// RestoreOperation RPC.
+	RepositoryServiceRestoreOperationProcedure = "/mono.codexel.RepositoryService/RestoreOperation"
+	// RepositoryServiceGetFileProcedure is the fully-qualified name of the RepositoryService's GetFile
+	// RPC.
+	RepositoryServiceGetFileProcedure = "/mono.codexel.RepositoryService/GetFile"
+	// RepositoryServiceListFilesProcedure is the fully-qualified name of the RepositoryService's
+	// ListFiles RPC.
+	RepositoryServiceListFilesProcedure = "/mono.codexel.RepositoryService/ListFiles"
+	// RepositoryServiceWriteFileProcedure is the fully-qualified name of the RepositoryService's
+	// WriteFile RPC.
+	RepositoryServiceWriteFileProcedure = "/mono.codexel.RepositoryService/WriteFile"
+	// RepositoryServiceListConflictsProcedure is the fully-qualified name of the RepositoryService's
+	// ListConflicts RPC.
+	RepositoryServiceListConflictsProcedure = "/mono.codexel.RepositoryService/ListConflicts"
+	// RepositoryServiceGetConflictProcedure is the fully-qualified name of the RepositoryService's
+	// GetConflict RPC.
+	RepositoryServiceGetConflictProcedure = "/mono.codexel.RepositoryService/GetConflict"
+	// RepositoryServiceResolveProcedure is the fully-qualified name of the RepositoryService's Resolve
+	// RPC.
+	RepositoryServiceResolveProcedure = "/mono.codexel.RepositoryService/Resolve"
+	// RepositoryServiceListWorkspacesProcedure is the fully-qualified name of the RepositoryService's
+	// ListWorkspaces RPC.
+	RepositoryServiceListWorkspacesProcedure = "/mono.codexel.RepositoryService/ListWorkspaces"
+	// RepositoryServiceAddWorkspaceProcedure is the fully-qualified name of the RepositoryService's
+	// AddWorkspace RPC.
+	RepositoryServiceAddWorkspaceProcedure = "/mono.codexel.RepositoryService/AddWorkspace"
+	// RepositoryServiceForgetWorkspaceProcedure is the fully-qualified name of the RepositoryService's
+	// ForgetWorkspace RPC.
+	RepositoryServiceForgetWorkspaceProcedure = "/mono.codexel.RepositoryService/ForgetWorkspace"
+	// RepositoryServiceRenameWorkspaceProcedure is the fully-qualified name of the RepositoryService's
+	// RenameWorkspace RPC.
+	RepositoryServiceRenameWorkspaceProcedure = "/mono.codexel.RepositoryService/RenameWorkspace"
+	// RepositoryServiceUpdateStaleProcedure is the fully-qualified name of the RepositoryService's
+	// UpdateStale RPC.
+	RepositoryServiceUpdateStaleProcedure = "/mono.codexel.RepositoryService/UpdateStale"
+	// RepositoryServiceListAliasesProcedure is the fully-qualified name of the RepositoryService's
+	// ListAliases RPC.
+	RepositoryServiceListAliasesProcedure = "/mono.codexel.RepositoryService/ListAliases"
+	// RepositoryServiceRunAliasProcedure is the fully-qualified name of the RepositoryService's
+	// RunAlias RPC.
+	RepositoryServiceRunAliasProcedure = "/mono.codexel.RepositoryService/RunAlias"
+	// ReviewServiceListProcedure is the fully-qualified name of the ReviewService's List RPC.
+	ReviewServiceListProcedure = "/mono.codexel.ReviewService/List"
 	// ReviewServiceListApprovedCommitsProcedure is the fully-qualified name of the ReviewService's
 	// ListApprovedCommits RPC.
 	ReviewServiceListApprovedCommitsProcedure = "/mono.codexel.ReviewService/ListApprovedCommits"
-	// ReviewServiceGetReviewProcedure is the fully-qualified name of the ReviewService's GetReview RPC.
-	ReviewServiceGetReviewProcedure = "/mono.codexel.ReviewService/GetReview"
-	// ReviewServiceStartReviewProcedure is the fully-qualified name of the ReviewService's StartReview
-	// RPC.
-	ReviewServiceStartReviewProcedure = "/mono.codexel.ReviewService/StartReview"
+	// ReviewServiceGetProcedure is the fully-qualified name of the ReviewService's Get RPC.
+	ReviewServiceGetProcedure = "/mono.codexel.ReviewService/Get"
+	// ReviewServiceStartProcedure is the fully-qualified name of the ReviewService's Start RPC.
+	ReviewServiceStartProcedure = "/mono.codexel.ReviewService/Start"
 	// ReviewServiceAddCommentProcedure is the fully-qualified name of the ReviewService's AddComment
 	// RPC.
 	ReviewServiceAddCommentProcedure = "/mono.codexel.ReviewService/AddComment"
@@ -231,14 +217,15 @@ const (
 
 // AgentServiceClient is a client for the mono.codexel.AgentService service.
 type AgentServiceClient interface {
-	ListAgents(context.Context, *connect.Request[RequestListAgents]) (*connect.Response[ResponseListAgents], error)
-	WatchAgents(context.Context, *connect.Request[RequestWatchAgents]) (*connect.ServerStreamForClient[ResponseWatchAgents], error)
+	List(context.Context, *connect.Request[RequestListAgents]) (*connect.Response[ResponseListAgents], error)
+	Watch(context.Context, *connect.Request[RequestWatchAgents]) (*connect.ServerStreamForClient[ResponseWatchAgents], error)
 	ReadOutput(context.Context, *connect.Request[RequestReadOutput]) (*connect.Response[ResponseReadOutput], error)
 	SendPrompt(context.Context, *connect.Request[RequestSendPrompt]) (*connect.Response[ResponseSendPrompt], error)
 	SendKeys(context.Context, *connect.Request[RequestSendKeys]) (*connect.Response[ResponseSendKeys], error)
-	FocusAgent(context.Context, *connect.Request[RequestFocusAgent]) (*connect.Response[ResponseFocusAgent], error)
+	Focus(context.Context, *connect.Request[RequestFocusAgent]) (*connect.Response[ResponseFocusAgent], error)
 	ListWorkspaces(context.Context, *connect.Request[RequestListWorkspaces]) (*connect.Response[ResponseListWorkspaces], error)
-	StartAgent(context.Context, *connect.Request[RequestStartAgent]) (*connect.Response[ResponseStartAgent], error)
+	Start(context.Context, *connect.Request[RequestStartAgent]) (*connect.Response[ResponseStartAgent], error)
+	WatchTranscript(context.Context, *connect.Request[RequestWatchTranscript]) (*connect.ServerStreamForClient[ResponseWatchTranscript], error)
 }
 
 // NewAgentServiceClient constructs a client for the mono.codexel.AgentService service. By default,
@@ -252,16 +239,16 @@ func NewAgentServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 	baseURL = strings.TrimRight(baseURL, "/")
 	agentServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("AgentService").Methods()
 	return &agentServiceClient{
-		listAgents: connect.NewClient[RequestListAgents, ResponseListAgents](
+		list: connect.NewClient[RequestListAgents, ResponseListAgents](
 			httpClient,
-			baseURL+AgentServiceListAgentsProcedure,
-			connect.WithSchema(agentServiceMethods.ByName("ListAgents")),
+			baseURL+AgentServiceListProcedure,
+			connect.WithSchema(agentServiceMethods.ByName("List")),
 			connect.WithClientOptions(opts...),
 		),
-		watchAgents: connect.NewClient[RequestWatchAgents, ResponseWatchAgents](
+		watch: connect.NewClient[RequestWatchAgents, ResponseWatchAgents](
 			httpClient,
-			baseURL+AgentServiceWatchAgentsProcedure,
-			connect.WithSchema(agentServiceMethods.ByName("WatchAgents")),
+			baseURL+AgentServiceWatchProcedure,
+			connect.WithSchema(agentServiceMethods.ByName("Watch")),
 			connect.WithClientOptions(opts...),
 		),
 		readOutput: connect.NewClient[RequestReadOutput, ResponseReadOutput](
@@ -282,10 +269,10 @@ func NewAgentServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(agentServiceMethods.ByName("SendKeys")),
 			connect.WithClientOptions(opts...),
 		),
-		focusAgent: connect.NewClient[RequestFocusAgent, ResponseFocusAgent](
+		focus: connect.NewClient[RequestFocusAgent, ResponseFocusAgent](
 			httpClient,
-			baseURL+AgentServiceFocusAgentProcedure,
-			connect.WithSchema(agentServiceMethods.ByName("FocusAgent")),
+			baseURL+AgentServiceFocusProcedure,
+			connect.WithSchema(agentServiceMethods.ByName("Focus")),
 			connect.WithClientOptions(opts...),
 		),
 		listWorkspaces: connect.NewClient[RequestListWorkspaces, ResponseListWorkspaces](
@@ -294,10 +281,16 @@ func NewAgentServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(agentServiceMethods.ByName("ListWorkspaces")),
 			connect.WithClientOptions(opts...),
 		),
-		startAgent: connect.NewClient[RequestStartAgent, ResponseStartAgent](
+		start: connect.NewClient[RequestStartAgent, ResponseStartAgent](
 			httpClient,
-			baseURL+AgentServiceStartAgentProcedure,
-			connect.WithSchema(agentServiceMethods.ByName("StartAgent")),
+			baseURL+AgentServiceStartProcedure,
+			connect.WithSchema(agentServiceMethods.ByName("Start")),
+			connect.WithClientOptions(opts...),
+		),
+		watchTranscript: connect.NewClient[RequestWatchTranscript, ResponseWatchTranscript](
+			httpClient,
+			baseURL+AgentServiceWatchTranscriptProcedure,
+			connect.WithSchema(agentServiceMethods.ByName("WatchTranscript")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -305,24 +298,25 @@ func NewAgentServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 
 // agentServiceClient implements AgentServiceClient.
 type agentServiceClient struct {
-	listAgents     *connect.Client[RequestListAgents, ResponseListAgents]
-	watchAgents    *connect.Client[RequestWatchAgents, ResponseWatchAgents]
-	readOutput     *connect.Client[RequestReadOutput, ResponseReadOutput]
-	sendPrompt     *connect.Client[RequestSendPrompt, ResponseSendPrompt]
-	sendKeys       *connect.Client[RequestSendKeys, ResponseSendKeys]
-	focusAgent     *connect.Client[RequestFocusAgent, ResponseFocusAgent]
-	listWorkspaces *connect.Client[RequestListWorkspaces, ResponseListWorkspaces]
-	startAgent     *connect.Client[RequestStartAgent, ResponseStartAgent]
+	list            *connect.Client[RequestListAgents, ResponseListAgents]
+	watch           *connect.Client[RequestWatchAgents, ResponseWatchAgents]
+	readOutput      *connect.Client[RequestReadOutput, ResponseReadOutput]
+	sendPrompt      *connect.Client[RequestSendPrompt, ResponseSendPrompt]
+	sendKeys        *connect.Client[RequestSendKeys, ResponseSendKeys]
+	focus           *connect.Client[RequestFocusAgent, ResponseFocusAgent]
+	listWorkspaces  *connect.Client[RequestListWorkspaces, ResponseListWorkspaces]
+	start           *connect.Client[RequestStartAgent, ResponseStartAgent]
+	watchTranscript *connect.Client[RequestWatchTranscript, ResponseWatchTranscript]
 }
 
-// ListAgents calls mono.codexel.AgentService.ListAgents.
-func (c *agentServiceClient) ListAgents(ctx context.Context, req *connect.Request[RequestListAgents]) (*connect.Response[ResponseListAgents], error) {
-	return c.listAgents.CallUnary(ctx, req)
+// List calls mono.codexel.AgentService.List.
+func (c *agentServiceClient) List(ctx context.Context, req *connect.Request[RequestListAgents]) (*connect.Response[ResponseListAgents], error) {
+	return c.list.CallUnary(ctx, req)
 }
 
-// WatchAgents calls mono.codexel.AgentService.WatchAgents.
-func (c *agentServiceClient) WatchAgents(ctx context.Context, req *connect.Request[RequestWatchAgents]) (*connect.ServerStreamForClient[ResponseWatchAgents], error) {
-	return c.watchAgents.CallServerStream(ctx, req)
+// Watch calls mono.codexel.AgentService.Watch.
+func (c *agentServiceClient) Watch(ctx context.Context, req *connect.Request[RequestWatchAgents]) (*connect.ServerStreamForClient[ResponseWatchAgents], error) {
+	return c.watch.CallServerStream(ctx, req)
 }
 
 // ReadOutput calls mono.codexel.AgentService.ReadOutput.
@@ -340,9 +334,9 @@ func (c *agentServiceClient) SendKeys(ctx context.Context, req *connect.Request[
 	return c.sendKeys.CallUnary(ctx, req)
 }
 
-// FocusAgent calls mono.codexel.AgentService.FocusAgent.
-func (c *agentServiceClient) FocusAgent(ctx context.Context, req *connect.Request[RequestFocusAgent]) (*connect.Response[ResponseFocusAgent], error) {
-	return c.focusAgent.CallUnary(ctx, req)
+// Focus calls mono.codexel.AgentService.Focus.
+func (c *agentServiceClient) Focus(ctx context.Context, req *connect.Request[RequestFocusAgent]) (*connect.Response[ResponseFocusAgent], error) {
+	return c.focus.CallUnary(ctx, req)
 }
 
 // ListWorkspaces calls mono.codexel.AgentService.ListWorkspaces.
@@ -350,21 +344,27 @@ func (c *agentServiceClient) ListWorkspaces(ctx context.Context, req *connect.Re
 	return c.listWorkspaces.CallUnary(ctx, req)
 }
 
-// StartAgent calls mono.codexel.AgentService.StartAgent.
-func (c *agentServiceClient) StartAgent(ctx context.Context, req *connect.Request[RequestStartAgent]) (*connect.Response[ResponseStartAgent], error) {
-	return c.startAgent.CallUnary(ctx, req)
+// Start calls mono.codexel.AgentService.Start.
+func (c *agentServiceClient) Start(ctx context.Context, req *connect.Request[RequestStartAgent]) (*connect.Response[ResponseStartAgent], error) {
+	return c.start.CallUnary(ctx, req)
+}
+
+// WatchTranscript calls mono.codexel.AgentService.WatchTranscript.
+func (c *agentServiceClient) WatchTranscript(ctx context.Context, req *connect.Request[RequestWatchTranscript]) (*connect.ServerStreamForClient[ResponseWatchTranscript], error) {
+	return c.watchTranscript.CallServerStream(ctx, req)
 }
 
 // AgentServiceHandler is an implementation of the mono.codexel.AgentService service.
 type AgentServiceHandler interface {
-	ListAgents(context.Context, *connect.Request[RequestListAgents]) (*connect.Response[ResponseListAgents], error)
-	WatchAgents(context.Context, *connect.Request[RequestWatchAgents], *connect.ServerStream[ResponseWatchAgents]) error
+	List(context.Context, *connect.Request[RequestListAgents]) (*connect.Response[ResponseListAgents], error)
+	Watch(context.Context, *connect.Request[RequestWatchAgents], *connect.ServerStream[ResponseWatchAgents]) error
 	ReadOutput(context.Context, *connect.Request[RequestReadOutput]) (*connect.Response[ResponseReadOutput], error)
 	SendPrompt(context.Context, *connect.Request[RequestSendPrompt]) (*connect.Response[ResponseSendPrompt], error)
 	SendKeys(context.Context, *connect.Request[RequestSendKeys]) (*connect.Response[ResponseSendKeys], error)
-	FocusAgent(context.Context, *connect.Request[RequestFocusAgent]) (*connect.Response[ResponseFocusAgent], error)
+	Focus(context.Context, *connect.Request[RequestFocusAgent]) (*connect.Response[ResponseFocusAgent], error)
 	ListWorkspaces(context.Context, *connect.Request[RequestListWorkspaces]) (*connect.Response[ResponseListWorkspaces], error)
-	StartAgent(context.Context, *connect.Request[RequestStartAgent]) (*connect.Response[ResponseStartAgent], error)
+	Start(context.Context, *connect.Request[RequestStartAgent]) (*connect.Response[ResponseStartAgent], error)
+	WatchTranscript(context.Context, *connect.Request[RequestWatchTranscript], *connect.ServerStream[ResponseWatchTranscript]) error
 }
 
 // NewAgentServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -374,16 +374,16 @@ type AgentServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewAgentServiceHandler(svc AgentServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	agentServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("AgentService").Methods()
-	agentServiceListAgentsHandler := connect.NewUnaryHandler(
-		AgentServiceListAgentsProcedure,
-		svc.ListAgents,
-		connect.WithSchema(agentServiceMethods.ByName("ListAgents")),
+	agentServiceListHandler := connect.NewUnaryHandler(
+		AgentServiceListProcedure,
+		svc.List,
+		connect.WithSchema(agentServiceMethods.ByName("List")),
 		connect.WithHandlerOptions(opts...),
 	)
-	agentServiceWatchAgentsHandler := connect.NewServerStreamHandler(
-		AgentServiceWatchAgentsProcedure,
-		svc.WatchAgents,
-		connect.WithSchema(agentServiceMethods.ByName("WatchAgents")),
+	agentServiceWatchHandler := connect.NewServerStreamHandler(
+		AgentServiceWatchProcedure,
+		svc.Watch,
+		connect.WithSchema(agentServiceMethods.ByName("Watch")),
 		connect.WithHandlerOptions(opts...),
 	)
 	agentServiceReadOutputHandler := connect.NewUnaryHandler(
@@ -404,10 +404,10 @@ func NewAgentServiceHandler(svc AgentServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(agentServiceMethods.ByName("SendKeys")),
 		connect.WithHandlerOptions(opts...),
 	)
-	agentServiceFocusAgentHandler := connect.NewUnaryHandler(
-		AgentServiceFocusAgentProcedure,
-		svc.FocusAgent,
-		connect.WithSchema(agentServiceMethods.ByName("FocusAgent")),
+	agentServiceFocusHandler := connect.NewUnaryHandler(
+		AgentServiceFocusProcedure,
+		svc.Focus,
+		connect.WithSchema(agentServiceMethods.ByName("Focus")),
 		connect.WithHandlerOptions(opts...),
 	)
 	agentServiceListWorkspacesHandler := connect.NewUnaryHandler(
@@ -416,30 +416,38 @@ func NewAgentServiceHandler(svc AgentServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(agentServiceMethods.ByName("ListWorkspaces")),
 		connect.WithHandlerOptions(opts...),
 	)
-	agentServiceStartAgentHandler := connect.NewUnaryHandler(
-		AgentServiceStartAgentProcedure,
-		svc.StartAgent,
-		connect.WithSchema(agentServiceMethods.ByName("StartAgent")),
+	agentServiceStartHandler := connect.NewUnaryHandler(
+		AgentServiceStartProcedure,
+		svc.Start,
+		connect.WithSchema(agentServiceMethods.ByName("Start")),
+		connect.WithHandlerOptions(opts...),
+	)
+	agentServiceWatchTranscriptHandler := connect.NewServerStreamHandler(
+		AgentServiceWatchTranscriptProcedure,
+		svc.WatchTranscript,
+		connect.WithSchema(agentServiceMethods.ByName("WatchTranscript")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/mono.codexel.AgentService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case AgentServiceListAgentsProcedure:
-			agentServiceListAgentsHandler.ServeHTTP(w, r)
-		case AgentServiceWatchAgentsProcedure:
-			agentServiceWatchAgentsHandler.ServeHTTP(w, r)
+		case AgentServiceListProcedure:
+			agentServiceListHandler.ServeHTTP(w, r)
+		case AgentServiceWatchProcedure:
+			agentServiceWatchHandler.ServeHTTP(w, r)
 		case AgentServiceReadOutputProcedure:
 			agentServiceReadOutputHandler.ServeHTTP(w, r)
 		case AgentServiceSendPromptProcedure:
 			agentServiceSendPromptHandler.ServeHTTP(w, r)
 		case AgentServiceSendKeysProcedure:
 			agentServiceSendKeysHandler.ServeHTTP(w, r)
-		case AgentServiceFocusAgentProcedure:
-			agentServiceFocusAgentHandler.ServeHTTP(w, r)
+		case AgentServiceFocusProcedure:
+			agentServiceFocusHandler.ServeHTTP(w, r)
 		case AgentServiceListWorkspacesProcedure:
 			agentServiceListWorkspacesHandler.ServeHTTP(w, r)
-		case AgentServiceStartAgentProcedure:
-			agentServiceStartAgentHandler.ServeHTTP(w, r)
+		case AgentServiceStartProcedure:
+			agentServiceStartHandler.ServeHTTP(w, r)
+		case AgentServiceWatchTranscriptProcedure:
+			agentServiceWatchTranscriptHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -449,12 +457,12 @@ func NewAgentServiceHandler(svc AgentServiceHandler, opts ...connect.HandlerOpti
 // UnimplementedAgentServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedAgentServiceHandler struct{}
 
-func (UnimplementedAgentServiceHandler) ListAgents(context.Context, *connect.Request[RequestListAgents]) (*connect.Response[ResponseListAgents], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.AgentService.ListAgents is not implemented"))
+func (UnimplementedAgentServiceHandler) List(context.Context, *connect.Request[RequestListAgents]) (*connect.Response[ResponseListAgents], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.AgentService.List is not implemented"))
 }
 
-func (UnimplementedAgentServiceHandler) WatchAgents(context.Context, *connect.Request[RequestWatchAgents], *connect.ServerStream[ResponseWatchAgents]) error {
-	return connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.AgentService.WatchAgents is not implemented"))
+func (UnimplementedAgentServiceHandler) Watch(context.Context, *connect.Request[RequestWatchAgents], *connect.ServerStream[ResponseWatchAgents]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.AgentService.Watch is not implemented"))
 }
 
 func (UnimplementedAgentServiceHandler) ReadOutput(context.Context, *connect.Request[RequestReadOutput]) (*connect.Response[ResponseReadOutput], error) {
@@ -469,168 +477,28 @@ func (UnimplementedAgentServiceHandler) SendKeys(context.Context, *connect.Reque
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.AgentService.SendKeys is not implemented"))
 }
 
-func (UnimplementedAgentServiceHandler) FocusAgent(context.Context, *connect.Request[RequestFocusAgent]) (*connect.Response[ResponseFocusAgent], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.AgentService.FocusAgent is not implemented"))
+func (UnimplementedAgentServiceHandler) Focus(context.Context, *connect.Request[RequestFocusAgent]) (*connect.Response[ResponseFocusAgent], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.AgentService.Focus is not implemented"))
 }
 
 func (UnimplementedAgentServiceHandler) ListWorkspaces(context.Context, *connect.Request[RequestListWorkspaces]) (*connect.Response[ResponseListWorkspaces], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.AgentService.ListWorkspaces is not implemented"))
 }
 
-func (UnimplementedAgentServiceHandler) StartAgent(context.Context, *connect.Request[RequestStartAgent]) (*connect.Response[ResponseStartAgent], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.AgentService.StartAgent is not implemented"))
+func (UnimplementedAgentServiceHandler) Start(context.Context, *connect.Request[RequestStartAgent]) (*connect.Response[ResponseStartAgent], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.AgentService.Start is not implemented"))
+}
+
+func (UnimplementedAgentServiceHandler) WatchTranscript(context.Context, *connect.Request[RequestWatchTranscript], *connect.ServerStream[ResponseWatchTranscript]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.AgentService.WatchTranscript is not implemented"))
 }
 
 // RepositoryServiceClient is a client for the mono.codexel.RepositoryService service.
 type RepositoryServiceClient interface {
-	ListRepositories(context.Context, *connect.Request[RequestListRepositories]) (*connect.Response[ResponseListRepositories], error)
-	OpenRepository(context.Context, *connect.Request[RequestOpenRepository]) (*connect.Response[ResponseOpenRepository], error)
-	CloseRepository(context.Context, *connect.Request[RequestCloseRepository]) (*connect.Response[ResponseCloseRepository], error)
-	WatchRepository(context.Context, *connect.Request[RequestWatchRepository]) (*connect.ServerStreamForClient[ResponseWatchRepository], error)
-}
-
-// NewRepositoryServiceClient constructs a client for the mono.codexel.RepositoryService service. By
-// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
-// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
-// connect.WithGRPC() or connect.WithGRPCWeb() options.
-//
-// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
-// http://api.acme.com or https://acme.com/grpc).
-func NewRepositoryServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) RepositoryServiceClient {
-	baseURL = strings.TrimRight(baseURL, "/")
-	repositoryServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("RepositoryService").Methods()
-	return &repositoryServiceClient{
-		listRepositories: connect.NewClient[RequestListRepositories, ResponseListRepositories](
-			httpClient,
-			baseURL+RepositoryServiceListRepositoriesProcedure,
-			connect.WithSchema(repositoryServiceMethods.ByName("ListRepositories")),
-			connect.WithClientOptions(opts...),
-		),
-		openRepository: connect.NewClient[RequestOpenRepository, ResponseOpenRepository](
-			httpClient,
-			baseURL+RepositoryServiceOpenRepositoryProcedure,
-			connect.WithSchema(repositoryServiceMethods.ByName("OpenRepository")),
-			connect.WithClientOptions(opts...),
-		),
-		closeRepository: connect.NewClient[RequestCloseRepository, ResponseCloseRepository](
-			httpClient,
-			baseURL+RepositoryServiceCloseRepositoryProcedure,
-			connect.WithSchema(repositoryServiceMethods.ByName("CloseRepository")),
-			connect.WithClientOptions(opts...),
-		),
-		watchRepository: connect.NewClient[RequestWatchRepository, ResponseWatchRepository](
-			httpClient,
-			baseURL+RepositoryServiceWatchRepositoryProcedure,
-			connect.WithSchema(repositoryServiceMethods.ByName("WatchRepository")),
-			connect.WithClientOptions(opts...),
-		),
-	}
-}
-
-// repositoryServiceClient implements RepositoryServiceClient.
-type repositoryServiceClient struct {
-	listRepositories *connect.Client[RequestListRepositories, ResponseListRepositories]
-	openRepository   *connect.Client[RequestOpenRepository, ResponseOpenRepository]
-	closeRepository  *connect.Client[RequestCloseRepository, ResponseCloseRepository]
-	watchRepository  *connect.Client[RequestWatchRepository, ResponseWatchRepository]
-}
-
-// ListRepositories calls mono.codexel.RepositoryService.ListRepositories.
-func (c *repositoryServiceClient) ListRepositories(ctx context.Context, req *connect.Request[RequestListRepositories]) (*connect.Response[ResponseListRepositories], error) {
-	return c.listRepositories.CallUnary(ctx, req)
-}
-
-// OpenRepository calls mono.codexel.RepositoryService.OpenRepository.
-func (c *repositoryServiceClient) OpenRepository(ctx context.Context, req *connect.Request[RequestOpenRepository]) (*connect.Response[ResponseOpenRepository], error) {
-	return c.openRepository.CallUnary(ctx, req)
-}
-
-// CloseRepository calls mono.codexel.RepositoryService.CloseRepository.
-func (c *repositoryServiceClient) CloseRepository(ctx context.Context, req *connect.Request[RequestCloseRepository]) (*connect.Response[ResponseCloseRepository], error) {
-	return c.closeRepository.CallUnary(ctx, req)
-}
-
-// WatchRepository calls mono.codexel.RepositoryService.WatchRepository.
-func (c *repositoryServiceClient) WatchRepository(ctx context.Context, req *connect.Request[RequestWatchRepository]) (*connect.ServerStreamForClient[ResponseWatchRepository], error) {
-	return c.watchRepository.CallServerStream(ctx, req)
-}
-
-// RepositoryServiceHandler is an implementation of the mono.codexel.RepositoryService service.
-type RepositoryServiceHandler interface {
-	ListRepositories(context.Context, *connect.Request[RequestListRepositories]) (*connect.Response[ResponseListRepositories], error)
-	OpenRepository(context.Context, *connect.Request[RequestOpenRepository]) (*connect.Response[ResponseOpenRepository], error)
-	CloseRepository(context.Context, *connect.Request[RequestCloseRepository]) (*connect.Response[ResponseCloseRepository], error)
-	WatchRepository(context.Context, *connect.Request[RequestWatchRepository], *connect.ServerStream[ResponseWatchRepository]) error
-}
-
-// NewRepositoryServiceHandler builds an HTTP handler from the service implementation. It returns
-// the path on which to mount the handler and the handler itself.
-//
-// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
-// and JSON codecs. They also support gzip compression.
-func NewRepositoryServiceHandler(svc RepositoryServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	repositoryServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("RepositoryService").Methods()
-	repositoryServiceListRepositoriesHandler := connect.NewUnaryHandler(
-		RepositoryServiceListRepositoriesProcedure,
-		svc.ListRepositories,
-		connect.WithSchema(repositoryServiceMethods.ByName("ListRepositories")),
-		connect.WithHandlerOptions(opts...),
-	)
-	repositoryServiceOpenRepositoryHandler := connect.NewUnaryHandler(
-		RepositoryServiceOpenRepositoryProcedure,
-		svc.OpenRepository,
-		connect.WithSchema(repositoryServiceMethods.ByName("OpenRepository")),
-		connect.WithHandlerOptions(opts...),
-	)
-	repositoryServiceCloseRepositoryHandler := connect.NewUnaryHandler(
-		RepositoryServiceCloseRepositoryProcedure,
-		svc.CloseRepository,
-		connect.WithSchema(repositoryServiceMethods.ByName("CloseRepository")),
-		connect.WithHandlerOptions(opts...),
-	)
-	repositoryServiceWatchRepositoryHandler := connect.NewServerStreamHandler(
-		RepositoryServiceWatchRepositoryProcedure,
-		svc.WatchRepository,
-		connect.WithSchema(repositoryServiceMethods.ByName("WatchRepository")),
-		connect.WithHandlerOptions(opts...),
-	)
-	return "/mono.codexel.RepositoryService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case RepositoryServiceListRepositoriesProcedure:
-			repositoryServiceListRepositoriesHandler.ServeHTTP(w, r)
-		case RepositoryServiceOpenRepositoryProcedure:
-			repositoryServiceOpenRepositoryHandler.ServeHTTP(w, r)
-		case RepositoryServiceCloseRepositoryProcedure:
-			repositoryServiceCloseRepositoryHandler.ServeHTTP(w, r)
-		case RepositoryServiceWatchRepositoryProcedure:
-			repositoryServiceWatchRepositoryHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
-}
-
-// UnimplementedRepositoryServiceHandler returns CodeUnimplemented from all methods.
-type UnimplementedRepositoryServiceHandler struct{}
-
-func (UnimplementedRepositoryServiceHandler) ListRepositories(context.Context, *connect.Request[RequestListRepositories]) (*connect.Response[ResponseListRepositories], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.ListRepositories is not implemented"))
-}
-
-func (UnimplementedRepositoryServiceHandler) OpenRepository(context.Context, *connect.Request[RequestOpenRepository]) (*connect.Response[ResponseOpenRepository], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.OpenRepository is not implemented"))
-}
-
-func (UnimplementedRepositoryServiceHandler) CloseRepository(context.Context, *connect.Request[RequestCloseRepository]) (*connect.Response[ResponseCloseRepository], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.CloseRepository is not implemented"))
-}
-
-func (UnimplementedRepositoryServiceHandler) WatchRepository(context.Context, *connect.Request[RequestWatchRepository], *connect.ServerStream[ResponseWatchRepository]) error {
-	return connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.WatchRepository is not implemented"))
-}
-
-// RevisionServiceClient is a client for the mono.codexel.RevisionService service.
-type RevisionServiceClient interface {
+	List(context.Context, *connect.Request[RequestListRepositories]) (*connect.Response[ResponseListRepositories], error)
+	Open(context.Context, *connect.Request[RequestOpenRepository]) (*connect.Response[ResponseOpenRepository], error)
+	Close(context.Context, *connect.Request[RequestCloseRepository]) (*connect.Response[ResponseCloseRepository], error)
+	Watch(context.Context, *connect.Request[RequestWatchRepository]) (*connect.ServerStreamForClient[ResponseWatchRepository], error)
 	Log(context.Context, *connect.Request[RequestLog]) (*connect.Response[ResponseLog], error)
 	GetRevision(context.Context, *connect.Request[RequestGetRevision]) (*connect.Response[ResponseGetRevision], error)
 	New(context.Context, *connect.Request[RequestNew]) (*connect.Response[ResponseNew], error)
@@ -646,114 +514,317 @@ type RevisionServiceClient interface {
 	Restore(context.Context, *connect.Request[RequestRestore]) (*connect.Response[ResponseRestore], error)
 	DiffRange(context.Context, *connect.Request[RequestDiffRange]) (*connect.Response[ResponseDiffRange], error)
 	ListAgentCommits(context.Context, *connect.Request[RequestListAgentCommits]) (*connect.Response[ResponseListAgentCommits], error)
+	ListBookmarks(context.Context, *connect.Request[RequestListBookmarks]) (*connect.Response[ResponseListBookmarks], error)
+	SetBookmark(context.Context, *connect.Request[RequestSetBookmark]) (*connect.Response[ResponseSetBookmark], error)
+	MoveBookmark(context.Context, *connect.Request[RequestMoveBookmark]) (*connect.Response[ResponseMoveBookmark], error)
+	DeleteBookmark(context.Context, *connect.Request[RequestDeleteBookmark]) (*connect.Response[ResponseDeleteBookmark], error)
+	ForgetBookmark(context.Context, *connect.Request[RequestForgetBookmark]) (*connect.Response[ResponseForgetBookmark], error)
+	TrackBookmark(context.Context, *connect.Request[RequestTrackBookmark]) (*connect.Response[ResponseTrackBookmark], error)
+	UntrackBookmark(context.Context, *connect.Request[RequestUntrackBookmark]) (*connect.Response[ResponseUntrackBookmark], error)
+	Fetch(context.Context, *connect.Request[RequestFetch]) (*connect.Response[ResponseFetch], error)
+	Push(context.Context, *connect.Request[RequestPush]) (*connect.Response[ResponsePush], error)
+	ListOperations(context.Context, *connect.Request[RequestListOperations]) (*connect.Response[ResponseListOperations], error)
+	RevertOperation(context.Context, *connect.Request[RequestRevertOperation]) (*connect.Response[ResponseRevertOperation], error)
+	RestoreOperation(context.Context, *connect.Request[RequestRestoreOperation]) (*connect.Response[ResponseRestoreOperation], error)
+	GetFile(context.Context, *connect.Request[RequestGetFile]) (*connect.Response[ResponseGetFile], error)
+	ListFiles(context.Context, *connect.Request[RequestListFiles]) (*connect.Response[ResponseListFiles], error)
+	WriteFile(context.Context, *connect.Request[RequestWriteFile]) (*connect.Response[ResponseWriteFile], error)
+	ListConflicts(context.Context, *connect.Request[RequestListConflicts]) (*connect.Response[ResponseListConflicts], error)
+	GetConflict(context.Context, *connect.Request[RequestGetConflict]) (*connect.Response[ResponseGetConflict], error)
+	Resolve(context.Context, *connect.Request[RequestResolve]) (*connect.Response[ResponseResolve], error)
+	ListWorkspaces(context.Context, *connect.Request[RequestListRepositoryWorkspaces]) (*connect.Response[ResponseListRepositoryWorkspaces], error)
+	AddWorkspace(context.Context, *connect.Request[RequestAddRepositoryWorkspace]) (*connect.Response[ResponseAddRepositoryWorkspace], error)
+	ForgetWorkspace(context.Context, *connect.Request[RequestForgetRepositoryWorkspace]) (*connect.Response[ResponseForgetRepositoryWorkspace], error)
+	RenameWorkspace(context.Context, *connect.Request[RequestRenameRepositoryWorkspace]) (*connect.Response[ResponseRenameRepositoryWorkspace], error)
+	UpdateStale(context.Context, *connect.Request[RequestUpdateStale]) (*connect.Response[ResponseUpdateStale], error)
+	ListAliases(context.Context, *connect.Request[RequestListAliases]) (*connect.Response[ResponseListAliases], error)
+	RunAlias(context.Context, *connect.Request[RequestRunAlias]) (*connect.Response[ResponseRunAlias], error)
 }
 
-// NewRevisionServiceClient constructs a client for the mono.codexel.RevisionService service. By
+// NewRepositoryServiceClient constructs a client for the mono.codexel.RepositoryService service. By
 // default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
 // and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
 // connect.WithGRPC() or connect.WithGRPCWeb() options.
 //
 // The URL supplied here should be the base URL for the Connect or gRPC server (for example,
 // http://api.acme.com or https://acme.com/grpc).
-func NewRevisionServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) RevisionServiceClient {
+func NewRepositoryServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) RepositoryServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
-	revisionServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("RevisionService").Methods()
-	return &revisionServiceClient{
+	repositoryServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("RepositoryService").Methods()
+	return &repositoryServiceClient{
+		list: connect.NewClient[RequestListRepositories, ResponseListRepositories](
+			httpClient,
+			baseURL+RepositoryServiceListProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("List")),
+			connect.WithClientOptions(opts...),
+		),
+		open: connect.NewClient[RequestOpenRepository, ResponseOpenRepository](
+			httpClient,
+			baseURL+RepositoryServiceOpenProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("Open")),
+			connect.WithClientOptions(opts...),
+		),
+		close: connect.NewClient[RequestCloseRepository, ResponseCloseRepository](
+			httpClient,
+			baseURL+RepositoryServiceCloseProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("Close")),
+			connect.WithClientOptions(opts...),
+		),
+		watch: connect.NewClient[RequestWatchRepository, ResponseWatchRepository](
+			httpClient,
+			baseURL+RepositoryServiceWatchProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("Watch")),
+			connect.WithClientOptions(opts...),
+		),
 		log: connect.NewClient[RequestLog, ResponseLog](
 			httpClient,
-			baseURL+RevisionServiceLogProcedure,
-			connect.WithSchema(revisionServiceMethods.ByName("Log")),
+			baseURL+RepositoryServiceLogProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("Log")),
 			connect.WithClientOptions(opts...),
 		),
 		getRevision: connect.NewClient[RequestGetRevision, ResponseGetRevision](
 			httpClient,
-			baseURL+RevisionServiceGetRevisionProcedure,
-			connect.WithSchema(revisionServiceMethods.ByName("GetRevision")),
+			baseURL+RepositoryServiceGetRevisionProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("GetRevision")),
 			connect.WithClientOptions(opts...),
 		),
 		new: connect.NewClient[RequestNew, ResponseNew](
 			httpClient,
-			baseURL+RevisionServiceNewProcedure,
-			connect.WithSchema(revisionServiceMethods.ByName("New")),
+			baseURL+RepositoryServiceNewProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("New")),
 			connect.WithClientOptions(opts...),
 		),
 		edit: connect.NewClient[RequestEdit, ResponseEdit](
 			httpClient,
-			baseURL+RevisionServiceEditProcedure,
-			connect.WithSchema(revisionServiceMethods.ByName("Edit")),
+			baseURL+RepositoryServiceEditProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("Edit")),
 			connect.WithClientOptions(opts...),
 		),
 		abandon: connect.NewClient[RequestAbandon, ResponseAbandon](
 			httpClient,
-			baseURL+RevisionServiceAbandonProcedure,
-			connect.WithSchema(revisionServiceMethods.ByName("Abandon")),
+			baseURL+RepositoryServiceAbandonProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("Abandon")),
 			connect.WithClientOptions(opts...),
 		),
 		describe: connect.NewClient[RequestDescribe, ResponseDescribe](
 			httpClient,
-			baseURL+RevisionServiceDescribeProcedure,
-			connect.WithSchema(revisionServiceMethods.ByName("Describe")),
+			baseURL+RepositoryServiceDescribeProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("Describe")),
 			connect.WithClientOptions(opts...),
 		),
 		commit: connect.NewClient[RequestCommit, ResponseCommit](
 			httpClient,
-			baseURL+RevisionServiceCommitProcedure,
-			connect.WithSchema(revisionServiceMethods.ByName("Commit")),
+			baseURL+RepositoryServiceCommitProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("Commit")),
 			connect.WithClientOptions(opts...),
 		),
 		undo: connect.NewClient[RequestUndo, ResponseUndo](
 			httpClient,
-			baseURL+RevisionServiceUndoProcedure,
-			connect.WithSchema(revisionServiceMethods.ByName("Undo")),
+			baseURL+RepositoryServiceUndoProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("Undo")),
 			connect.WithClientOptions(opts...),
 		),
 		rebase: connect.NewClient[RequestRebase, ResponseRebase](
 			httpClient,
-			baseURL+RevisionServiceRebaseProcedure,
-			connect.WithSchema(revisionServiceMethods.ByName("Rebase")),
+			baseURL+RepositoryServiceRebaseProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("Rebase")),
 			connect.WithClientOptions(opts...),
 		),
 		squash: connect.NewClient[RequestSquash, ResponseSquash](
 			httpClient,
-			baseURL+RevisionServiceSquashProcedure,
-			connect.WithSchema(revisionServiceMethods.ByName("Squash")),
+			baseURL+RepositoryServiceSquashProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("Squash")),
 			connect.WithClientOptions(opts...),
 		),
 		evolog: connect.NewClient[RequestEvolog, ResponseEvolog](
 			httpClient,
-			baseURL+RevisionServiceEvologProcedure,
-			connect.WithSchema(revisionServiceMethods.ByName("Evolog")),
+			baseURL+RepositoryServiceEvologProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("Evolog")),
 			connect.WithClientOptions(opts...),
 		),
 		split: connect.NewClient[RequestSplit, ResponseSplit](
 			httpClient,
-			baseURL+RevisionServiceSplitProcedure,
-			connect.WithSchema(revisionServiceMethods.ByName("Split")),
+			baseURL+RepositoryServiceSplitProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("Split")),
 			connect.WithClientOptions(opts...),
 		),
 		restore: connect.NewClient[RequestRestore, ResponseRestore](
 			httpClient,
-			baseURL+RevisionServiceRestoreProcedure,
-			connect.WithSchema(revisionServiceMethods.ByName("Restore")),
+			baseURL+RepositoryServiceRestoreProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("Restore")),
 			connect.WithClientOptions(opts...),
 		),
 		diffRange: connect.NewClient[RequestDiffRange, ResponseDiffRange](
 			httpClient,
-			baseURL+RevisionServiceDiffRangeProcedure,
-			connect.WithSchema(revisionServiceMethods.ByName("DiffRange")),
+			baseURL+RepositoryServiceDiffRangeProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("DiffRange")),
 			connect.WithClientOptions(opts...),
 		),
 		listAgentCommits: connect.NewClient[RequestListAgentCommits, ResponseListAgentCommits](
 			httpClient,
-			baseURL+RevisionServiceListAgentCommitsProcedure,
-			connect.WithSchema(revisionServiceMethods.ByName("ListAgentCommits")),
+			baseURL+RepositoryServiceListAgentCommitsProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("ListAgentCommits")),
+			connect.WithClientOptions(opts...),
+		),
+		listBookmarks: connect.NewClient[RequestListBookmarks, ResponseListBookmarks](
+			httpClient,
+			baseURL+RepositoryServiceListBookmarksProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("ListBookmarks")),
+			connect.WithClientOptions(opts...),
+		),
+		setBookmark: connect.NewClient[RequestSetBookmark, ResponseSetBookmark](
+			httpClient,
+			baseURL+RepositoryServiceSetBookmarkProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("SetBookmark")),
+			connect.WithClientOptions(opts...),
+		),
+		moveBookmark: connect.NewClient[RequestMoveBookmark, ResponseMoveBookmark](
+			httpClient,
+			baseURL+RepositoryServiceMoveBookmarkProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("MoveBookmark")),
+			connect.WithClientOptions(opts...),
+		),
+		deleteBookmark: connect.NewClient[RequestDeleteBookmark, ResponseDeleteBookmark](
+			httpClient,
+			baseURL+RepositoryServiceDeleteBookmarkProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("DeleteBookmark")),
+			connect.WithClientOptions(opts...),
+		),
+		forgetBookmark: connect.NewClient[RequestForgetBookmark, ResponseForgetBookmark](
+			httpClient,
+			baseURL+RepositoryServiceForgetBookmarkProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("ForgetBookmark")),
+			connect.WithClientOptions(opts...),
+		),
+		trackBookmark: connect.NewClient[RequestTrackBookmark, ResponseTrackBookmark](
+			httpClient,
+			baseURL+RepositoryServiceTrackBookmarkProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("TrackBookmark")),
+			connect.WithClientOptions(opts...),
+		),
+		untrackBookmark: connect.NewClient[RequestUntrackBookmark, ResponseUntrackBookmark](
+			httpClient,
+			baseURL+RepositoryServiceUntrackBookmarkProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("UntrackBookmark")),
+			connect.WithClientOptions(opts...),
+		),
+		fetch: connect.NewClient[RequestFetch, ResponseFetch](
+			httpClient,
+			baseURL+RepositoryServiceFetchProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("Fetch")),
+			connect.WithClientOptions(opts...),
+		),
+		push: connect.NewClient[RequestPush, ResponsePush](
+			httpClient,
+			baseURL+RepositoryServicePushProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("Push")),
+			connect.WithClientOptions(opts...),
+		),
+		listOperations: connect.NewClient[RequestListOperations, ResponseListOperations](
+			httpClient,
+			baseURL+RepositoryServiceListOperationsProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("ListOperations")),
+			connect.WithClientOptions(opts...),
+		),
+		revertOperation: connect.NewClient[RequestRevertOperation, ResponseRevertOperation](
+			httpClient,
+			baseURL+RepositoryServiceRevertOperationProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("RevertOperation")),
+			connect.WithClientOptions(opts...),
+		),
+		restoreOperation: connect.NewClient[RequestRestoreOperation, ResponseRestoreOperation](
+			httpClient,
+			baseURL+RepositoryServiceRestoreOperationProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("RestoreOperation")),
+			connect.WithClientOptions(opts...),
+		),
+		getFile: connect.NewClient[RequestGetFile, ResponseGetFile](
+			httpClient,
+			baseURL+RepositoryServiceGetFileProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("GetFile")),
+			connect.WithClientOptions(opts...),
+		),
+		listFiles: connect.NewClient[RequestListFiles, ResponseListFiles](
+			httpClient,
+			baseURL+RepositoryServiceListFilesProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("ListFiles")),
+			connect.WithClientOptions(opts...),
+		),
+		writeFile: connect.NewClient[RequestWriteFile, ResponseWriteFile](
+			httpClient,
+			baseURL+RepositoryServiceWriteFileProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("WriteFile")),
+			connect.WithClientOptions(opts...),
+		),
+		listConflicts: connect.NewClient[RequestListConflicts, ResponseListConflicts](
+			httpClient,
+			baseURL+RepositoryServiceListConflictsProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("ListConflicts")),
+			connect.WithClientOptions(opts...),
+		),
+		getConflict: connect.NewClient[RequestGetConflict, ResponseGetConflict](
+			httpClient,
+			baseURL+RepositoryServiceGetConflictProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("GetConflict")),
+			connect.WithClientOptions(opts...),
+		),
+		resolve: connect.NewClient[RequestResolve, ResponseResolve](
+			httpClient,
+			baseURL+RepositoryServiceResolveProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("Resolve")),
+			connect.WithClientOptions(opts...),
+		),
+		listWorkspaces: connect.NewClient[RequestListRepositoryWorkspaces, ResponseListRepositoryWorkspaces](
+			httpClient,
+			baseURL+RepositoryServiceListWorkspacesProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("ListWorkspaces")),
+			connect.WithClientOptions(opts...),
+		),
+		addWorkspace: connect.NewClient[RequestAddRepositoryWorkspace, ResponseAddRepositoryWorkspace](
+			httpClient,
+			baseURL+RepositoryServiceAddWorkspaceProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("AddWorkspace")),
+			connect.WithClientOptions(opts...),
+		),
+		forgetWorkspace: connect.NewClient[RequestForgetRepositoryWorkspace, ResponseForgetRepositoryWorkspace](
+			httpClient,
+			baseURL+RepositoryServiceForgetWorkspaceProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("ForgetWorkspace")),
+			connect.WithClientOptions(opts...),
+		),
+		renameWorkspace: connect.NewClient[RequestRenameRepositoryWorkspace, ResponseRenameRepositoryWorkspace](
+			httpClient,
+			baseURL+RepositoryServiceRenameWorkspaceProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("RenameWorkspace")),
+			connect.WithClientOptions(opts...),
+		),
+		updateStale: connect.NewClient[RequestUpdateStale, ResponseUpdateStale](
+			httpClient,
+			baseURL+RepositoryServiceUpdateStaleProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("UpdateStale")),
+			connect.WithClientOptions(opts...),
+		),
+		listAliases: connect.NewClient[RequestListAliases, ResponseListAliases](
+			httpClient,
+			baseURL+RepositoryServiceListAliasesProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("ListAliases")),
+			connect.WithClientOptions(opts...),
+		),
+		runAlias: connect.NewClient[RequestRunAlias, ResponseRunAlias](
+			httpClient,
+			baseURL+RepositoryServiceRunAliasProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("RunAlias")),
 			connect.WithClientOptions(opts...),
 		),
 	}
 }
 
-// revisionServiceClient implements RevisionServiceClient.
-type revisionServiceClient struct {
+// repositoryServiceClient implements RepositoryServiceClient.
+type repositoryServiceClient struct {
+	list             *connect.Client[RequestListRepositories, ResponseListRepositories]
+	open             *connect.Client[RequestOpenRepository, ResponseOpenRepository]
+	close            *connect.Client[RequestCloseRepository, ResponseCloseRepository]
+	watch            *connect.Client[RequestWatchRepository, ResponseWatchRepository]
 	log              *connect.Client[RequestLog, ResponseLog]
 	getRevision      *connect.Client[RequestGetRevision, ResponseGetRevision]
 	new              *connect.Client[RequestNew, ResponseNew]
@@ -769,85 +840,259 @@ type revisionServiceClient struct {
 	restore          *connect.Client[RequestRestore, ResponseRestore]
 	diffRange        *connect.Client[RequestDiffRange, ResponseDiffRange]
 	listAgentCommits *connect.Client[RequestListAgentCommits, ResponseListAgentCommits]
+	listBookmarks    *connect.Client[RequestListBookmarks, ResponseListBookmarks]
+	setBookmark      *connect.Client[RequestSetBookmark, ResponseSetBookmark]
+	moveBookmark     *connect.Client[RequestMoveBookmark, ResponseMoveBookmark]
+	deleteBookmark   *connect.Client[RequestDeleteBookmark, ResponseDeleteBookmark]
+	forgetBookmark   *connect.Client[RequestForgetBookmark, ResponseForgetBookmark]
+	trackBookmark    *connect.Client[RequestTrackBookmark, ResponseTrackBookmark]
+	untrackBookmark  *connect.Client[RequestUntrackBookmark, ResponseUntrackBookmark]
+	fetch            *connect.Client[RequestFetch, ResponseFetch]
+	push             *connect.Client[RequestPush, ResponsePush]
+	listOperations   *connect.Client[RequestListOperations, ResponseListOperations]
+	revertOperation  *connect.Client[RequestRevertOperation, ResponseRevertOperation]
+	restoreOperation *connect.Client[RequestRestoreOperation, ResponseRestoreOperation]
+	getFile          *connect.Client[RequestGetFile, ResponseGetFile]
+	listFiles        *connect.Client[RequestListFiles, ResponseListFiles]
+	writeFile        *connect.Client[RequestWriteFile, ResponseWriteFile]
+	listConflicts    *connect.Client[RequestListConflicts, ResponseListConflicts]
+	getConflict      *connect.Client[RequestGetConflict, ResponseGetConflict]
+	resolve          *connect.Client[RequestResolve, ResponseResolve]
+	listWorkspaces   *connect.Client[RequestListRepositoryWorkspaces, ResponseListRepositoryWorkspaces]
+	addWorkspace     *connect.Client[RequestAddRepositoryWorkspace, ResponseAddRepositoryWorkspace]
+	forgetWorkspace  *connect.Client[RequestForgetRepositoryWorkspace, ResponseForgetRepositoryWorkspace]
+	renameWorkspace  *connect.Client[RequestRenameRepositoryWorkspace, ResponseRenameRepositoryWorkspace]
+	updateStale      *connect.Client[RequestUpdateStale, ResponseUpdateStale]
+	listAliases      *connect.Client[RequestListAliases, ResponseListAliases]
+	runAlias         *connect.Client[RequestRunAlias, ResponseRunAlias]
 }
 
-// Log calls mono.codexel.RevisionService.Log.
-func (c *revisionServiceClient) Log(ctx context.Context, req *connect.Request[RequestLog]) (*connect.Response[ResponseLog], error) {
+// List calls mono.codexel.RepositoryService.List.
+func (c *repositoryServiceClient) List(ctx context.Context, req *connect.Request[RequestListRepositories]) (*connect.Response[ResponseListRepositories], error) {
+	return c.list.CallUnary(ctx, req)
+}
+
+// Open calls mono.codexel.RepositoryService.Open.
+func (c *repositoryServiceClient) Open(ctx context.Context, req *connect.Request[RequestOpenRepository]) (*connect.Response[ResponseOpenRepository], error) {
+	return c.open.CallUnary(ctx, req)
+}
+
+// Close calls mono.codexel.RepositoryService.Close.
+func (c *repositoryServiceClient) Close(ctx context.Context, req *connect.Request[RequestCloseRepository]) (*connect.Response[ResponseCloseRepository], error) {
+	return c.close.CallUnary(ctx, req)
+}
+
+// Watch calls mono.codexel.RepositoryService.Watch.
+func (c *repositoryServiceClient) Watch(ctx context.Context, req *connect.Request[RequestWatchRepository]) (*connect.ServerStreamForClient[ResponseWatchRepository], error) {
+	return c.watch.CallServerStream(ctx, req)
+}
+
+// Log calls mono.codexel.RepositoryService.Log.
+func (c *repositoryServiceClient) Log(ctx context.Context, req *connect.Request[RequestLog]) (*connect.Response[ResponseLog], error) {
 	return c.log.CallUnary(ctx, req)
 }
 
-// GetRevision calls mono.codexel.RevisionService.GetRevision.
-func (c *revisionServiceClient) GetRevision(ctx context.Context, req *connect.Request[RequestGetRevision]) (*connect.Response[ResponseGetRevision], error) {
+// GetRevision calls mono.codexel.RepositoryService.GetRevision.
+func (c *repositoryServiceClient) GetRevision(ctx context.Context, req *connect.Request[RequestGetRevision]) (*connect.Response[ResponseGetRevision], error) {
 	return c.getRevision.CallUnary(ctx, req)
 }
 
-// New calls mono.codexel.RevisionService.New.
-func (c *revisionServiceClient) New(ctx context.Context, req *connect.Request[RequestNew]) (*connect.Response[ResponseNew], error) {
+// New calls mono.codexel.RepositoryService.New.
+func (c *repositoryServiceClient) New(ctx context.Context, req *connect.Request[RequestNew]) (*connect.Response[ResponseNew], error) {
 	return c.new.CallUnary(ctx, req)
 }
 
-// Edit calls mono.codexel.RevisionService.Edit.
-func (c *revisionServiceClient) Edit(ctx context.Context, req *connect.Request[RequestEdit]) (*connect.Response[ResponseEdit], error) {
+// Edit calls mono.codexel.RepositoryService.Edit.
+func (c *repositoryServiceClient) Edit(ctx context.Context, req *connect.Request[RequestEdit]) (*connect.Response[ResponseEdit], error) {
 	return c.edit.CallUnary(ctx, req)
 }
 
-// Abandon calls mono.codexel.RevisionService.Abandon.
-func (c *revisionServiceClient) Abandon(ctx context.Context, req *connect.Request[RequestAbandon]) (*connect.Response[ResponseAbandon], error) {
+// Abandon calls mono.codexel.RepositoryService.Abandon.
+func (c *repositoryServiceClient) Abandon(ctx context.Context, req *connect.Request[RequestAbandon]) (*connect.Response[ResponseAbandon], error) {
 	return c.abandon.CallUnary(ctx, req)
 }
 
-// Describe calls mono.codexel.RevisionService.Describe.
-func (c *revisionServiceClient) Describe(ctx context.Context, req *connect.Request[RequestDescribe]) (*connect.Response[ResponseDescribe], error) {
+// Describe calls mono.codexel.RepositoryService.Describe.
+func (c *repositoryServiceClient) Describe(ctx context.Context, req *connect.Request[RequestDescribe]) (*connect.Response[ResponseDescribe], error) {
 	return c.describe.CallUnary(ctx, req)
 }
 
-// Commit calls mono.codexel.RevisionService.Commit.
-func (c *revisionServiceClient) Commit(ctx context.Context, req *connect.Request[RequestCommit]) (*connect.Response[ResponseCommit], error) {
+// Commit calls mono.codexel.RepositoryService.Commit.
+func (c *repositoryServiceClient) Commit(ctx context.Context, req *connect.Request[RequestCommit]) (*connect.Response[ResponseCommit], error) {
 	return c.commit.CallUnary(ctx, req)
 }
 
-// Undo calls mono.codexel.RevisionService.Undo.
-func (c *revisionServiceClient) Undo(ctx context.Context, req *connect.Request[RequestUndo]) (*connect.Response[ResponseUndo], error) {
+// Undo calls mono.codexel.RepositoryService.Undo.
+func (c *repositoryServiceClient) Undo(ctx context.Context, req *connect.Request[RequestUndo]) (*connect.Response[ResponseUndo], error) {
 	return c.undo.CallUnary(ctx, req)
 }
 
-// Rebase calls mono.codexel.RevisionService.Rebase.
-func (c *revisionServiceClient) Rebase(ctx context.Context, req *connect.Request[RequestRebase]) (*connect.Response[ResponseRebase], error) {
+// Rebase calls mono.codexel.RepositoryService.Rebase.
+func (c *repositoryServiceClient) Rebase(ctx context.Context, req *connect.Request[RequestRebase]) (*connect.Response[ResponseRebase], error) {
 	return c.rebase.CallUnary(ctx, req)
 }
 
-// Squash calls mono.codexel.RevisionService.Squash.
-func (c *revisionServiceClient) Squash(ctx context.Context, req *connect.Request[RequestSquash]) (*connect.Response[ResponseSquash], error) {
+// Squash calls mono.codexel.RepositoryService.Squash.
+func (c *repositoryServiceClient) Squash(ctx context.Context, req *connect.Request[RequestSquash]) (*connect.Response[ResponseSquash], error) {
 	return c.squash.CallUnary(ctx, req)
 }
 
-// Evolog calls mono.codexel.RevisionService.Evolog.
-func (c *revisionServiceClient) Evolog(ctx context.Context, req *connect.Request[RequestEvolog]) (*connect.Response[ResponseEvolog], error) {
+// Evolog calls mono.codexel.RepositoryService.Evolog.
+func (c *repositoryServiceClient) Evolog(ctx context.Context, req *connect.Request[RequestEvolog]) (*connect.Response[ResponseEvolog], error) {
 	return c.evolog.CallUnary(ctx, req)
 }
 
-// Split calls mono.codexel.RevisionService.Split.
-func (c *revisionServiceClient) Split(ctx context.Context, req *connect.Request[RequestSplit]) (*connect.Response[ResponseSplit], error) {
+// Split calls mono.codexel.RepositoryService.Split.
+func (c *repositoryServiceClient) Split(ctx context.Context, req *connect.Request[RequestSplit]) (*connect.Response[ResponseSplit], error) {
 	return c.split.CallUnary(ctx, req)
 }
 
-// Restore calls mono.codexel.RevisionService.Restore.
-func (c *revisionServiceClient) Restore(ctx context.Context, req *connect.Request[RequestRestore]) (*connect.Response[ResponseRestore], error) {
+// Restore calls mono.codexel.RepositoryService.Restore.
+func (c *repositoryServiceClient) Restore(ctx context.Context, req *connect.Request[RequestRestore]) (*connect.Response[ResponseRestore], error) {
 	return c.restore.CallUnary(ctx, req)
 }
 
-// DiffRange calls mono.codexel.RevisionService.DiffRange.
-func (c *revisionServiceClient) DiffRange(ctx context.Context, req *connect.Request[RequestDiffRange]) (*connect.Response[ResponseDiffRange], error) {
+// DiffRange calls mono.codexel.RepositoryService.DiffRange.
+func (c *repositoryServiceClient) DiffRange(ctx context.Context, req *connect.Request[RequestDiffRange]) (*connect.Response[ResponseDiffRange], error) {
 	return c.diffRange.CallUnary(ctx, req)
 }
 
-// ListAgentCommits calls mono.codexel.RevisionService.ListAgentCommits.
-func (c *revisionServiceClient) ListAgentCommits(ctx context.Context, req *connect.Request[RequestListAgentCommits]) (*connect.Response[ResponseListAgentCommits], error) {
+// ListAgentCommits calls mono.codexel.RepositoryService.ListAgentCommits.
+func (c *repositoryServiceClient) ListAgentCommits(ctx context.Context, req *connect.Request[RequestListAgentCommits]) (*connect.Response[ResponseListAgentCommits], error) {
 	return c.listAgentCommits.CallUnary(ctx, req)
 }
 
-// RevisionServiceHandler is an implementation of the mono.codexel.RevisionService service.
-type RevisionServiceHandler interface {
+// ListBookmarks calls mono.codexel.RepositoryService.ListBookmarks.
+func (c *repositoryServiceClient) ListBookmarks(ctx context.Context, req *connect.Request[RequestListBookmarks]) (*connect.Response[ResponseListBookmarks], error) {
+	return c.listBookmarks.CallUnary(ctx, req)
+}
+
+// SetBookmark calls mono.codexel.RepositoryService.SetBookmark.
+func (c *repositoryServiceClient) SetBookmark(ctx context.Context, req *connect.Request[RequestSetBookmark]) (*connect.Response[ResponseSetBookmark], error) {
+	return c.setBookmark.CallUnary(ctx, req)
+}
+
+// MoveBookmark calls mono.codexel.RepositoryService.MoveBookmark.
+func (c *repositoryServiceClient) MoveBookmark(ctx context.Context, req *connect.Request[RequestMoveBookmark]) (*connect.Response[ResponseMoveBookmark], error) {
+	return c.moveBookmark.CallUnary(ctx, req)
+}
+
+// DeleteBookmark calls mono.codexel.RepositoryService.DeleteBookmark.
+func (c *repositoryServiceClient) DeleteBookmark(ctx context.Context, req *connect.Request[RequestDeleteBookmark]) (*connect.Response[ResponseDeleteBookmark], error) {
+	return c.deleteBookmark.CallUnary(ctx, req)
+}
+
+// ForgetBookmark calls mono.codexel.RepositoryService.ForgetBookmark.
+func (c *repositoryServiceClient) ForgetBookmark(ctx context.Context, req *connect.Request[RequestForgetBookmark]) (*connect.Response[ResponseForgetBookmark], error) {
+	return c.forgetBookmark.CallUnary(ctx, req)
+}
+
+// TrackBookmark calls mono.codexel.RepositoryService.TrackBookmark.
+func (c *repositoryServiceClient) TrackBookmark(ctx context.Context, req *connect.Request[RequestTrackBookmark]) (*connect.Response[ResponseTrackBookmark], error) {
+	return c.trackBookmark.CallUnary(ctx, req)
+}
+
+// UntrackBookmark calls mono.codexel.RepositoryService.UntrackBookmark.
+func (c *repositoryServiceClient) UntrackBookmark(ctx context.Context, req *connect.Request[RequestUntrackBookmark]) (*connect.Response[ResponseUntrackBookmark], error) {
+	return c.untrackBookmark.CallUnary(ctx, req)
+}
+
+// Fetch calls mono.codexel.RepositoryService.Fetch.
+func (c *repositoryServiceClient) Fetch(ctx context.Context, req *connect.Request[RequestFetch]) (*connect.Response[ResponseFetch], error) {
+	return c.fetch.CallUnary(ctx, req)
+}
+
+// Push calls mono.codexel.RepositoryService.Push.
+func (c *repositoryServiceClient) Push(ctx context.Context, req *connect.Request[RequestPush]) (*connect.Response[ResponsePush], error) {
+	return c.push.CallUnary(ctx, req)
+}
+
+// ListOperations calls mono.codexel.RepositoryService.ListOperations.
+func (c *repositoryServiceClient) ListOperations(ctx context.Context, req *connect.Request[RequestListOperations]) (*connect.Response[ResponseListOperations], error) {
+	return c.listOperations.CallUnary(ctx, req)
+}
+
+// RevertOperation calls mono.codexel.RepositoryService.RevertOperation.
+func (c *repositoryServiceClient) RevertOperation(ctx context.Context, req *connect.Request[RequestRevertOperation]) (*connect.Response[ResponseRevertOperation], error) {
+	return c.revertOperation.CallUnary(ctx, req)
+}
+
+// RestoreOperation calls mono.codexel.RepositoryService.RestoreOperation.
+func (c *repositoryServiceClient) RestoreOperation(ctx context.Context, req *connect.Request[RequestRestoreOperation]) (*connect.Response[ResponseRestoreOperation], error) {
+	return c.restoreOperation.CallUnary(ctx, req)
+}
+
+// GetFile calls mono.codexel.RepositoryService.GetFile.
+func (c *repositoryServiceClient) GetFile(ctx context.Context, req *connect.Request[RequestGetFile]) (*connect.Response[ResponseGetFile], error) {
+	return c.getFile.CallUnary(ctx, req)
+}
+
+// ListFiles calls mono.codexel.RepositoryService.ListFiles.
+func (c *repositoryServiceClient) ListFiles(ctx context.Context, req *connect.Request[RequestListFiles]) (*connect.Response[ResponseListFiles], error) {
+	return c.listFiles.CallUnary(ctx, req)
+}
+
+// WriteFile calls mono.codexel.RepositoryService.WriteFile.
+func (c *repositoryServiceClient) WriteFile(ctx context.Context, req *connect.Request[RequestWriteFile]) (*connect.Response[ResponseWriteFile], error) {
+	return c.writeFile.CallUnary(ctx, req)
+}
+
+// ListConflicts calls mono.codexel.RepositoryService.ListConflicts.
+func (c *repositoryServiceClient) ListConflicts(ctx context.Context, req *connect.Request[RequestListConflicts]) (*connect.Response[ResponseListConflicts], error) {
+	return c.listConflicts.CallUnary(ctx, req)
+}
+
+// GetConflict calls mono.codexel.RepositoryService.GetConflict.
+func (c *repositoryServiceClient) GetConflict(ctx context.Context, req *connect.Request[RequestGetConflict]) (*connect.Response[ResponseGetConflict], error) {
+	return c.getConflict.CallUnary(ctx, req)
+}
+
+// Resolve calls mono.codexel.RepositoryService.Resolve.
+func (c *repositoryServiceClient) Resolve(ctx context.Context, req *connect.Request[RequestResolve]) (*connect.Response[ResponseResolve], error) {
+	return c.resolve.CallUnary(ctx, req)
+}
+
+// ListWorkspaces calls mono.codexel.RepositoryService.ListWorkspaces.
+func (c *repositoryServiceClient) ListWorkspaces(ctx context.Context, req *connect.Request[RequestListRepositoryWorkspaces]) (*connect.Response[ResponseListRepositoryWorkspaces], error) {
+	return c.listWorkspaces.CallUnary(ctx, req)
+}
+
+// AddWorkspace calls mono.codexel.RepositoryService.AddWorkspace.
+func (c *repositoryServiceClient) AddWorkspace(ctx context.Context, req *connect.Request[RequestAddRepositoryWorkspace]) (*connect.Response[ResponseAddRepositoryWorkspace], error) {
+	return c.addWorkspace.CallUnary(ctx, req)
+}
+
+// ForgetWorkspace calls mono.codexel.RepositoryService.ForgetWorkspace.
+func (c *repositoryServiceClient) ForgetWorkspace(ctx context.Context, req *connect.Request[RequestForgetRepositoryWorkspace]) (*connect.Response[ResponseForgetRepositoryWorkspace], error) {
+	return c.forgetWorkspace.CallUnary(ctx, req)
+}
+
+// RenameWorkspace calls mono.codexel.RepositoryService.RenameWorkspace.
+func (c *repositoryServiceClient) RenameWorkspace(ctx context.Context, req *connect.Request[RequestRenameRepositoryWorkspace]) (*connect.Response[ResponseRenameRepositoryWorkspace], error) {
+	return c.renameWorkspace.CallUnary(ctx, req)
+}
+
+// UpdateStale calls mono.codexel.RepositoryService.UpdateStale.
+func (c *repositoryServiceClient) UpdateStale(ctx context.Context, req *connect.Request[RequestUpdateStale]) (*connect.Response[ResponseUpdateStale], error) {
+	return c.updateStale.CallUnary(ctx, req)
+}
+
+// ListAliases calls mono.codexel.RepositoryService.ListAliases.
+func (c *repositoryServiceClient) ListAliases(ctx context.Context, req *connect.Request[RequestListAliases]) (*connect.Response[ResponseListAliases], error) {
+	return c.listAliases.CallUnary(ctx, req)
+}
+
+// RunAlias calls mono.codexel.RepositoryService.RunAlias.
+func (c *repositoryServiceClient) RunAlias(ctx context.Context, req *connect.Request[RequestRunAlias]) (*connect.Response[ResponseRunAlias], error) {
+	return c.runAlias.CallUnary(ctx, req)
+}
+
+// RepositoryServiceHandler is an implementation of the mono.codexel.RepositoryService service.
+type RepositoryServiceHandler interface {
+	List(context.Context, *connect.Request[RequestListRepositories]) (*connect.Response[ResponseListRepositories], error)
+	Open(context.Context, *connect.Request[RequestOpenRepository]) (*connect.Response[ResponseOpenRepository], error)
+	Close(context.Context, *connect.Request[RequestCloseRepository]) (*connect.Response[ResponseCloseRepository], error)
+	Watch(context.Context, *connect.Request[RequestWatchRepository], *connect.ServerStream[ResponseWatchRepository]) error
 	Log(context.Context, *connect.Request[RequestLog]) (*connect.Response[ResponseLog], error)
 	GetRevision(context.Context, *connect.Request[RequestGetRevision]) (*connect.Response[ResponseGetRevision], error)
 	New(context.Context, *connect.Request[RequestNew]) (*connect.Response[ResponseNew], error)
@@ -863,208 +1108,6 @@ type RevisionServiceHandler interface {
 	Restore(context.Context, *connect.Request[RequestRestore]) (*connect.Response[ResponseRestore], error)
 	DiffRange(context.Context, *connect.Request[RequestDiffRange]) (*connect.Response[ResponseDiffRange], error)
 	ListAgentCommits(context.Context, *connect.Request[RequestListAgentCommits]) (*connect.Response[ResponseListAgentCommits], error)
-}
-
-// NewRevisionServiceHandler builds an HTTP handler from the service implementation. It returns the
-// path on which to mount the handler and the handler itself.
-//
-// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
-// and JSON codecs. They also support gzip compression.
-func NewRevisionServiceHandler(svc RevisionServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	revisionServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("RevisionService").Methods()
-	revisionServiceLogHandler := connect.NewUnaryHandler(
-		RevisionServiceLogProcedure,
-		svc.Log,
-		connect.WithSchema(revisionServiceMethods.ByName("Log")),
-		connect.WithHandlerOptions(opts...),
-	)
-	revisionServiceGetRevisionHandler := connect.NewUnaryHandler(
-		RevisionServiceGetRevisionProcedure,
-		svc.GetRevision,
-		connect.WithSchema(revisionServiceMethods.ByName("GetRevision")),
-		connect.WithHandlerOptions(opts...),
-	)
-	revisionServiceNewHandler := connect.NewUnaryHandler(
-		RevisionServiceNewProcedure,
-		svc.New,
-		connect.WithSchema(revisionServiceMethods.ByName("New")),
-		connect.WithHandlerOptions(opts...),
-	)
-	revisionServiceEditHandler := connect.NewUnaryHandler(
-		RevisionServiceEditProcedure,
-		svc.Edit,
-		connect.WithSchema(revisionServiceMethods.ByName("Edit")),
-		connect.WithHandlerOptions(opts...),
-	)
-	revisionServiceAbandonHandler := connect.NewUnaryHandler(
-		RevisionServiceAbandonProcedure,
-		svc.Abandon,
-		connect.WithSchema(revisionServiceMethods.ByName("Abandon")),
-		connect.WithHandlerOptions(opts...),
-	)
-	revisionServiceDescribeHandler := connect.NewUnaryHandler(
-		RevisionServiceDescribeProcedure,
-		svc.Describe,
-		connect.WithSchema(revisionServiceMethods.ByName("Describe")),
-		connect.WithHandlerOptions(opts...),
-	)
-	revisionServiceCommitHandler := connect.NewUnaryHandler(
-		RevisionServiceCommitProcedure,
-		svc.Commit,
-		connect.WithSchema(revisionServiceMethods.ByName("Commit")),
-		connect.WithHandlerOptions(opts...),
-	)
-	revisionServiceUndoHandler := connect.NewUnaryHandler(
-		RevisionServiceUndoProcedure,
-		svc.Undo,
-		connect.WithSchema(revisionServiceMethods.ByName("Undo")),
-		connect.WithHandlerOptions(opts...),
-	)
-	revisionServiceRebaseHandler := connect.NewUnaryHandler(
-		RevisionServiceRebaseProcedure,
-		svc.Rebase,
-		connect.WithSchema(revisionServiceMethods.ByName("Rebase")),
-		connect.WithHandlerOptions(opts...),
-	)
-	revisionServiceSquashHandler := connect.NewUnaryHandler(
-		RevisionServiceSquashProcedure,
-		svc.Squash,
-		connect.WithSchema(revisionServiceMethods.ByName("Squash")),
-		connect.WithHandlerOptions(opts...),
-	)
-	revisionServiceEvologHandler := connect.NewUnaryHandler(
-		RevisionServiceEvologProcedure,
-		svc.Evolog,
-		connect.WithSchema(revisionServiceMethods.ByName("Evolog")),
-		connect.WithHandlerOptions(opts...),
-	)
-	revisionServiceSplitHandler := connect.NewUnaryHandler(
-		RevisionServiceSplitProcedure,
-		svc.Split,
-		connect.WithSchema(revisionServiceMethods.ByName("Split")),
-		connect.WithHandlerOptions(opts...),
-	)
-	revisionServiceRestoreHandler := connect.NewUnaryHandler(
-		RevisionServiceRestoreProcedure,
-		svc.Restore,
-		connect.WithSchema(revisionServiceMethods.ByName("Restore")),
-		connect.WithHandlerOptions(opts...),
-	)
-	revisionServiceDiffRangeHandler := connect.NewUnaryHandler(
-		RevisionServiceDiffRangeProcedure,
-		svc.DiffRange,
-		connect.WithSchema(revisionServiceMethods.ByName("DiffRange")),
-		connect.WithHandlerOptions(opts...),
-	)
-	revisionServiceListAgentCommitsHandler := connect.NewUnaryHandler(
-		RevisionServiceListAgentCommitsProcedure,
-		svc.ListAgentCommits,
-		connect.WithSchema(revisionServiceMethods.ByName("ListAgentCommits")),
-		connect.WithHandlerOptions(opts...),
-	)
-	return "/mono.codexel.RevisionService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case RevisionServiceLogProcedure:
-			revisionServiceLogHandler.ServeHTTP(w, r)
-		case RevisionServiceGetRevisionProcedure:
-			revisionServiceGetRevisionHandler.ServeHTTP(w, r)
-		case RevisionServiceNewProcedure:
-			revisionServiceNewHandler.ServeHTTP(w, r)
-		case RevisionServiceEditProcedure:
-			revisionServiceEditHandler.ServeHTTP(w, r)
-		case RevisionServiceAbandonProcedure:
-			revisionServiceAbandonHandler.ServeHTTP(w, r)
-		case RevisionServiceDescribeProcedure:
-			revisionServiceDescribeHandler.ServeHTTP(w, r)
-		case RevisionServiceCommitProcedure:
-			revisionServiceCommitHandler.ServeHTTP(w, r)
-		case RevisionServiceUndoProcedure:
-			revisionServiceUndoHandler.ServeHTTP(w, r)
-		case RevisionServiceRebaseProcedure:
-			revisionServiceRebaseHandler.ServeHTTP(w, r)
-		case RevisionServiceSquashProcedure:
-			revisionServiceSquashHandler.ServeHTTP(w, r)
-		case RevisionServiceEvologProcedure:
-			revisionServiceEvologHandler.ServeHTTP(w, r)
-		case RevisionServiceSplitProcedure:
-			revisionServiceSplitHandler.ServeHTTP(w, r)
-		case RevisionServiceRestoreProcedure:
-			revisionServiceRestoreHandler.ServeHTTP(w, r)
-		case RevisionServiceDiffRangeProcedure:
-			revisionServiceDiffRangeHandler.ServeHTTP(w, r)
-		case RevisionServiceListAgentCommitsProcedure:
-			revisionServiceListAgentCommitsHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
-}
-
-// UnimplementedRevisionServiceHandler returns CodeUnimplemented from all methods.
-type UnimplementedRevisionServiceHandler struct{}
-
-func (UnimplementedRevisionServiceHandler) Log(context.Context, *connect.Request[RequestLog]) (*connect.Response[ResponseLog], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.Log is not implemented"))
-}
-
-func (UnimplementedRevisionServiceHandler) GetRevision(context.Context, *connect.Request[RequestGetRevision]) (*connect.Response[ResponseGetRevision], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.GetRevision is not implemented"))
-}
-
-func (UnimplementedRevisionServiceHandler) New(context.Context, *connect.Request[RequestNew]) (*connect.Response[ResponseNew], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.New is not implemented"))
-}
-
-func (UnimplementedRevisionServiceHandler) Edit(context.Context, *connect.Request[RequestEdit]) (*connect.Response[ResponseEdit], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.Edit is not implemented"))
-}
-
-func (UnimplementedRevisionServiceHandler) Abandon(context.Context, *connect.Request[RequestAbandon]) (*connect.Response[ResponseAbandon], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.Abandon is not implemented"))
-}
-
-func (UnimplementedRevisionServiceHandler) Describe(context.Context, *connect.Request[RequestDescribe]) (*connect.Response[ResponseDescribe], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.Describe is not implemented"))
-}
-
-func (UnimplementedRevisionServiceHandler) Commit(context.Context, *connect.Request[RequestCommit]) (*connect.Response[ResponseCommit], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.Commit is not implemented"))
-}
-
-func (UnimplementedRevisionServiceHandler) Undo(context.Context, *connect.Request[RequestUndo]) (*connect.Response[ResponseUndo], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.Undo is not implemented"))
-}
-
-func (UnimplementedRevisionServiceHandler) Rebase(context.Context, *connect.Request[RequestRebase]) (*connect.Response[ResponseRebase], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.Rebase is not implemented"))
-}
-
-func (UnimplementedRevisionServiceHandler) Squash(context.Context, *connect.Request[RequestSquash]) (*connect.Response[ResponseSquash], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.Squash is not implemented"))
-}
-
-func (UnimplementedRevisionServiceHandler) Evolog(context.Context, *connect.Request[RequestEvolog]) (*connect.Response[ResponseEvolog], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.Evolog is not implemented"))
-}
-
-func (UnimplementedRevisionServiceHandler) Split(context.Context, *connect.Request[RequestSplit]) (*connect.Response[ResponseSplit], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.Split is not implemented"))
-}
-
-func (UnimplementedRevisionServiceHandler) Restore(context.Context, *connect.Request[RequestRestore]) (*connect.Response[ResponseRestore], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.Restore is not implemented"))
-}
-
-func (UnimplementedRevisionServiceHandler) DiffRange(context.Context, *connect.Request[RequestDiffRange]) (*connect.Response[ResponseDiffRange], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.DiffRange is not implemented"))
-}
-
-func (UnimplementedRevisionServiceHandler) ListAgentCommits(context.Context, *connect.Request[RequestListAgentCommits]) (*connect.Response[ResponseListAgentCommits], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.ListAgentCommits is not implemented"))
-}
-
-// BookmarkServiceClient is a client for the mono.codexel.BookmarkService service.
-type BookmarkServiceClient interface {
 	ListBookmarks(context.Context, *connect.Request[RequestListBookmarks]) (*connect.Response[ResponseListBookmarks], error)
 	SetBookmark(context.Context, *connect.Request[RequestSetBookmark]) (*connect.Response[ResponseSetBookmark], error)
 	MoveBookmark(context.Context, *connect.Request[RequestMoveBookmark]) (*connect.Response[ResponseMoveBookmark], error)
@@ -1072,1031 +1115,578 @@ type BookmarkServiceClient interface {
 	ForgetBookmark(context.Context, *connect.Request[RequestForgetBookmark]) (*connect.Response[ResponseForgetBookmark], error)
 	TrackBookmark(context.Context, *connect.Request[RequestTrackBookmark]) (*connect.Response[ResponseTrackBookmark], error)
 	UntrackBookmark(context.Context, *connect.Request[RequestUntrackBookmark]) (*connect.Response[ResponseUntrackBookmark], error)
-}
-
-// NewBookmarkServiceClient constructs a client for the mono.codexel.BookmarkService service. By
-// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
-// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
-// connect.WithGRPC() or connect.WithGRPCWeb() options.
-//
-// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
-// http://api.acme.com or https://acme.com/grpc).
-func NewBookmarkServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) BookmarkServiceClient {
-	baseURL = strings.TrimRight(baseURL, "/")
-	bookmarkServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("BookmarkService").Methods()
-	return &bookmarkServiceClient{
-		listBookmarks: connect.NewClient[RequestListBookmarks, ResponseListBookmarks](
-			httpClient,
-			baseURL+BookmarkServiceListBookmarksProcedure,
-			connect.WithSchema(bookmarkServiceMethods.ByName("ListBookmarks")),
-			connect.WithClientOptions(opts...),
-		),
-		setBookmark: connect.NewClient[RequestSetBookmark, ResponseSetBookmark](
-			httpClient,
-			baseURL+BookmarkServiceSetBookmarkProcedure,
-			connect.WithSchema(bookmarkServiceMethods.ByName("SetBookmark")),
-			connect.WithClientOptions(opts...),
-		),
-		moveBookmark: connect.NewClient[RequestMoveBookmark, ResponseMoveBookmark](
-			httpClient,
-			baseURL+BookmarkServiceMoveBookmarkProcedure,
-			connect.WithSchema(bookmarkServiceMethods.ByName("MoveBookmark")),
-			connect.WithClientOptions(opts...),
-		),
-		deleteBookmark: connect.NewClient[RequestDeleteBookmark, ResponseDeleteBookmark](
-			httpClient,
-			baseURL+BookmarkServiceDeleteBookmarkProcedure,
-			connect.WithSchema(bookmarkServiceMethods.ByName("DeleteBookmark")),
-			connect.WithClientOptions(opts...),
-		),
-		forgetBookmark: connect.NewClient[RequestForgetBookmark, ResponseForgetBookmark](
-			httpClient,
-			baseURL+BookmarkServiceForgetBookmarkProcedure,
-			connect.WithSchema(bookmarkServiceMethods.ByName("ForgetBookmark")),
-			connect.WithClientOptions(opts...),
-		),
-		trackBookmark: connect.NewClient[RequestTrackBookmark, ResponseTrackBookmark](
-			httpClient,
-			baseURL+BookmarkServiceTrackBookmarkProcedure,
-			connect.WithSchema(bookmarkServiceMethods.ByName("TrackBookmark")),
-			connect.WithClientOptions(opts...),
-		),
-		untrackBookmark: connect.NewClient[RequestUntrackBookmark, ResponseUntrackBookmark](
-			httpClient,
-			baseURL+BookmarkServiceUntrackBookmarkProcedure,
-			connect.WithSchema(bookmarkServiceMethods.ByName("UntrackBookmark")),
-			connect.WithClientOptions(opts...),
-		),
-	}
-}
-
-// bookmarkServiceClient implements BookmarkServiceClient.
-type bookmarkServiceClient struct {
-	listBookmarks   *connect.Client[RequestListBookmarks, ResponseListBookmarks]
-	setBookmark     *connect.Client[RequestSetBookmark, ResponseSetBookmark]
-	moveBookmark    *connect.Client[RequestMoveBookmark, ResponseMoveBookmark]
-	deleteBookmark  *connect.Client[RequestDeleteBookmark, ResponseDeleteBookmark]
-	forgetBookmark  *connect.Client[RequestForgetBookmark, ResponseForgetBookmark]
-	trackBookmark   *connect.Client[RequestTrackBookmark, ResponseTrackBookmark]
-	untrackBookmark *connect.Client[RequestUntrackBookmark, ResponseUntrackBookmark]
-}
-
-// ListBookmarks calls mono.codexel.BookmarkService.ListBookmarks.
-func (c *bookmarkServiceClient) ListBookmarks(ctx context.Context, req *connect.Request[RequestListBookmarks]) (*connect.Response[ResponseListBookmarks], error) {
-	return c.listBookmarks.CallUnary(ctx, req)
-}
-
-// SetBookmark calls mono.codexel.BookmarkService.SetBookmark.
-func (c *bookmarkServiceClient) SetBookmark(ctx context.Context, req *connect.Request[RequestSetBookmark]) (*connect.Response[ResponseSetBookmark], error) {
-	return c.setBookmark.CallUnary(ctx, req)
-}
-
-// MoveBookmark calls mono.codexel.BookmarkService.MoveBookmark.
-func (c *bookmarkServiceClient) MoveBookmark(ctx context.Context, req *connect.Request[RequestMoveBookmark]) (*connect.Response[ResponseMoveBookmark], error) {
-	return c.moveBookmark.CallUnary(ctx, req)
-}
-
-// DeleteBookmark calls mono.codexel.BookmarkService.DeleteBookmark.
-func (c *bookmarkServiceClient) DeleteBookmark(ctx context.Context, req *connect.Request[RequestDeleteBookmark]) (*connect.Response[ResponseDeleteBookmark], error) {
-	return c.deleteBookmark.CallUnary(ctx, req)
-}
-
-// ForgetBookmark calls mono.codexel.BookmarkService.ForgetBookmark.
-func (c *bookmarkServiceClient) ForgetBookmark(ctx context.Context, req *connect.Request[RequestForgetBookmark]) (*connect.Response[ResponseForgetBookmark], error) {
-	return c.forgetBookmark.CallUnary(ctx, req)
-}
-
-// TrackBookmark calls mono.codexel.BookmarkService.TrackBookmark.
-func (c *bookmarkServiceClient) TrackBookmark(ctx context.Context, req *connect.Request[RequestTrackBookmark]) (*connect.Response[ResponseTrackBookmark], error) {
-	return c.trackBookmark.CallUnary(ctx, req)
-}
-
-// UntrackBookmark calls mono.codexel.BookmarkService.UntrackBookmark.
-func (c *bookmarkServiceClient) UntrackBookmark(ctx context.Context, req *connect.Request[RequestUntrackBookmark]) (*connect.Response[ResponseUntrackBookmark], error) {
-	return c.untrackBookmark.CallUnary(ctx, req)
-}
-
-// BookmarkServiceHandler is an implementation of the mono.codexel.BookmarkService service.
-type BookmarkServiceHandler interface {
-	ListBookmarks(context.Context, *connect.Request[RequestListBookmarks]) (*connect.Response[ResponseListBookmarks], error)
-	SetBookmark(context.Context, *connect.Request[RequestSetBookmark]) (*connect.Response[ResponseSetBookmark], error)
-	MoveBookmark(context.Context, *connect.Request[RequestMoveBookmark]) (*connect.Response[ResponseMoveBookmark], error)
-	DeleteBookmark(context.Context, *connect.Request[RequestDeleteBookmark]) (*connect.Response[ResponseDeleteBookmark], error)
-	ForgetBookmark(context.Context, *connect.Request[RequestForgetBookmark]) (*connect.Response[ResponseForgetBookmark], error)
-	TrackBookmark(context.Context, *connect.Request[RequestTrackBookmark]) (*connect.Response[ResponseTrackBookmark], error)
-	UntrackBookmark(context.Context, *connect.Request[RequestUntrackBookmark]) (*connect.Response[ResponseUntrackBookmark], error)
-}
-
-// NewBookmarkServiceHandler builds an HTTP handler from the service implementation. It returns the
-// path on which to mount the handler and the handler itself.
-//
-// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
-// and JSON codecs. They also support gzip compression.
-func NewBookmarkServiceHandler(svc BookmarkServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	bookmarkServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("BookmarkService").Methods()
-	bookmarkServiceListBookmarksHandler := connect.NewUnaryHandler(
-		BookmarkServiceListBookmarksProcedure,
-		svc.ListBookmarks,
-		connect.WithSchema(bookmarkServiceMethods.ByName("ListBookmarks")),
-		connect.WithHandlerOptions(opts...),
-	)
-	bookmarkServiceSetBookmarkHandler := connect.NewUnaryHandler(
-		BookmarkServiceSetBookmarkProcedure,
-		svc.SetBookmark,
-		connect.WithSchema(bookmarkServiceMethods.ByName("SetBookmark")),
-		connect.WithHandlerOptions(opts...),
-	)
-	bookmarkServiceMoveBookmarkHandler := connect.NewUnaryHandler(
-		BookmarkServiceMoveBookmarkProcedure,
-		svc.MoveBookmark,
-		connect.WithSchema(bookmarkServiceMethods.ByName("MoveBookmark")),
-		connect.WithHandlerOptions(opts...),
-	)
-	bookmarkServiceDeleteBookmarkHandler := connect.NewUnaryHandler(
-		BookmarkServiceDeleteBookmarkProcedure,
-		svc.DeleteBookmark,
-		connect.WithSchema(bookmarkServiceMethods.ByName("DeleteBookmark")),
-		connect.WithHandlerOptions(opts...),
-	)
-	bookmarkServiceForgetBookmarkHandler := connect.NewUnaryHandler(
-		BookmarkServiceForgetBookmarkProcedure,
-		svc.ForgetBookmark,
-		connect.WithSchema(bookmarkServiceMethods.ByName("ForgetBookmark")),
-		connect.WithHandlerOptions(opts...),
-	)
-	bookmarkServiceTrackBookmarkHandler := connect.NewUnaryHandler(
-		BookmarkServiceTrackBookmarkProcedure,
-		svc.TrackBookmark,
-		connect.WithSchema(bookmarkServiceMethods.ByName("TrackBookmark")),
-		connect.WithHandlerOptions(opts...),
-	)
-	bookmarkServiceUntrackBookmarkHandler := connect.NewUnaryHandler(
-		BookmarkServiceUntrackBookmarkProcedure,
-		svc.UntrackBookmark,
-		connect.WithSchema(bookmarkServiceMethods.ByName("UntrackBookmark")),
-		connect.WithHandlerOptions(opts...),
-	)
-	return "/mono.codexel.BookmarkService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case BookmarkServiceListBookmarksProcedure:
-			bookmarkServiceListBookmarksHandler.ServeHTTP(w, r)
-		case BookmarkServiceSetBookmarkProcedure:
-			bookmarkServiceSetBookmarkHandler.ServeHTTP(w, r)
-		case BookmarkServiceMoveBookmarkProcedure:
-			bookmarkServiceMoveBookmarkHandler.ServeHTTP(w, r)
-		case BookmarkServiceDeleteBookmarkProcedure:
-			bookmarkServiceDeleteBookmarkHandler.ServeHTTP(w, r)
-		case BookmarkServiceForgetBookmarkProcedure:
-			bookmarkServiceForgetBookmarkHandler.ServeHTTP(w, r)
-		case BookmarkServiceTrackBookmarkProcedure:
-			bookmarkServiceTrackBookmarkHandler.ServeHTTP(w, r)
-		case BookmarkServiceUntrackBookmarkProcedure:
-			bookmarkServiceUntrackBookmarkHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
-}
-
-// UnimplementedBookmarkServiceHandler returns CodeUnimplemented from all methods.
-type UnimplementedBookmarkServiceHandler struct{}
-
-func (UnimplementedBookmarkServiceHandler) ListBookmarks(context.Context, *connect.Request[RequestListBookmarks]) (*connect.Response[ResponseListBookmarks], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.BookmarkService.ListBookmarks is not implemented"))
-}
-
-func (UnimplementedBookmarkServiceHandler) SetBookmark(context.Context, *connect.Request[RequestSetBookmark]) (*connect.Response[ResponseSetBookmark], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.BookmarkService.SetBookmark is not implemented"))
-}
-
-func (UnimplementedBookmarkServiceHandler) MoveBookmark(context.Context, *connect.Request[RequestMoveBookmark]) (*connect.Response[ResponseMoveBookmark], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.BookmarkService.MoveBookmark is not implemented"))
-}
-
-func (UnimplementedBookmarkServiceHandler) DeleteBookmark(context.Context, *connect.Request[RequestDeleteBookmark]) (*connect.Response[ResponseDeleteBookmark], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.BookmarkService.DeleteBookmark is not implemented"))
-}
-
-func (UnimplementedBookmarkServiceHandler) ForgetBookmark(context.Context, *connect.Request[RequestForgetBookmark]) (*connect.Response[ResponseForgetBookmark], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.BookmarkService.ForgetBookmark is not implemented"))
-}
-
-func (UnimplementedBookmarkServiceHandler) TrackBookmark(context.Context, *connect.Request[RequestTrackBookmark]) (*connect.Response[ResponseTrackBookmark], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.BookmarkService.TrackBookmark is not implemented"))
-}
-
-func (UnimplementedBookmarkServiceHandler) UntrackBookmark(context.Context, *connect.Request[RequestUntrackBookmark]) (*connect.Response[ResponseUntrackBookmark], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.BookmarkService.UntrackBookmark is not implemented"))
-}
-
-// GitServiceClient is a client for the mono.codexel.GitService service.
-type GitServiceClient interface {
 	Fetch(context.Context, *connect.Request[RequestFetch]) (*connect.Response[ResponseFetch], error)
 	Push(context.Context, *connect.Request[RequestPush]) (*connect.Response[ResponsePush], error)
-}
-
-// NewGitServiceClient constructs a client for the mono.codexel.GitService service. By default, it
-// uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
-// uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
-// connect.WithGRPCWeb() options.
-//
-// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
-// http://api.acme.com or https://acme.com/grpc).
-func NewGitServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) GitServiceClient {
-	baseURL = strings.TrimRight(baseURL, "/")
-	gitServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("GitService").Methods()
-	return &gitServiceClient{
-		fetch: connect.NewClient[RequestFetch, ResponseFetch](
-			httpClient,
-			baseURL+GitServiceFetchProcedure,
-			connect.WithSchema(gitServiceMethods.ByName("Fetch")),
-			connect.WithClientOptions(opts...),
-		),
-		push: connect.NewClient[RequestPush, ResponsePush](
-			httpClient,
-			baseURL+GitServicePushProcedure,
-			connect.WithSchema(gitServiceMethods.ByName("Push")),
-			connect.WithClientOptions(opts...),
-		),
-	}
-}
-
-// gitServiceClient implements GitServiceClient.
-type gitServiceClient struct {
-	fetch *connect.Client[RequestFetch, ResponseFetch]
-	push  *connect.Client[RequestPush, ResponsePush]
-}
-
-// Fetch calls mono.codexel.GitService.Fetch.
-func (c *gitServiceClient) Fetch(ctx context.Context, req *connect.Request[RequestFetch]) (*connect.Response[ResponseFetch], error) {
-	return c.fetch.CallUnary(ctx, req)
-}
-
-// Push calls mono.codexel.GitService.Push.
-func (c *gitServiceClient) Push(ctx context.Context, req *connect.Request[RequestPush]) (*connect.Response[ResponsePush], error) {
-	return c.push.CallUnary(ctx, req)
-}
-
-// GitServiceHandler is an implementation of the mono.codexel.GitService service.
-type GitServiceHandler interface {
-	Fetch(context.Context, *connect.Request[RequestFetch]) (*connect.Response[ResponseFetch], error)
-	Push(context.Context, *connect.Request[RequestPush]) (*connect.Response[ResponsePush], error)
-}
-
-// NewGitServiceHandler builds an HTTP handler from the service implementation. It returns the path
-// on which to mount the handler and the handler itself.
-//
-// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
-// and JSON codecs. They also support gzip compression.
-func NewGitServiceHandler(svc GitServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	gitServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("GitService").Methods()
-	gitServiceFetchHandler := connect.NewUnaryHandler(
-		GitServiceFetchProcedure,
-		svc.Fetch,
-		connect.WithSchema(gitServiceMethods.ByName("Fetch")),
-		connect.WithHandlerOptions(opts...),
-	)
-	gitServicePushHandler := connect.NewUnaryHandler(
-		GitServicePushProcedure,
-		svc.Push,
-		connect.WithSchema(gitServiceMethods.ByName("Push")),
-		connect.WithHandlerOptions(opts...),
-	)
-	return "/mono.codexel.GitService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case GitServiceFetchProcedure:
-			gitServiceFetchHandler.ServeHTTP(w, r)
-		case GitServicePushProcedure:
-			gitServicePushHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
-}
-
-// UnimplementedGitServiceHandler returns CodeUnimplemented from all methods.
-type UnimplementedGitServiceHandler struct{}
-
-func (UnimplementedGitServiceHandler) Fetch(context.Context, *connect.Request[RequestFetch]) (*connect.Response[ResponseFetch], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.GitService.Fetch is not implemented"))
-}
-
-func (UnimplementedGitServiceHandler) Push(context.Context, *connect.Request[RequestPush]) (*connect.Response[ResponsePush], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.GitService.Push is not implemented"))
-}
-
-// OperationServiceClient is a client for the mono.codexel.OperationService service.
-type OperationServiceClient interface {
 	ListOperations(context.Context, *connect.Request[RequestListOperations]) (*connect.Response[ResponseListOperations], error)
 	RevertOperation(context.Context, *connect.Request[RequestRevertOperation]) (*connect.Response[ResponseRevertOperation], error)
 	RestoreOperation(context.Context, *connect.Request[RequestRestoreOperation]) (*connect.Response[ResponseRestoreOperation], error)
-}
-
-// NewOperationServiceClient constructs a client for the mono.codexel.OperationService service. By
-// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
-// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
-// connect.WithGRPC() or connect.WithGRPCWeb() options.
-//
-// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
-// http://api.acme.com or https://acme.com/grpc).
-func NewOperationServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) OperationServiceClient {
-	baseURL = strings.TrimRight(baseURL, "/")
-	operationServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("OperationService").Methods()
-	return &operationServiceClient{
-		listOperations: connect.NewClient[RequestListOperations, ResponseListOperations](
-			httpClient,
-			baseURL+OperationServiceListOperationsProcedure,
-			connect.WithSchema(operationServiceMethods.ByName("ListOperations")),
-			connect.WithClientOptions(opts...),
-		),
-		revertOperation: connect.NewClient[RequestRevertOperation, ResponseRevertOperation](
-			httpClient,
-			baseURL+OperationServiceRevertOperationProcedure,
-			connect.WithSchema(operationServiceMethods.ByName("RevertOperation")),
-			connect.WithClientOptions(opts...),
-		),
-		restoreOperation: connect.NewClient[RequestRestoreOperation, ResponseRestoreOperation](
-			httpClient,
-			baseURL+OperationServiceRestoreOperationProcedure,
-			connect.WithSchema(operationServiceMethods.ByName("RestoreOperation")),
-			connect.WithClientOptions(opts...),
-		),
-	}
-}
-
-// operationServiceClient implements OperationServiceClient.
-type operationServiceClient struct {
-	listOperations   *connect.Client[RequestListOperations, ResponseListOperations]
-	revertOperation  *connect.Client[RequestRevertOperation, ResponseRevertOperation]
-	restoreOperation *connect.Client[RequestRestoreOperation, ResponseRestoreOperation]
-}
-
-// ListOperations calls mono.codexel.OperationService.ListOperations.
-func (c *operationServiceClient) ListOperations(ctx context.Context, req *connect.Request[RequestListOperations]) (*connect.Response[ResponseListOperations], error) {
-	return c.listOperations.CallUnary(ctx, req)
-}
-
-// RevertOperation calls mono.codexel.OperationService.RevertOperation.
-func (c *operationServiceClient) RevertOperation(ctx context.Context, req *connect.Request[RequestRevertOperation]) (*connect.Response[ResponseRevertOperation], error) {
-	return c.revertOperation.CallUnary(ctx, req)
-}
-
-// RestoreOperation calls mono.codexel.OperationService.RestoreOperation.
-func (c *operationServiceClient) RestoreOperation(ctx context.Context, req *connect.Request[RequestRestoreOperation]) (*connect.Response[ResponseRestoreOperation], error) {
-	return c.restoreOperation.CallUnary(ctx, req)
-}
-
-// OperationServiceHandler is an implementation of the mono.codexel.OperationService service.
-type OperationServiceHandler interface {
-	ListOperations(context.Context, *connect.Request[RequestListOperations]) (*connect.Response[ResponseListOperations], error)
-	RevertOperation(context.Context, *connect.Request[RequestRevertOperation]) (*connect.Response[ResponseRevertOperation], error)
-	RestoreOperation(context.Context, *connect.Request[RequestRestoreOperation]) (*connect.Response[ResponseRestoreOperation], error)
-}
-
-// NewOperationServiceHandler builds an HTTP handler from the service implementation. It returns the
-// path on which to mount the handler and the handler itself.
-//
-// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
-// and JSON codecs. They also support gzip compression.
-func NewOperationServiceHandler(svc OperationServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	operationServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("OperationService").Methods()
-	operationServiceListOperationsHandler := connect.NewUnaryHandler(
-		OperationServiceListOperationsProcedure,
-		svc.ListOperations,
-		connect.WithSchema(operationServiceMethods.ByName("ListOperations")),
-		connect.WithHandlerOptions(opts...),
-	)
-	operationServiceRevertOperationHandler := connect.NewUnaryHandler(
-		OperationServiceRevertOperationProcedure,
-		svc.RevertOperation,
-		connect.WithSchema(operationServiceMethods.ByName("RevertOperation")),
-		connect.WithHandlerOptions(opts...),
-	)
-	operationServiceRestoreOperationHandler := connect.NewUnaryHandler(
-		OperationServiceRestoreOperationProcedure,
-		svc.RestoreOperation,
-		connect.WithSchema(operationServiceMethods.ByName("RestoreOperation")),
-		connect.WithHandlerOptions(opts...),
-	)
-	return "/mono.codexel.OperationService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case OperationServiceListOperationsProcedure:
-			operationServiceListOperationsHandler.ServeHTTP(w, r)
-		case OperationServiceRevertOperationProcedure:
-			operationServiceRevertOperationHandler.ServeHTTP(w, r)
-		case OperationServiceRestoreOperationProcedure:
-			operationServiceRestoreOperationHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
-}
-
-// UnimplementedOperationServiceHandler returns CodeUnimplemented from all methods.
-type UnimplementedOperationServiceHandler struct{}
-
-func (UnimplementedOperationServiceHandler) ListOperations(context.Context, *connect.Request[RequestListOperations]) (*connect.Response[ResponseListOperations], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.OperationService.ListOperations is not implemented"))
-}
-
-func (UnimplementedOperationServiceHandler) RevertOperation(context.Context, *connect.Request[RequestRevertOperation]) (*connect.Response[ResponseRevertOperation], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.OperationService.RevertOperation is not implemented"))
-}
-
-func (UnimplementedOperationServiceHandler) RestoreOperation(context.Context, *connect.Request[RequestRestoreOperation]) (*connect.Response[ResponseRestoreOperation], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.OperationService.RestoreOperation is not implemented"))
-}
-
-// FileServiceClient is a client for the mono.codexel.FileService service.
-type FileServiceClient interface {
 	GetFile(context.Context, *connect.Request[RequestGetFile]) (*connect.Response[ResponseGetFile], error)
 	ListFiles(context.Context, *connect.Request[RequestListFiles]) (*connect.Response[ResponseListFiles], error)
 	WriteFile(context.Context, *connect.Request[RequestWriteFile]) (*connect.Response[ResponseWriteFile], error)
-}
-
-// NewFileServiceClient constructs a client for the mono.codexel.FileService service. By default, it
-// uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
-// uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
-// connect.WithGRPCWeb() options.
-//
-// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
-// http://api.acme.com or https://acme.com/grpc).
-func NewFileServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) FileServiceClient {
-	baseURL = strings.TrimRight(baseURL, "/")
-	fileServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("FileService").Methods()
-	return &fileServiceClient{
-		getFile: connect.NewClient[RequestGetFile, ResponseGetFile](
-			httpClient,
-			baseURL+FileServiceGetFileProcedure,
-			connect.WithSchema(fileServiceMethods.ByName("GetFile")),
-			connect.WithClientOptions(opts...),
-		),
-		listFiles: connect.NewClient[RequestListFiles, ResponseListFiles](
-			httpClient,
-			baseURL+FileServiceListFilesProcedure,
-			connect.WithSchema(fileServiceMethods.ByName("ListFiles")),
-			connect.WithClientOptions(opts...),
-		),
-		writeFile: connect.NewClient[RequestWriteFile, ResponseWriteFile](
-			httpClient,
-			baseURL+FileServiceWriteFileProcedure,
-			connect.WithSchema(fileServiceMethods.ByName("WriteFile")),
-			connect.WithClientOptions(opts...),
-		),
-	}
-}
-
-// fileServiceClient implements FileServiceClient.
-type fileServiceClient struct {
-	getFile   *connect.Client[RequestGetFile, ResponseGetFile]
-	listFiles *connect.Client[RequestListFiles, ResponseListFiles]
-	writeFile *connect.Client[RequestWriteFile, ResponseWriteFile]
-}
-
-// GetFile calls mono.codexel.FileService.GetFile.
-func (c *fileServiceClient) GetFile(ctx context.Context, req *connect.Request[RequestGetFile]) (*connect.Response[ResponseGetFile], error) {
-	return c.getFile.CallUnary(ctx, req)
-}
-
-// ListFiles calls mono.codexel.FileService.ListFiles.
-func (c *fileServiceClient) ListFiles(ctx context.Context, req *connect.Request[RequestListFiles]) (*connect.Response[ResponseListFiles], error) {
-	return c.listFiles.CallUnary(ctx, req)
-}
-
-// WriteFile calls mono.codexel.FileService.WriteFile.
-func (c *fileServiceClient) WriteFile(ctx context.Context, req *connect.Request[RequestWriteFile]) (*connect.Response[ResponseWriteFile], error) {
-	return c.writeFile.CallUnary(ctx, req)
-}
-
-// FileServiceHandler is an implementation of the mono.codexel.FileService service.
-type FileServiceHandler interface {
-	GetFile(context.Context, *connect.Request[RequestGetFile]) (*connect.Response[ResponseGetFile], error)
-	ListFiles(context.Context, *connect.Request[RequestListFiles]) (*connect.Response[ResponseListFiles], error)
-	WriteFile(context.Context, *connect.Request[RequestWriteFile]) (*connect.Response[ResponseWriteFile], error)
-}
-
-// NewFileServiceHandler builds an HTTP handler from the service implementation. It returns the path
-// on which to mount the handler and the handler itself.
-//
-// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
-// and JSON codecs. They also support gzip compression.
-func NewFileServiceHandler(svc FileServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	fileServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("FileService").Methods()
-	fileServiceGetFileHandler := connect.NewUnaryHandler(
-		FileServiceGetFileProcedure,
-		svc.GetFile,
-		connect.WithSchema(fileServiceMethods.ByName("GetFile")),
-		connect.WithHandlerOptions(opts...),
-	)
-	fileServiceListFilesHandler := connect.NewUnaryHandler(
-		FileServiceListFilesProcedure,
-		svc.ListFiles,
-		connect.WithSchema(fileServiceMethods.ByName("ListFiles")),
-		connect.WithHandlerOptions(opts...),
-	)
-	fileServiceWriteFileHandler := connect.NewUnaryHandler(
-		FileServiceWriteFileProcedure,
-		svc.WriteFile,
-		connect.WithSchema(fileServiceMethods.ByName("WriteFile")),
-		connect.WithHandlerOptions(opts...),
-	)
-	return "/mono.codexel.FileService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case FileServiceGetFileProcedure:
-			fileServiceGetFileHandler.ServeHTTP(w, r)
-		case FileServiceListFilesProcedure:
-			fileServiceListFilesHandler.ServeHTTP(w, r)
-		case FileServiceWriteFileProcedure:
-			fileServiceWriteFileHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
-}
-
-// UnimplementedFileServiceHandler returns CodeUnimplemented from all methods.
-type UnimplementedFileServiceHandler struct{}
-
-func (UnimplementedFileServiceHandler) GetFile(context.Context, *connect.Request[RequestGetFile]) (*connect.Response[ResponseGetFile], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.FileService.GetFile is not implemented"))
-}
-
-func (UnimplementedFileServiceHandler) ListFiles(context.Context, *connect.Request[RequestListFiles]) (*connect.Response[ResponseListFiles], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.FileService.ListFiles is not implemented"))
-}
-
-func (UnimplementedFileServiceHandler) WriteFile(context.Context, *connect.Request[RequestWriteFile]) (*connect.Response[ResponseWriteFile], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.FileService.WriteFile is not implemented"))
-}
-
-// ConflictServiceClient is a client for the mono.codexel.ConflictService service.
-type ConflictServiceClient interface {
 	ListConflicts(context.Context, *connect.Request[RequestListConflicts]) (*connect.Response[ResponseListConflicts], error)
 	GetConflict(context.Context, *connect.Request[RequestGetConflict]) (*connect.Response[ResponseGetConflict], error)
 	Resolve(context.Context, *connect.Request[RequestResolve]) (*connect.Response[ResponseResolve], error)
-}
-
-// NewConflictServiceClient constructs a client for the mono.codexel.ConflictService service. By
-// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
-// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
-// connect.WithGRPC() or connect.WithGRPCWeb() options.
-//
-// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
-// http://api.acme.com or https://acme.com/grpc).
-func NewConflictServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) ConflictServiceClient {
-	baseURL = strings.TrimRight(baseURL, "/")
-	conflictServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("ConflictService").Methods()
-	return &conflictServiceClient{
-		listConflicts: connect.NewClient[RequestListConflicts, ResponseListConflicts](
-			httpClient,
-			baseURL+ConflictServiceListConflictsProcedure,
-			connect.WithSchema(conflictServiceMethods.ByName("ListConflicts")),
-			connect.WithClientOptions(opts...),
-		),
-		getConflict: connect.NewClient[RequestGetConflict, ResponseGetConflict](
-			httpClient,
-			baseURL+ConflictServiceGetConflictProcedure,
-			connect.WithSchema(conflictServiceMethods.ByName("GetConflict")),
-			connect.WithClientOptions(opts...),
-		),
-		resolve: connect.NewClient[RequestResolve, ResponseResolve](
-			httpClient,
-			baseURL+ConflictServiceResolveProcedure,
-			connect.WithSchema(conflictServiceMethods.ByName("Resolve")),
-			connect.WithClientOptions(opts...),
-		),
-	}
-}
-
-// conflictServiceClient implements ConflictServiceClient.
-type conflictServiceClient struct {
-	listConflicts *connect.Client[RequestListConflicts, ResponseListConflicts]
-	getConflict   *connect.Client[RequestGetConflict, ResponseGetConflict]
-	resolve       *connect.Client[RequestResolve, ResponseResolve]
-}
-
-// ListConflicts calls mono.codexel.ConflictService.ListConflicts.
-func (c *conflictServiceClient) ListConflicts(ctx context.Context, req *connect.Request[RequestListConflicts]) (*connect.Response[ResponseListConflicts], error) {
-	return c.listConflicts.CallUnary(ctx, req)
-}
-
-// GetConflict calls mono.codexel.ConflictService.GetConflict.
-func (c *conflictServiceClient) GetConflict(ctx context.Context, req *connect.Request[RequestGetConflict]) (*connect.Response[ResponseGetConflict], error) {
-	return c.getConflict.CallUnary(ctx, req)
-}
-
-// Resolve calls mono.codexel.ConflictService.Resolve.
-func (c *conflictServiceClient) Resolve(ctx context.Context, req *connect.Request[RequestResolve]) (*connect.Response[ResponseResolve], error) {
-	return c.resolve.CallUnary(ctx, req)
-}
-
-// ConflictServiceHandler is an implementation of the mono.codexel.ConflictService service.
-type ConflictServiceHandler interface {
-	ListConflicts(context.Context, *connect.Request[RequestListConflicts]) (*connect.Response[ResponseListConflicts], error)
-	GetConflict(context.Context, *connect.Request[RequestGetConflict]) (*connect.Response[ResponseGetConflict], error)
-	Resolve(context.Context, *connect.Request[RequestResolve]) (*connect.Response[ResponseResolve], error)
-}
-
-// NewConflictServiceHandler builds an HTTP handler from the service implementation. It returns the
-// path on which to mount the handler and the handler itself.
-//
-// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
-// and JSON codecs. They also support gzip compression.
-func NewConflictServiceHandler(svc ConflictServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	conflictServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("ConflictService").Methods()
-	conflictServiceListConflictsHandler := connect.NewUnaryHandler(
-		ConflictServiceListConflictsProcedure,
-		svc.ListConflicts,
-		connect.WithSchema(conflictServiceMethods.ByName("ListConflicts")),
-		connect.WithHandlerOptions(opts...),
-	)
-	conflictServiceGetConflictHandler := connect.NewUnaryHandler(
-		ConflictServiceGetConflictProcedure,
-		svc.GetConflict,
-		connect.WithSchema(conflictServiceMethods.ByName("GetConflict")),
-		connect.WithHandlerOptions(opts...),
-	)
-	conflictServiceResolveHandler := connect.NewUnaryHandler(
-		ConflictServiceResolveProcedure,
-		svc.Resolve,
-		connect.WithSchema(conflictServiceMethods.ByName("Resolve")),
-		connect.WithHandlerOptions(opts...),
-	)
-	return "/mono.codexel.ConflictService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case ConflictServiceListConflictsProcedure:
-			conflictServiceListConflictsHandler.ServeHTTP(w, r)
-		case ConflictServiceGetConflictProcedure:
-			conflictServiceGetConflictHandler.ServeHTTP(w, r)
-		case ConflictServiceResolveProcedure:
-			conflictServiceResolveHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
-}
-
-// UnimplementedConflictServiceHandler returns CodeUnimplemented from all methods.
-type UnimplementedConflictServiceHandler struct{}
-
-func (UnimplementedConflictServiceHandler) ListConflicts(context.Context, *connect.Request[RequestListConflicts]) (*connect.Response[ResponseListConflicts], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ConflictService.ListConflicts is not implemented"))
-}
-
-func (UnimplementedConflictServiceHandler) GetConflict(context.Context, *connect.Request[RequestGetConflict]) (*connect.Response[ResponseGetConflict], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ConflictService.GetConflict is not implemented"))
-}
-
-func (UnimplementedConflictServiceHandler) Resolve(context.Context, *connect.Request[RequestResolve]) (*connect.Response[ResponseResolve], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ConflictService.Resolve is not implemented"))
-}
-
-// WorkspaceServiceClient is a client for the mono.codexel.WorkspaceService service.
-type WorkspaceServiceClient interface {
-	ListRepositoryWorkspaces(context.Context, *connect.Request[RequestListRepositoryWorkspaces]) (*connect.Response[ResponseListRepositoryWorkspaces], error)
-	AddRepositoryWorkspace(context.Context, *connect.Request[RequestAddRepositoryWorkspace]) (*connect.Response[ResponseAddRepositoryWorkspace], error)
-	ForgetRepositoryWorkspace(context.Context, *connect.Request[RequestForgetRepositoryWorkspace]) (*connect.Response[ResponseForgetRepositoryWorkspace], error)
-	RenameRepositoryWorkspace(context.Context, *connect.Request[RequestRenameRepositoryWorkspace]) (*connect.Response[ResponseRenameRepositoryWorkspace], error)
+	ListWorkspaces(context.Context, *connect.Request[RequestListRepositoryWorkspaces]) (*connect.Response[ResponseListRepositoryWorkspaces], error)
+	AddWorkspace(context.Context, *connect.Request[RequestAddRepositoryWorkspace]) (*connect.Response[ResponseAddRepositoryWorkspace], error)
+	ForgetWorkspace(context.Context, *connect.Request[RequestForgetRepositoryWorkspace]) (*connect.Response[ResponseForgetRepositoryWorkspace], error)
+	RenameWorkspace(context.Context, *connect.Request[RequestRenameRepositoryWorkspace]) (*connect.Response[ResponseRenameRepositoryWorkspace], error)
 	UpdateStale(context.Context, *connect.Request[RequestUpdateStale]) (*connect.Response[ResponseUpdateStale], error)
-}
-
-// NewWorkspaceServiceClient constructs a client for the mono.codexel.WorkspaceService service. By
-// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
-// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
-// connect.WithGRPC() or connect.WithGRPCWeb() options.
-//
-// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
-// http://api.acme.com or https://acme.com/grpc).
-func NewWorkspaceServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) WorkspaceServiceClient {
-	baseURL = strings.TrimRight(baseURL, "/")
-	workspaceServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("WorkspaceService").Methods()
-	return &workspaceServiceClient{
-		listRepositoryWorkspaces: connect.NewClient[RequestListRepositoryWorkspaces, ResponseListRepositoryWorkspaces](
-			httpClient,
-			baseURL+WorkspaceServiceListRepositoryWorkspacesProcedure,
-			connect.WithSchema(workspaceServiceMethods.ByName("ListRepositoryWorkspaces")),
-			connect.WithClientOptions(opts...),
-		),
-		addRepositoryWorkspace: connect.NewClient[RequestAddRepositoryWorkspace, ResponseAddRepositoryWorkspace](
-			httpClient,
-			baseURL+WorkspaceServiceAddRepositoryWorkspaceProcedure,
-			connect.WithSchema(workspaceServiceMethods.ByName("AddRepositoryWorkspace")),
-			connect.WithClientOptions(opts...),
-		),
-		forgetRepositoryWorkspace: connect.NewClient[RequestForgetRepositoryWorkspace, ResponseForgetRepositoryWorkspace](
-			httpClient,
-			baseURL+WorkspaceServiceForgetRepositoryWorkspaceProcedure,
-			connect.WithSchema(workspaceServiceMethods.ByName("ForgetRepositoryWorkspace")),
-			connect.WithClientOptions(opts...),
-		),
-		renameRepositoryWorkspace: connect.NewClient[RequestRenameRepositoryWorkspace, ResponseRenameRepositoryWorkspace](
-			httpClient,
-			baseURL+WorkspaceServiceRenameRepositoryWorkspaceProcedure,
-			connect.WithSchema(workspaceServiceMethods.ByName("RenameRepositoryWorkspace")),
-			connect.WithClientOptions(opts...),
-		),
-		updateStale: connect.NewClient[RequestUpdateStale, ResponseUpdateStale](
-			httpClient,
-			baseURL+WorkspaceServiceUpdateStaleProcedure,
-			connect.WithSchema(workspaceServiceMethods.ByName("UpdateStale")),
-			connect.WithClientOptions(opts...),
-		),
-	}
-}
-
-// workspaceServiceClient implements WorkspaceServiceClient.
-type workspaceServiceClient struct {
-	listRepositoryWorkspaces  *connect.Client[RequestListRepositoryWorkspaces, ResponseListRepositoryWorkspaces]
-	addRepositoryWorkspace    *connect.Client[RequestAddRepositoryWorkspace, ResponseAddRepositoryWorkspace]
-	forgetRepositoryWorkspace *connect.Client[RequestForgetRepositoryWorkspace, ResponseForgetRepositoryWorkspace]
-	renameRepositoryWorkspace *connect.Client[RequestRenameRepositoryWorkspace, ResponseRenameRepositoryWorkspace]
-	updateStale               *connect.Client[RequestUpdateStale, ResponseUpdateStale]
-}
-
-// ListRepositoryWorkspaces calls mono.codexel.WorkspaceService.ListRepositoryWorkspaces.
-func (c *workspaceServiceClient) ListRepositoryWorkspaces(ctx context.Context, req *connect.Request[RequestListRepositoryWorkspaces]) (*connect.Response[ResponseListRepositoryWorkspaces], error) {
-	return c.listRepositoryWorkspaces.CallUnary(ctx, req)
-}
-
-// AddRepositoryWorkspace calls mono.codexel.WorkspaceService.AddRepositoryWorkspace.
-func (c *workspaceServiceClient) AddRepositoryWorkspace(ctx context.Context, req *connect.Request[RequestAddRepositoryWorkspace]) (*connect.Response[ResponseAddRepositoryWorkspace], error) {
-	return c.addRepositoryWorkspace.CallUnary(ctx, req)
-}
-
-// ForgetRepositoryWorkspace calls mono.codexel.WorkspaceService.ForgetRepositoryWorkspace.
-func (c *workspaceServiceClient) ForgetRepositoryWorkspace(ctx context.Context, req *connect.Request[RequestForgetRepositoryWorkspace]) (*connect.Response[ResponseForgetRepositoryWorkspace], error) {
-	return c.forgetRepositoryWorkspace.CallUnary(ctx, req)
-}
-
-// RenameRepositoryWorkspace calls mono.codexel.WorkspaceService.RenameRepositoryWorkspace.
-func (c *workspaceServiceClient) RenameRepositoryWorkspace(ctx context.Context, req *connect.Request[RequestRenameRepositoryWorkspace]) (*connect.Response[ResponseRenameRepositoryWorkspace], error) {
-	return c.renameRepositoryWorkspace.CallUnary(ctx, req)
-}
-
-// UpdateStale calls mono.codexel.WorkspaceService.UpdateStale.
-func (c *workspaceServiceClient) UpdateStale(ctx context.Context, req *connect.Request[RequestUpdateStale]) (*connect.Response[ResponseUpdateStale], error) {
-	return c.updateStale.CallUnary(ctx, req)
-}
-
-// WorkspaceServiceHandler is an implementation of the mono.codexel.WorkspaceService service.
-type WorkspaceServiceHandler interface {
-	ListRepositoryWorkspaces(context.Context, *connect.Request[RequestListRepositoryWorkspaces]) (*connect.Response[ResponseListRepositoryWorkspaces], error)
-	AddRepositoryWorkspace(context.Context, *connect.Request[RequestAddRepositoryWorkspace]) (*connect.Response[ResponseAddRepositoryWorkspace], error)
-	ForgetRepositoryWorkspace(context.Context, *connect.Request[RequestForgetRepositoryWorkspace]) (*connect.Response[ResponseForgetRepositoryWorkspace], error)
-	RenameRepositoryWorkspace(context.Context, *connect.Request[RequestRenameRepositoryWorkspace]) (*connect.Response[ResponseRenameRepositoryWorkspace], error)
-	UpdateStale(context.Context, *connect.Request[RequestUpdateStale]) (*connect.Response[ResponseUpdateStale], error)
-}
-
-// NewWorkspaceServiceHandler builds an HTTP handler from the service implementation. It returns the
-// path on which to mount the handler and the handler itself.
-//
-// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
-// and JSON codecs. They also support gzip compression.
-func NewWorkspaceServiceHandler(svc WorkspaceServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	workspaceServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("WorkspaceService").Methods()
-	workspaceServiceListRepositoryWorkspacesHandler := connect.NewUnaryHandler(
-		WorkspaceServiceListRepositoryWorkspacesProcedure,
-		svc.ListRepositoryWorkspaces,
-		connect.WithSchema(workspaceServiceMethods.ByName("ListRepositoryWorkspaces")),
-		connect.WithHandlerOptions(opts...),
-	)
-	workspaceServiceAddRepositoryWorkspaceHandler := connect.NewUnaryHandler(
-		WorkspaceServiceAddRepositoryWorkspaceProcedure,
-		svc.AddRepositoryWorkspace,
-		connect.WithSchema(workspaceServiceMethods.ByName("AddRepositoryWorkspace")),
-		connect.WithHandlerOptions(opts...),
-	)
-	workspaceServiceForgetRepositoryWorkspaceHandler := connect.NewUnaryHandler(
-		WorkspaceServiceForgetRepositoryWorkspaceProcedure,
-		svc.ForgetRepositoryWorkspace,
-		connect.WithSchema(workspaceServiceMethods.ByName("ForgetRepositoryWorkspace")),
-		connect.WithHandlerOptions(opts...),
-	)
-	workspaceServiceRenameRepositoryWorkspaceHandler := connect.NewUnaryHandler(
-		WorkspaceServiceRenameRepositoryWorkspaceProcedure,
-		svc.RenameRepositoryWorkspace,
-		connect.WithSchema(workspaceServiceMethods.ByName("RenameRepositoryWorkspace")),
-		connect.WithHandlerOptions(opts...),
-	)
-	workspaceServiceUpdateStaleHandler := connect.NewUnaryHandler(
-		WorkspaceServiceUpdateStaleProcedure,
-		svc.UpdateStale,
-		connect.WithSchema(workspaceServiceMethods.ByName("UpdateStale")),
-		connect.WithHandlerOptions(opts...),
-	)
-	return "/mono.codexel.WorkspaceService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case WorkspaceServiceListRepositoryWorkspacesProcedure:
-			workspaceServiceListRepositoryWorkspacesHandler.ServeHTTP(w, r)
-		case WorkspaceServiceAddRepositoryWorkspaceProcedure:
-			workspaceServiceAddRepositoryWorkspaceHandler.ServeHTTP(w, r)
-		case WorkspaceServiceForgetRepositoryWorkspaceProcedure:
-			workspaceServiceForgetRepositoryWorkspaceHandler.ServeHTTP(w, r)
-		case WorkspaceServiceRenameRepositoryWorkspaceProcedure:
-			workspaceServiceRenameRepositoryWorkspaceHandler.ServeHTTP(w, r)
-		case WorkspaceServiceUpdateStaleProcedure:
-			workspaceServiceUpdateStaleHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
-}
-
-// UnimplementedWorkspaceServiceHandler returns CodeUnimplemented from all methods.
-type UnimplementedWorkspaceServiceHandler struct{}
-
-func (UnimplementedWorkspaceServiceHandler) ListRepositoryWorkspaces(context.Context, *connect.Request[RequestListRepositoryWorkspaces]) (*connect.Response[ResponseListRepositoryWorkspaces], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.WorkspaceService.ListRepositoryWorkspaces is not implemented"))
-}
-
-func (UnimplementedWorkspaceServiceHandler) AddRepositoryWorkspace(context.Context, *connect.Request[RequestAddRepositoryWorkspace]) (*connect.Response[ResponseAddRepositoryWorkspace], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.WorkspaceService.AddRepositoryWorkspace is not implemented"))
-}
-
-func (UnimplementedWorkspaceServiceHandler) ForgetRepositoryWorkspace(context.Context, *connect.Request[RequestForgetRepositoryWorkspace]) (*connect.Response[ResponseForgetRepositoryWorkspace], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.WorkspaceService.ForgetRepositoryWorkspace is not implemented"))
-}
-
-func (UnimplementedWorkspaceServiceHandler) RenameRepositoryWorkspace(context.Context, *connect.Request[RequestRenameRepositoryWorkspace]) (*connect.Response[ResponseRenameRepositoryWorkspace], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.WorkspaceService.RenameRepositoryWorkspace is not implemented"))
-}
-
-func (UnimplementedWorkspaceServiceHandler) UpdateStale(context.Context, *connect.Request[RequestUpdateStale]) (*connect.Response[ResponseUpdateStale], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.WorkspaceService.UpdateStale is not implemented"))
-}
-
-// AliasServiceClient is a client for the mono.codexel.AliasService service.
-type AliasServiceClient interface {
 	ListAliases(context.Context, *connect.Request[RequestListAliases]) (*connect.Response[ResponseListAliases], error)
 	RunAlias(context.Context, *connect.Request[RequestRunAlias]) (*connect.Response[ResponseRunAlias], error)
 }
 
-// NewAliasServiceClient constructs a client for the mono.codexel.AliasService service. By default,
-// it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and
-// sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC()
-// or connect.WithGRPCWeb() options.
-//
-// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
-// http://api.acme.com or https://acme.com/grpc).
-func NewAliasServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) AliasServiceClient {
-	baseURL = strings.TrimRight(baseURL, "/")
-	aliasServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("AliasService").Methods()
-	return &aliasServiceClient{
-		listAliases: connect.NewClient[RequestListAliases, ResponseListAliases](
-			httpClient,
-			baseURL+AliasServiceListAliasesProcedure,
-			connect.WithSchema(aliasServiceMethods.ByName("ListAliases")),
-			connect.WithClientOptions(opts...),
-		),
-		runAlias: connect.NewClient[RequestRunAlias, ResponseRunAlias](
-			httpClient,
-			baseURL+AliasServiceRunAliasProcedure,
-			connect.WithSchema(aliasServiceMethods.ByName("RunAlias")),
-			connect.WithClientOptions(opts...),
-		),
-	}
-}
-
-// aliasServiceClient implements AliasServiceClient.
-type aliasServiceClient struct {
-	listAliases *connect.Client[RequestListAliases, ResponseListAliases]
-	runAlias    *connect.Client[RequestRunAlias, ResponseRunAlias]
-}
-
-// ListAliases calls mono.codexel.AliasService.ListAliases.
-func (c *aliasServiceClient) ListAliases(ctx context.Context, req *connect.Request[RequestListAliases]) (*connect.Response[ResponseListAliases], error) {
-	return c.listAliases.CallUnary(ctx, req)
-}
-
-// RunAlias calls mono.codexel.AliasService.RunAlias.
-func (c *aliasServiceClient) RunAlias(ctx context.Context, req *connect.Request[RequestRunAlias]) (*connect.Response[ResponseRunAlias], error) {
-	return c.runAlias.CallUnary(ctx, req)
-}
-
-// AliasServiceHandler is an implementation of the mono.codexel.AliasService service.
-type AliasServiceHandler interface {
-	ListAliases(context.Context, *connect.Request[RequestListAliases]) (*connect.Response[ResponseListAliases], error)
-	RunAlias(context.Context, *connect.Request[RequestRunAlias]) (*connect.Response[ResponseRunAlias], error)
-}
-
-// NewAliasServiceHandler builds an HTTP handler from the service implementation. It returns the
-// path on which to mount the handler and the handler itself.
-//
-// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
-// and JSON codecs. They also support gzip compression.
-func NewAliasServiceHandler(svc AliasServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	aliasServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("AliasService").Methods()
-	aliasServiceListAliasesHandler := connect.NewUnaryHandler(
-		AliasServiceListAliasesProcedure,
-		svc.ListAliases,
-		connect.WithSchema(aliasServiceMethods.ByName("ListAliases")),
-		connect.WithHandlerOptions(opts...),
-	)
-	aliasServiceRunAliasHandler := connect.NewUnaryHandler(
-		AliasServiceRunAliasProcedure,
-		svc.RunAlias,
-		connect.WithSchema(aliasServiceMethods.ByName("RunAlias")),
-		connect.WithHandlerOptions(opts...),
-	)
-	return "/mono.codexel.AliasService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case AliasServiceListAliasesProcedure:
-			aliasServiceListAliasesHandler.ServeHTTP(w, r)
-		case AliasServiceRunAliasProcedure:
-			aliasServiceRunAliasHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
-}
-
-// UnimplementedAliasServiceHandler returns CodeUnimplemented from all methods.
-type UnimplementedAliasServiceHandler struct{}
-
-func (UnimplementedAliasServiceHandler) ListAliases(context.Context, *connect.Request[RequestListAliases]) (*connect.Response[ResponseListAliases], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.AliasService.ListAliases is not implemented"))
-}
-
-func (UnimplementedAliasServiceHandler) RunAlias(context.Context, *connect.Request[RequestRunAlias]) (*connect.Response[ResponseRunAlias], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.AliasService.RunAlias is not implemented"))
-}
-
-// TranscriptServiceClient is a client for the mono.codexel.TranscriptService service.
-type TranscriptServiceClient interface {
-	WatchTranscript(context.Context, *connect.Request[RequestWatchTranscript]) (*connect.ServerStreamForClient[ResponseWatchTranscript], error)
-}
-
-// NewTranscriptServiceClient constructs a client for the mono.codexel.TranscriptService service. By
-// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
-// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
-// connect.WithGRPC() or connect.WithGRPCWeb() options.
-//
-// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
-// http://api.acme.com or https://acme.com/grpc).
-func NewTranscriptServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) TranscriptServiceClient {
-	baseURL = strings.TrimRight(baseURL, "/")
-	transcriptServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("TranscriptService").Methods()
-	return &transcriptServiceClient{
-		watchTranscript: connect.NewClient[RequestWatchTranscript, ResponseWatchTranscript](
-			httpClient,
-			baseURL+TranscriptServiceWatchTranscriptProcedure,
-			connect.WithSchema(transcriptServiceMethods.ByName("WatchTranscript")),
-			connect.WithClientOptions(opts...),
-		),
-	}
-}
-
-// transcriptServiceClient implements TranscriptServiceClient.
-type transcriptServiceClient struct {
-	watchTranscript *connect.Client[RequestWatchTranscript, ResponseWatchTranscript]
-}
-
-// WatchTranscript calls mono.codexel.TranscriptService.WatchTranscript.
-func (c *transcriptServiceClient) WatchTranscript(ctx context.Context, req *connect.Request[RequestWatchTranscript]) (*connect.ServerStreamForClient[ResponseWatchTranscript], error) {
-	return c.watchTranscript.CallServerStream(ctx, req)
-}
-
-// TranscriptServiceHandler is an implementation of the mono.codexel.TranscriptService service.
-type TranscriptServiceHandler interface {
-	WatchTranscript(context.Context, *connect.Request[RequestWatchTranscript], *connect.ServerStream[ResponseWatchTranscript]) error
-}
-
-// NewTranscriptServiceHandler builds an HTTP handler from the service implementation. It returns
+// NewRepositoryServiceHandler builds an HTTP handler from the service implementation. It returns
 // the path on which to mount the handler and the handler itself.
 //
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
-func NewTranscriptServiceHandler(svc TranscriptServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	transcriptServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("TranscriptService").Methods()
-	transcriptServiceWatchTranscriptHandler := connect.NewServerStreamHandler(
-		TranscriptServiceWatchTranscriptProcedure,
-		svc.WatchTranscript,
-		connect.WithSchema(transcriptServiceMethods.ByName("WatchTranscript")),
+func NewRepositoryServiceHandler(svc RepositoryServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	repositoryServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("RepositoryService").Methods()
+	repositoryServiceListHandler := connect.NewUnaryHandler(
+		RepositoryServiceListProcedure,
+		svc.List,
+		connect.WithSchema(repositoryServiceMethods.ByName("List")),
 		connect.WithHandlerOptions(opts...),
 	)
-	return "/mono.codexel.TranscriptService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	repositoryServiceOpenHandler := connect.NewUnaryHandler(
+		RepositoryServiceOpenProcedure,
+		svc.Open,
+		connect.WithSchema(repositoryServiceMethods.ByName("Open")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceCloseHandler := connect.NewUnaryHandler(
+		RepositoryServiceCloseProcedure,
+		svc.Close,
+		connect.WithSchema(repositoryServiceMethods.ByName("Close")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceWatchHandler := connect.NewServerStreamHandler(
+		RepositoryServiceWatchProcedure,
+		svc.Watch,
+		connect.WithSchema(repositoryServiceMethods.ByName("Watch")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceLogHandler := connect.NewUnaryHandler(
+		RepositoryServiceLogProcedure,
+		svc.Log,
+		connect.WithSchema(repositoryServiceMethods.ByName("Log")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceGetRevisionHandler := connect.NewUnaryHandler(
+		RepositoryServiceGetRevisionProcedure,
+		svc.GetRevision,
+		connect.WithSchema(repositoryServiceMethods.ByName("GetRevision")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceNewHandler := connect.NewUnaryHandler(
+		RepositoryServiceNewProcedure,
+		svc.New,
+		connect.WithSchema(repositoryServiceMethods.ByName("New")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceEditHandler := connect.NewUnaryHandler(
+		RepositoryServiceEditProcedure,
+		svc.Edit,
+		connect.WithSchema(repositoryServiceMethods.ByName("Edit")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceAbandonHandler := connect.NewUnaryHandler(
+		RepositoryServiceAbandonProcedure,
+		svc.Abandon,
+		connect.WithSchema(repositoryServiceMethods.ByName("Abandon")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceDescribeHandler := connect.NewUnaryHandler(
+		RepositoryServiceDescribeProcedure,
+		svc.Describe,
+		connect.WithSchema(repositoryServiceMethods.ByName("Describe")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceCommitHandler := connect.NewUnaryHandler(
+		RepositoryServiceCommitProcedure,
+		svc.Commit,
+		connect.WithSchema(repositoryServiceMethods.ByName("Commit")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceUndoHandler := connect.NewUnaryHandler(
+		RepositoryServiceUndoProcedure,
+		svc.Undo,
+		connect.WithSchema(repositoryServiceMethods.ByName("Undo")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceRebaseHandler := connect.NewUnaryHandler(
+		RepositoryServiceRebaseProcedure,
+		svc.Rebase,
+		connect.WithSchema(repositoryServiceMethods.ByName("Rebase")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceSquashHandler := connect.NewUnaryHandler(
+		RepositoryServiceSquashProcedure,
+		svc.Squash,
+		connect.WithSchema(repositoryServiceMethods.ByName("Squash")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceEvologHandler := connect.NewUnaryHandler(
+		RepositoryServiceEvologProcedure,
+		svc.Evolog,
+		connect.WithSchema(repositoryServiceMethods.ByName("Evolog")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceSplitHandler := connect.NewUnaryHandler(
+		RepositoryServiceSplitProcedure,
+		svc.Split,
+		connect.WithSchema(repositoryServiceMethods.ByName("Split")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceRestoreHandler := connect.NewUnaryHandler(
+		RepositoryServiceRestoreProcedure,
+		svc.Restore,
+		connect.WithSchema(repositoryServiceMethods.ByName("Restore")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceDiffRangeHandler := connect.NewUnaryHandler(
+		RepositoryServiceDiffRangeProcedure,
+		svc.DiffRange,
+		connect.WithSchema(repositoryServiceMethods.ByName("DiffRange")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceListAgentCommitsHandler := connect.NewUnaryHandler(
+		RepositoryServiceListAgentCommitsProcedure,
+		svc.ListAgentCommits,
+		connect.WithSchema(repositoryServiceMethods.ByName("ListAgentCommits")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceListBookmarksHandler := connect.NewUnaryHandler(
+		RepositoryServiceListBookmarksProcedure,
+		svc.ListBookmarks,
+		connect.WithSchema(repositoryServiceMethods.ByName("ListBookmarks")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceSetBookmarkHandler := connect.NewUnaryHandler(
+		RepositoryServiceSetBookmarkProcedure,
+		svc.SetBookmark,
+		connect.WithSchema(repositoryServiceMethods.ByName("SetBookmark")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceMoveBookmarkHandler := connect.NewUnaryHandler(
+		RepositoryServiceMoveBookmarkProcedure,
+		svc.MoveBookmark,
+		connect.WithSchema(repositoryServiceMethods.ByName("MoveBookmark")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceDeleteBookmarkHandler := connect.NewUnaryHandler(
+		RepositoryServiceDeleteBookmarkProcedure,
+		svc.DeleteBookmark,
+		connect.WithSchema(repositoryServiceMethods.ByName("DeleteBookmark")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceForgetBookmarkHandler := connect.NewUnaryHandler(
+		RepositoryServiceForgetBookmarkProcedure,
+		svc.ForgetBookmark,
+		connect.WithSchema(repositoryServiceMethods.ByName("ForgetBookmark")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceTrackBookmarkHandler := connect.NewUnaryHandler(
+		RepositoryServiceTrackBookmarkProcedure,
+		svc.TrackBookmark,
+		connect.WithSchema(repositoryServiceMethods.ByName("TrackBookmark")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceUntrackBookmarkHandler := connect.NewUnaryHandler(
+		RepositoryServiceUntrackBookmarkProcedure,
+		svc.UntrackBookmark,
+		connect.WithSchema(repositoryServiceMethods.ByName("UntrackBookmark")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceFetchHandler := connect.NewUnaryHandler(
+		RepositoryServiceFetchProcedure,
+		svc.Fetch,
+		connect.WithSchema(repositoryServiceMethods.ByName("Fetch")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServicePushHandler := connect.NewUnaryHandler(
+		RepositoryServicePushProcedure,
+		svc.Push,
+		connect.WithSchema(repositoryServiceMethods.ByName("Push")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceListOperationsHandler := connect.NewUnaryHandler(
+		RepositoryServiceListOperationsProcedure,
+		svc.ListOperations,
+		connect.WithSchema(repositoryServiceMethods.ByName("ListOperations")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceRevertOperationHandler := connect.NewUnaryHandler(
+		RepositoryServiceRevertOperationProcedure,
+		svc.RevertOperation,
+		connect.WithSchema(repositoryServiceMethods.ByName("RevertOperation")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceRestoreOperationHandler := connect.NewUnaryHandler(
+		RepositoryServiceRestoreOperationProcedure,
+		svc.RestoreOperation,
+		connect.WithSchema(repositoryServiceMethods.ByName("RestoreOperation")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceGetFileHandler := connect.NewUnaryHandler(
+		RepositoryServiceGetFileProcedure,
+		svc.GetFile,
+		connect.WithSchema(repositoryServiceMethods.ByName("GetFile")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceListFilesHandler := connect.NewUnaryHandler(
+		RepositoryServiceListFilesProcedure,
+		svc.ListFiles,
+		connect.WithSchema(repositoryServiceMethods.ByName("ListFiles")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceWriteFileHandler := connect.NewUnaryHandler(
+		RepositoryServiceWriteFileProcedure,
+		svc.WriteFile,
+		connect.WithSchema(repositoryServiceMethods.ByName("WriteFile")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceListConflictsHandler := connect.NewUnaryHandler(
+		RepositoryServiceListConflictsProcedure,
+		svc.ListConflicts,
+		connect.WithSchema(repositoryServiceMethods.ByName("ListConflicts")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceGetConflictHandler := connect.NewUnaryHandler(
+		RepositoryServiceGetConflictProcedure,
+		svc.GetConflict,
+		connect.WithSchema(repositoryServiceMethods.ByName("GetConflict")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceResolveHandler := connect.NewUnaryHandler(
+		RepositoryServiceResolveProcedure,
+		svc.Resolve,
+		connect.WithSchema(repositoryServiceMethods.ByName("Resolve")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceListWorkspacesHandler := connect.NewUnaryHandler(
+		RepositoryServiceListWorkspacesProcedure,
+		svc.ListWorkspaces,
+		connect.WithSchema(repositoryServiceMethods.ByName("ListWorkspaces")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceAddWorkspaceHandler := connect.NewUnaryHandler(
+		RepositoryServiceAddWorkspaceProcedure,
+		svc.AddWorkspace,
+		connect.WithSchema(repositoryServiceMethods.ByName("AddWorkspace")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceForgetWorkspaceHandler := connect.NewUnaryHandler(
+		RepositoryServiceForgetWorkspaceProcedure,
+		svc.ForgetWorkspace,
+		connect.WithSchema(repositoryServiceMethods.ByName("ForgetWorkspace")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceRenameWorkspaceHandler := connect.NewUnaryHandler(
+		RepositoryServiceRenameWorkspaceProcedure,
+		svc.RenameWorkspace,
+		connect.WithSchema(repositoryServiceMethods.ByName("RenameWorkspace")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceUpdateStaleHandler := connect.NewUnaryHandler(
+		RepositoryServiceUpdateStaleProcedure,
+		svc.UpdateStale,
+		connect.WithSchema(repositoryServiceMethods.ByName("UpdateStale")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceListAliasesHandler := connect.NewUnaryHandler(
+		RepositoryServiceListAliasesProcedure,
+		svc.ListAliases,
+		connect.WithSchema(repositoryServiceMethods.ByName("ListAliases")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceRunAliasHandler := connect.NewUnaryHandler(
+		RepositoryServiceRunAliasProcedure,
+		svc.RunAlias,
+		connect.WithSchema(repositoryServiceMethods.ByName("RunAlias")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/mono.codexel.RepositoryService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case TranscriptServiceWatchTranscriptProcedure:
-			transcriptServiceWatchTranscriptHandler.ServeHTTP(w, r)
+		case RepositoryServiceListProcedure:
+			repositoryServiceListHandler.ServeHTTP(w, r)
+		case RepositoryServiceOpenProcedure:
+			repositoryServiceOpenHandler.ServeHTTP(w, r)
+		case RepositoryServiceCloseProcedure:
+			repositoryServiceCloseHandler.ServeHTTP(w, r)
+		case RepositoryServiceWatchProcedure:
+			repositoryServiceWatchHandler.ServeHTTP(w, r)
+		case RepositoryServiceLogProcedure:
+			repositoryServiceLogHandler.ServeHTTP(w, r)
+		case RepositoryServiceGetRevisionProcedure:
+			repositoryServiceGetRevisionHandler.ServeHTTP(w, r)
+		case RepositoryServiceNewProcedure:
+			repositoryServiceNewHandler.ServeHTTP(w, r)
+		case RepositoryServiceEditProcedure:
+			repositoryServiceEditHandler.ServeHTTP(w, r)
+		case RepositoryServiceAbandonProcedure:
+			repositoryServiceAbandonHandler.ServeHTTP(w, r)
+		case RepositoryServiceDescribeProcedure:
+			repositoryServiceDescribeHandler.ServeHTTP(w, r)
+		case RepositoryServiceCommitProcedure:
+			repositoryServiceCommitHandler.ServeHTTP(w, r)
+		case RepositoryServiceUndoProcedure:
+			repositoryServiceUndoHandler.ServeHTTP(w, r)
+		case RepositoryServiceRebaseProcedure:
+			repositoryServiceRebaseHandler.ServeHTTP(w, r)
+		case RepositoryServiceSquashProcedure:
+			repositoryServiceSquashHandler.ServeHTTP(w, r)
+		case RepositoryServiceEvologProcedure:
+			repositoryServiceEvologHandler.ServeHTTP(w, r)
+		case RepositoryServiceSplitProcedure:
+			repositoryServiceSplitHandler.ServeHTTP(w, r)
+		case RepositoryServiceRestoreProcedure:
+			repositoryServiceRestoreHandler.ServeHTTP(w, r)
+		case RepositoryServiceDiffRangeProcedure:
+			repositoryServiceDiffRangeHandler.ServeHTTP(w, r)
+		case RepositoryServiceListAgentCommitsProcedure:
+			repositoryServiceListAgentCommitsHandler.ServeHTTP(w, r)
+		case RepositoryServiceListBookmarksProcedure:
+			repositoryServiceListBookmarksHandler.ServeHTTP(w, r)
+		case RepositoryServiceSetBookmarkProcedure:
+			repositoryServiceSetBookmarkHandler.ServeHTTP(w, r)
+		case RepositoryServiceMoveBookmarkProcedure:
+			repositoryServiceMoveBookmarkHandler.ServeHTTP(w, r)
+		case RepositoryServiceDeleteBookmarkProcedure:
+			repositoryServiceDeleteBookmarkHandler.ServeHTTP(w, r)
+		case RepositoryServiceForgetBookmarkProcedure:
+			repositoryServiceForgetBookmarkHandler.ServeHTTP(w, r)
+		case RepositoryServiceTrackBookmarkProcedure:
+			repositoryServiceTrackBookmarkHandler.ServeHTTP(w, r)
+		case RepositoryServiceUntrackBookmarkProcedure:
+			repositoryServiceUntrackBookmarkHandler.ServeHTTP(w, r)
+		case RepositoryServiceFetchProcedure:
+			repositoryServiceFetchHandler.ServeHTTP(w, r)
+		case RepositoryServicePushProcedure:
+			repositoryServicePushHandler.ServeHTTP(w, r)
+		case RepositoryServiceListOperationsProcedure:
+			repositoryServiceListOperationsHandler.ServeHTTP(w, r)
+		case RepositoryServiceRevertOperationProcedure:
+			repositoryServiceRevertOperationHandler.ServeHTTP(w, r)
+		case RepositoryServiceRestoreOperationProcedure:
+			repositoryServiceRestoreOperationHandler.ServeHTTP(w, r)
+		case RepositoryServiceGetFileProcedure:
+			repositoryServiceGetFileHandler.ServeHTTP(w, r)
+		case RepositoryServiceListFilesProcedure:
+			repositoryServiceListFilesHandler.ServeHTTP(w, r)
+		case RepositoryServiceWriteFileProcedure:
+			repositoryServiceWriteFileHandler.ServeHTTP(w, r)
+		case RepositoryServiceListConflictsProcedure:
+			repositoryServiceListConflictsHandler.ServeHTTP(w, r)
+		case RepositoryServiceGetConflictProcedure:
+			repositoryServiceGetConflictHandler.ServeHTTP(w, r)
+		case RepositoryServiceResolveProcedure:
+			repositoryServiceResolveHandler.ServeHTTP(w, r)
+		case RepositoryServiceListWorkspacesProcedure:
+			repositoryServiceListWorkspacesHandler.ServeHTTP(w, r)
+		case RepositoryServiceAddWorkspaceProcedure:
+			repositoryServiceAddWorkspaceHandler.ServeHTTP(w, r)
+		case RepositoryServiceForgetWorkspaceProcedure:
+			repositoryServiceForgetWorkspaceHandler.ServeHTTP(w, r)
+		case RepositoryServiceRenameWorkspaceProcedure:
+			repositoryServiceRenameWorkspaceHandler.ServeHTTP(w, r)
+		case RepositoryServiceUpdateStaleProcedure:
+			repositoryServiceUpdateStaleHandler.ServeHTTP(w, r)
+		case RepositoryServiceListAliasesProcedure:
+			repositoryServiceListAliasesHandler.ServeHTTP(w, r)
+		case RepositoryServiceRunAliasProcedure:
+			repositoryServiceRunAliasHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
 	})
 }
 
-// UnimplementedTranscriptServiceHandler returns CodeUnimplemented from all methods.
-type UnimplementedTranscriptServiceHandler struct{}
+// UnimplementedRepositoryServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedRepositoryServiceHandler struct{}
 
-func (UnimplementedTranscriptServiceHandler) WatchTranscript(context.Context, *connect.Request[RequestWatchTranscript], *connect.ServerStream[ResponseWatchTranscript]) error {
-	return connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.TranscriptService.WatchTranscript is not implemented"))
+func (UnimplementedRepositoryServiceHandler) List(context.Context, *connect.Request[RequestListRepositories]) (*connect.Response[ResponseListRepositories], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.List is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) Open(context.Context, *connect.Request[RequestOpenRepository]) (*connect.Response[ResponseOpenRepository], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.Open is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) Close(context.Context, *connect.Request[RequestCloseRepository]) (*connect.Response[ResponseCloseRepository], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.Close is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) Watch(context.Context, *connect.Request[RequestWatchRepository], *connect.ServerStream[ResponseWatchRepository]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.Watch is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) Log(context.Context, *connect.Request[RequestLog]) (*connect.Response[ResponseLog], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.Log is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) GetRevision(context.Context, *connect.Request[RequestGetRevision]) (*connect.Response[ResponseGetRevision], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.GetRevision is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) New(context.Context, *connect.Request[RequestNew]) (*connect.Response[ResponseNew], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.New is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) Edit(context.Context, *connect.Request[RequestEdit]) (*connect.Response[ResponseEdit], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.Edit is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) Abandon(context.Context, *connect.Request[RequestAbandon]) (*connect.Response[ResponseAbandon], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.Abandon is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) Describe(context.Context, *connect.Request[RequestDescribe]) (*connect.Response[ResponseDescribe], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.Describe is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) Commit(context.Context, *connect.Request[RequestCommit]) (*connect.Response[ResponseCommit], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.Commit is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) Undo(context.Context, *connect.Request[RequestUndo]) (*connect.Response[ResponseUndo], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.Undo is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) Rebase(context.Context, *connect.Request[RequestRebase]) (*connect.Response[ResponseRebase], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.Rebase is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) Squash(context.Context, *connect.Request[RequestSquash]) (*connect.Response[ResponseSquash], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.Squash is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) Evolog(context.Context, *connect.Request[RequestEvolog]) (*connect.Response[ResponseEvolog], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.Evolog is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) Split(context.Context, *connect.Request[RequestSplit]) (*connect.Response[ResponseSplit], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.Split is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) Restore(context.Context, *connect.Request[RequestRestore]) (*connect.Response[ResponseRestore], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.Restore is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) DiffRange(context.Context, *connect.Request[RequestDiffRange]) (*connect.Response[ResponseDiffRange], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.DiffRange is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) ListAgentCommits(context.Context, *connect.Request[RequestListAgentCommits]) (*connect.Response[ResponseListAgentCommits], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.ListAgentCommits is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) ListBookmarks(context.Context, *connect.Request[RequestListBookmarks]) (*connect.Response[ResponseListBookmarks], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.ListBookmarks is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) SetBookmark(context.Context, *connect.Request[RequestSetBookmark]) (*connect.Response[ResponseSetBookmark], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.SetBookmark is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) MoveBookmark(context.Context, *connect.Request[RequestMoveBookmark]) (*connect.Response[ResponseMoveBookmark], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.MoveBookmark is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) DeleteBookmark(context.Context, *connect.Request[RequestDeleteBookmark]) (*connect.Response[ResponseDeleteBookmark], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.DeleteBookmark is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) ForgetBookmark(context.Context, *connect.Request[RequestForgetBookmark]) (*connect.Response[ResponseForgetBookmark], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.ForgetBookmark is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) TrackBookmark(context.Context, *connect.Request[RequestTrackBookmark]) (*connect.Response[ResponseTrackBookmark], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.TrackBookmark is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) UntrackBookmark(context.Context, *connect.Request[RequestUntrackBookmark]) (*connect.Response[ResponseUntrackBookmark], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.UntrackBookmark is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) Fetch(context.Context, *connect.Request[RequestFetch]) (*connect.Response[ResponseFetch], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.Fetch is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) Push(context.Context, *connect.Request[RequestPush]) (*connect.Response[ResponsePush], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.Push is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) ListOperations(context.Context, *connect.Request[RequestListOperations]) (*connect.Response[ResponseListOperations], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.ListOperations is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) RevertOperation(context.Context, *connect.Request[RequestRevertOperation]) (*connect.Response[ResponseRevertOperation], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.RevertOperation is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) RestoreOperation(context.Context, *connect.Request[RequestRestoreOperation]) (*connect.Response[ResponseRestoreOperation], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.RestoreOperation is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) GetFile(context.Context, *connect.Request[RequestGetFile]) (*connect.Response[ResponseGetFile], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.GetFile is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) ListFiles(context.Context, *connect.Request[RequestListFiles]) (*connect.Response[ResponseListFiles], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.ListFiles is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) WriteFile(context.Context, *connect.Request[RequestWriteFile]) (*connect.Response[ResponseWriteFile], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.WriteFile is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) ListConflicts(context.Context, *connect.Request[RequestListConflicts]) (*connect.Response[ResponseListConflicts], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.ListConflicts is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) GetConflict(context.Context, *connect.Request[RequestGetConflict]) (*connect.Response[ResponseGetConflict], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.GetConflict is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) Resolve(context.Context, *connect.Request[RequestResolve]) (*connect.Response[ResponseResolve], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.Resolve is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) ListWorkspaces(context.Context, *connect.Request[RequestListRepositoryWorkspaces]) (*connect.Response[ResponseListRepositoryWorkspaces], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.ListWorkspaces is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) AddWorkspace(context.Context, *connect.Request[RequestAddRepositoryWorkspace]) (*connect.Response[ResponseAddRepositoryWorkspace], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.AddWorkspace is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) ForgetWorkspace(context.Context, *connect.Request[RequestForgetRepositoryWorkspace]) (*connect.Response[ResponseForgetRepositoryWorkspace], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.ForgetWorkspace is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) RenameWorkspace(context.Context, *connect.Request[RequestRenameRepositoryWorkspace]) (*connect.Response[ResponseRenameRepositoryWorkspace], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.RenameWorkspace is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) UpdateStale(context.Context, *connect.Request[RequestUpdateStale]) (*connect.Response[ResponseUpdateStale], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.UpdateStale is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) ListAliases(context.Context, *connect.Request[RequestListAliases]) (*connect.Response[ResponseListAliases], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.ListAliases is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) RunAlias(context.Context, *connect.Request[RequestRunAlias]) (*connect.Response[ResponseRunAlias], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.RunAlias is not implemented"))
 }
 
 // ReviewServiceClient is a client for the mono.codexel.ReviewService service.
 type ReviewServiceClient interface {
-	ListReviews(context.Context, *connect.Request[RequestListReviews]) (*connect.Response[ResponseListReviews], error)
+	List(context.Context, *connect.Request[RequestListReviews]) (*connect.Response[ResponseListReviews], error)
 	ListApprovedCommits(context.Context, *connect.Request[RequestListApprovedCommits]) (*connect.Response[ResponseListApprovedCommits], error)
-	GetReview(context.Context, *connect.Request[RequestGetReview]) (*connect.Response[ResponseGetReview], error)
-	StartReview(context.Context, *connect.Request[RequestStartReview]) (*connect.Response[ResponseStartReview], error)
+	Get(context.Context, *connect.Request[RequestGetReview]) (*connect.Response[ResponseGetReview], error)
+	Start(context.Context, *connect.Request[RequestStartReview]) (*connect.Response[ResponseStartReview], error)
 	AddComment(context.Context, *connect.Request[RequestAddComment]) (*connect.Response[ResponseAddComment], error)
 	EditComment(context.Context, *connect.Request[RequestEditComment]) (*connect.Response[ResponseEditComment], error)
 	DeleteComment(context.Context, *connect.Request[RequestDeleteComment]) (*connect.Response[ResponseDeleteComment], error)
@@ -2119,10 +1709,10 @@ func NewReviewServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 	baseURL = strings.TrimRight(baseURL, "/")
 	reviewServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("ReviewService").Methods()
 	return &reviewServiceClient{
-		listReviews: connect.NewClient[RequestListReviews, ResponseListReviews](
+		list: connect.NewClient[RequestListReviews, ResponseListReviews](
 			httpClient,
-			baseURL+ReviewServiceListReviewsProcedure,
-			connect.WithSchema(reviewServiceMethods.ByName("ListReviews")),
+			baseURL+ReviewServiceListProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("List")),
 			connect.WithClientOptions(opts...),
 		),
 		listApprovedCommits: connect.NewClient[RequestListApprovedCommits, ResponseListApprovedCommits](
@@ -2131,16 +1721,16 @@ func NewReviewServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(reviewServiceMethods.ByName("ListApprovedCommits")),
 			connect.WithClientOptions(opts...),
 		),
-		getReview: connect.NewClient[RequestGetReview, ResponseGetReview](
+		get: connect.NewClient[RequestGetReview, ResponseGetReview](
 			httpClient,
-			baseURL+ReviewServiceGetReviewProcedure,
-			connect.WithSchema(reviewServiceMethods.ByName("GetReview")),
+			baseURL+ReviewServiceGetProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("Get")),
 			connect.WithClientOptions(opts...),
 		),
-		startReview: connect.NewClient[RequestStartReview, ResponseStartReview](
+		start: connect.NewClient[RequestStartReview, ResponseStartReview](
 			httpClient,
-			baseURL+ReviewServiceStartReviewProcedure,
-			connect.WithSchema(reviewServiceMethods.ByName("StartReview")),
+			baseURL+ReviewServiceStartProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("Start")),
 			connect.WithClientOptions(opts...),
 		),
 		addComment: connect.NewClient[RequestAddComment, ResponseAddComment](
@@ -2202,10 +1792,10 @@ func NewReviewServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 
 // reviewServiceClient implements ReviewServiceClient.
 type reviewServiceClient struct {
-	listReviews         *connect.Client[RequestListReviews, ResponseListReviews]
+	list                *connect.Client[RequestListReviews, ResponseListReviews]
 	listApprovedCommits *connect.Client[RequestListApprovedCommits, ResponseListApprovedCommits]
-	getReview           *connect.Client[RequestGetReview, ResponseGetReview]
-	startReview         *connect.Client[RequestStartReview, ResponseStartReview]
+	get                 *connect.Client[RequestGetReview, ResponseGetReview]
+	start               *connect.Client[RequestStartReview, ResponseStartReview]
 	addComment          *connect.Client[RequestAddComment, ResponseAddComment]
 	editComment         *connect.Client[RequestEditComment, ResponseEditComment]
 	deleteComment       *connect.Client[RequestDeleteComment, ResponseDeleteComment]
@@ -2217,9 +1807,9 @@ type reviewServiceClient struct {
 	setViewed           *connect.Client[RequestSetViewed, ResponseSetViewed]
 }
 
-// ListReviews calls mono.codexel.ReviewService.ListReviews.
-func (c *reviewServiceClient) ListReviews(ctx context.Context, req *connect.Request[RequestListReviews]) (*connect.Response[ResponseListReviews], error) {
-	return c.listReviews.CallUnary(ctx, req)
+// List calls mono.codexel.ReviewService.List.
+func (c *reviewServiceClient) List(ctx context.Context, req *connect.Request[RequestListReviews]) (*connect.Response[ResponseListReviews], error) {
+	return c.list.CallUnary(ctx, req)
 }
 
 // ListApprovedCommits calls mono.codexel.ReviewService.ListApprovedCommits.
@@ -2227,14 +1817,14 @@ func (c *reviewServiceClient) ListApprovedCommits(ctx context.Context, req *conn
 	return c.listApprovedCommits.CallUnary(ctx, req)
 }
 
-// GetReview calls mono.codexel.ReviewService.GetReview.
-func (c *reviewServiceClient) GetReview(ctx context.Context, req *connect.Request[RequestGetReview]) (*connect.Response[ResponseGetReview], error) {
-	return c.getReview.CallUnary(ctx, req)
+// Get calls mono.codexel.ReviewService.Get.
+func (c *reviewServiceClient) Get(ctx context.Context, req *connect.Request[RequestGetReview]) (*connect.Response[ResponseGetReview], error) {
+	return c.get.CallUnary(ctx, req)
 }
 
-// StartReview calls mono.codexel.ReviewService.StartReview.
-func (c *reviewServiceClient) StartReview(ctx context.Context, req *connect.Request[RequestStartReview]) (*connect.Response[ResponseStartReview], error) {
-	return c.startReview.CallUnary(ctx, req)
+// Start calls mono.codexel.ReviewService.Start.
+func (c *reviewServiceClient) Start(ctx context.Context, req *connect.Request[RequestStartReview]) (*connect.Response[ResponseStartReview], error) {
+	return c.start.CallUnary(ctx, req)
 }
 
 // AddComment calls mono.codexel.ReviewService.AddComment.
@@ -2284,10 +1874,10 @@ func (c *reviewServiceClient) SetViewed(ctx context.Context, req *connect.Reques
 
 // ReviewServiceHandler is an implementation of the mono.codexel.ReviewService service.
 type ReviewServiceHandler interface {
-	ListReviews(context.Context, *connect.Request[RequestListReviews]) (*connect.Response[ResponseListReviews], error)
+	List(context.Context, *connect.Request[RequestListReviews]) (*connect.Response[ResponseListReviews], error)
 	ListApprovedCommits(context.Context, *connect.Request[RequestListApprovedCommits]) (*connect.Response[ResponseListApprovedCommits], error)
-	GetReview(context.Context, *connect.Request[RequestGetReview]) (*connect.Response[ResponseGetReview], error)
-	StartReview(context.Context, *connect.Request[RequestStartReview]) (*connect.Response[ResponseStartReview], error)
+	Get(context.Context, *connect.Request[RequestGetReview]) (*connect.Response[ResponseGetReview], error)
+	Start(context.Context, *connect.Request[RequestStartReview]) (*connect.Response[ResponseStartReview], error)
 	AddComment(context.Context, *connect.Request[RequestAddComment]) (*connect.Response[ResponseAddComment], error)
 	EditComment(context.Context, *connect.Request[RequestEditComment]) (*connect.Response[ResponseEditComment], error)
 	DeleteComment(context.Context, *connect.Request[RequestDeleteComment]) (*connect.Response[ResponseDeleteComment], error)
@@ -2306,10 +1896,10 @@ type ReviewServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewReviewServiceHandler(svc ReviewServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	reviewServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("ReviewService").Methods()
-	reviewServiceListReviewsHandler := connect.NewUnaryHandler(
-		ReviewServiceListReviewsProcedure,
-		svc.ListReviews,
-		connect.WithSchema(reviewServiceMethods.ByName("ListReviews")),
+	reviewServiceListHandler := connect.NewUnaryHandler(
+		ReviewServiceListProcedure,
+		svc.List,
+		connect.WithSchema(reviewServiceMethods.ByName("List")),
 		connect.WithHandlerOptions(opts...),
 	)
 	reviewServiceListApprovedCommitsHandler := connect.NewUnaryHandler(
@@ -2318,16 +1908,16 @@ func NewReviewServiceHandler(svc ReviewServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(reviewServiceMethods.ByName("ListApprovedCommits")),
 		connect.WithHandlerOptions(opts...),
 	)
-	reviewServiceGetReviewHandler := connect.NewUnaryHandler(
-		ReviewServiceGetReviewProcedure,
-		svc.GetReview,
-		connect.WithSchema(reviewServiceMethods.ByName("GetReview")),
+	reviewServiceGetHandler := connect.NewUnaryHandler(
+		ReviewServiceGetProcedure,
+		svc.Get,
+		connect.WithSchema(reviewServiceMethods.ByName("Get")),
 		connect.WithHandlerOptions(opts...),
 	)
-	reviewServiceStartReviewHandler := connect.NewUnaryHandler(
-		ReviewServiceStartReviewProcedure,
-		svc.StartReview,
-		connect.WithSchema(reviewServiceMethods.ByName("StartReview")),
+	reviewServiceStartHandler := connect.NewUnaryHandler(
+		ReviewServiceStartProcedure,
+		svc.Start,
+		connect.WithSchema(reviewServiceMethods.ByName("Start")),
 		connect.WithHandlerOptions(opts...),
 	)
 	reviewServiceAddCommentHandler := connect.NewUnaryHandler(
@@ -2386,14 +1976,14 @@ func NewReviewServiceHandler(svc ReviewServiceHandler, opts ...connect.HandlerOp
 	)
 	return "/mono.codexel.ReviewService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case ReviewServiceListReviewsProcedure:
-			reviewServiceListReviewsHandler.ServeHTTP(w, r)
+		case ReviewServiceListProcedure:
+			reviewServiceListHandler.ServeHTTP(w, r)
 		case ReviewServiceListApprovedCommitsProcedure:
 			reviewServiceListApprovedCommitsHandler.ServeHTTP(w, r)
-		case ReviewServiceGetReviewProcedure:
-			reviewServiceGetReviewHandler.ServeHTTP(w, r)
-		case ReviewServiceStartReviewProcedure:
-			reviewServiceStartReviewHandler.ServeHTTP(w, r)
+		case ReviewServiceGetProcedure:
+			reviewServiceGetHandler.ServeHTTP(w, r)
+		case ReviewServiceStartProcedure:
+			reviewServiceStartHandler.ServeHTTP(w, r)
 		case ReviewServiceAddCommentProcedure:
 			reviewServiceAddCommentHandler.ServeHTTP(w, r)
 		case ReviewServiceEditCommentProcedure:
@@ -2421,20 +2011,20 @@ func NewReviewServiceHandler(svc ReviewServiceHandler, opts ...connect.HandlerOp
 // UnimplementedReviewServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedReviewServiceHandler struct{}
 
-func (UnimplementedReviewServiceHandler) ListReviews(context.Context, *connect.Request[RequestListReviews]) (*connect.Response[ResponseListReviews], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.ListReviews is not implemented"))
+func (UnimplementedReviewServiceHandler) List(context.Context, *connect.Request[RequestListReviews]) (*connect.Response[ResponseListReviews], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.List is not implemented"))
 }
 
 func (UnimplementedReviewServiceHandler) ListApprovedCommits(context.Context, *connect.Request[RequestListApprovedCommits]) (*connect.Response[ResponseListApprovedCommits], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.ListApprovedCommits is not implemented"))
 }
 
-func (UnimplementedReviewServiceHandler) GetReview(context.Context, *connect.Request[RequestGetReview]) (*connect.Response[ResponseGetReview], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.GetReview is not implemented"))
+func (UnimplementedReviewServiceHandler) Get(context.Context, *connect.Request[RequestGetReview]) (*connect.Response[ResponseGetReview], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.Get is not implemented"))
 }
 
-func (UnimplementedReviewServiceHandler) StartReview(context.Context, *connect.Request[RequestStartReview]) (*connect.Response[ResponseStartReview], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.StartReview is not implemented"))
+func (UnimplementedReviewServiceHandler) Start(context.Context, *connect.Request[RequestStartReview]) (*connect.Response[ResponseStartReview], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.Start is not implemented"))
 }
 
 func (UnimplementedReviewServiceHandler) AddComment(context.Context, *connect.Request[RequestAddComment]) (*connect.Response[ResponseAddComment], error) {

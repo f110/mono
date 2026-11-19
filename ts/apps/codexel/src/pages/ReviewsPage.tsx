@@ -6,7 +6,7 @@ import { stateChip } from '../lib/review.ts'
 
 // ReviewsPage lists the reviews of all repositories.
 export const ReviewsPage = () => {
-  const { data, error } = useQuery(ReviewService.method.listReviews, { path: '' })
+  const { data, error } = useQuery(ReviewService.method.list, { path: '' })
   const navigate = useNavigate()
 
   if (error) {
