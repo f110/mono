@@ -800,6 +800,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           <MenuItem key="edit" disabled={menu.commit.immutable} onClick={() => { setMenu(undefined); edit(menu.commit) }}>Edit</MenuItem>,
           <MenuItem key="describe" disabled={menu.commit.immutable} onClick={() => { setMenu(undefined); startDescribe(menu.commit) }}>Describe (e)</MenuItem>,
           <MenuItem key="abandon" disabled={menu.commit.immutable} onClick={() => { setMenu(undefined); setAbandoning(checkedCommits.length > 0 ? checkedCommits : [menu.commit]) }}>Abandon</MenuItem>,
+          <MenuItem key="review" onClick={() => { setMenu(undefined); startReview(checkedCommits.length > 0 ? checkedCommits : [menu.commit]) }}>Review (v)</MenuItem>,
         ]}
       </Menu>
 
