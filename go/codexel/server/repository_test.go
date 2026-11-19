@@ -66,6 +66,21 @@ func TestOperationRejectsRepositoryNotOpened(t *testing.T) {
 	assertion.Equal(t, connectErr.Code(), connect.CodeNotFound)
 }
 
+func TestGetFileRejectsPathOutsideRepository(t *testing.T) {
+	h := NewRepositoryHandler(newConfig(t, "/src/mono"))
+
+	for _, file := range []string{"../ops/secret", "go/../../ops/secret", "/etc/passwd", ".."} {
+		t.Run(file, func(t *testing.T) {
+			_, err := h.GetFile(t.Context(), connect.NewRequest(api.RequestGetFile_builder{Path: new("/src/mono"), Revision: new("@"), File: new(file)}.Build()))
+			assertion.MustError(t, err)
+			connectErr, ok := errors.AsType[*connect.Error](err)
+			assertion.True(t, ok)
+			assertion.Equal(t, connectErr.Code(), connect.CodeInvalidArgument)
+			assertion.Contains(t, connectErr.Message(), "outside of the repository")
+		})
+	}
+}
+
 func TestListAgentCommitsRequiresAgent(t *testing.T) {
 	h := NewRepositoryHandler(newConfig(t, "/src/mono"))
 

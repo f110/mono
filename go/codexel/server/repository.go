@@ -531,6 +531,9 @@ func (h *RepositoryHandler) GetFile(ctx context.Context, req *connect.Request[ap
 	if req.Msg.GetRevision() == "" || req.Msg.GetFile() == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("revision and file are required"))
 	}
+	if !filepath.IsLocal(req.Msg.GetFile()) {
+		return nil, connect.NewError(connect.CodeInvalidArgument, xerrors.Newf("the file is outside of the repository: %s", req.Msg.GetFile()))
+	}
 	repo, err := openedRepository(h.config, req.Msg.GetPath())
 	if err != nil {
 		return nil, err

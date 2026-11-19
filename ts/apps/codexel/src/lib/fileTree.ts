@@ -39,3 +39,26 @@ export const visibleNodes = (files: string[], expanded: Set<string>): TreeNode[]
 
 // fileRevset returns the revset of the revisions which change the file.
 export const fileRevset = (path: string) => `files(root-file:"${path.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}")`
+
+// parentDirs returns the directories which contain the file from the top.
+export const parentDirs = (path: string): string[] => {
+  const parts = path.split('/')
+  return parts.slice(0, -1).map((_, i) => parts.slice(0, i + 1).join('/'))
+}
+
+// FileRevision is the revision shown in the file browser.
+export type FileRevision = { commitId: string; changeId: string }
+
+// FileLocation is the position in the file browser which is kept in the state of the history.
+export type FileLocation = { repoPath: string; revision: FileRevision; file: string; scrollTop: number }
+
+const fileLocationKey = 'codexelFile'
+
+// fileLocation returns the position in the file browser of the repository from the state of the history.
+export const fileLocation = (state: unknown, repoPath: string): FileLocation | undefined => {
+  const l = (state as Record<string, unknown> | undefined)?.[fileLocationKey] as FileLocation | undefined
+  return l?.repoPath === repoPath ? l : undefined
+}
+
+// withFileLocation returns the state of the history which has the position in the file browser.
+export const withFileLocation = (state: object, location: FileLocation): object => ({ ...state, [fileLocationKey]: location })

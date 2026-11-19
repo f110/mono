@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from '@connectrpc/connect'
 import { useQuery } from '@connectrpc/connect-query'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useRouter } from '@tanstack/react-router'
 import {
   Alert,
   Box,
@@ -15,7 +15,6 @@ import {
   Snackbar,
   Stack,
   TextField,
-  Typography,
 } from '@mui/material'
 import {
   RebaseSource,
@@ -29,7 +28,7 @@ import { useApprovedCommits } from '../hooks/useApprovedCommits.ts'
 import { useDiffNavigation } from '../hooks/useDiffNavigation.ts'
 import { useOperation } from '../hooks/useOperation.ts'
 import { useReviews } from '../hooks/useReviews.ts'
-import { fileRevset, visibleNodes } from '../lib/fileTree.ts'
+import { fileLocation, fileRevset, type FileRevision } from '../lib/fileTree.ts'
 import { ignoreKey, pressKey } from '../lib/keys.ts'
 import { computeSlide } from '../lib/slide.ts'
 import { transport } from '../providers/AppProvider.tsx'
@@ -39,7 +38,7 @@ import { CommandPalette } from './CommandPalette.tsx'
 import { DescriptionDialog } from './DescriptionDialog.tsx'
 import { DivergenceDialog } from './DivergenceDialog.tsx'
 import { FileDiffView } from './FileDiffView.tsx'
-import { FileTreePanel, FileView } from './FileTree.tsx'
+import { FileBrowser } from './FileTree.tsx'
 import { ConflictsPanel, conflictEntries } from './ConflictsPanel.tsx'
 import { EvologPanel, OperationsPanel } from './HistoryPanels.tsx'
 import { MergeEditor } from './MergeEditor.tsx'
@@ -107,7 +106,9 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   const [editing, setEditing] = useState<Editing>()
   const [abandoning, setAbandoning] = useState<Commit[]>()
   const [mode, setMode] = useState<Mode>()
-  const [view, setView] = useState<'log' | 'bookmarks' | 'oplog' | 'evolog' | 'files' | 'conflicts'>('log')
+  const { history } = useRouter()
+  const [treeTarget, setTreeTarget] = useState<FileRevision | undefined>(() => fileLocation(history.location.state, path)?.revision)
+  const [view, setView] = useState<'log' | 'bookmarks' | 'oplog' | 'evolog' | 'files' | 'conflicts'>(() => (treeTarget ? 'files' : 'log'))
   const [conflictSelected, setConflictSelected] = useState(0)
   const [splitting, setSplitting] = useState<Commit>()
   const [workspaceOpen, setWorkspaceOpen] = useState(false)
@@ -115,12 +116,6 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   const [paletteOpen, setPaletteOpen] = useState(false)
   const { data: aliasData } = useQuery(RepositoryService.method.listAliases, { path }, { enabled: paletteOpen })
   const [restoringFile, setRestoringFile] = useState<{ commit: Commit; file: string }>()
-  const [treeTarget, setTreeTarget] = useState<Commit>()
-  const [treeExpanded, setTreeExpanded] = useState<Set<string>>(new Set())
-  const [treeSelected, setTreeSelected] = useState(0)
-  const [treeFilter, setTreeFilter] = useState('')
-  const [openFile, setOpenFile] = useState<string>()
-  const filterRef = useRef<HTMLInputElement>(null)
   const [bookmarkSelected, setBookmarkSelected] = useState(0)
   const [settingBookmark, setSettingBookmark] = useState<Commit>()
   const [pushing, setPushing] = useState(false)
@@ -150,19 +145,11 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   const evolog = evologData?.entries ?? []
   const { data: conflictData, refetch: refetchConflicts } = useQuery(RepositoryService.method.listConflicts, { path }, { enabled: view === 'conflicts' })
   const conflicts = useMemo(() => conflictEntries(conflictData?.commits ?? []), [conflictData])
-  const { data: filesData } = useQuery(
-    RepositoryService.method.listFiles,
-    { path, revision: treeTarget?.commitId ?? '' },
-    { enabled: view === 'files' && treeTarget !== undefined, staleTime: Infinity },
-  )
-  const treeNodes = useMemo(() => {
-    const files = filesData?.files ?? []
-    if (treeFilter) {
-      const f = treeFilter.toLowerCase()
-      return files.filter((p) => p.toLowerCase().includes(f)).map((p) => ({ path: p, name: p, depth: 0, dir: false }))
-    }
-    return visibleNodes(files, treeExpanded)
-  }, [filesData, treeFilter, treeExpanded])
+  const restoreFiles = useCallback((r: FileRevision) => {
+    setTreeTarget(r)
+    setView('files')
+  }, [])
+  const closeFiles = useCallback(() => setView('log'), [])
 
   // showHistory shows the revisions which change the file in the log.
   const showHistory = useCallback((file: string) => {
@@ -314,42 +301,6 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
         return
       }
       if (view === 'files') {
-        const node = treeNodes[treeSelected]
-        const toggle = (path: string, open: boolean) =>
-          setTreeExpanded((s) => {
-            const next = new Set(s)
-            if (open) next.add(path)
-            else next.delete(path)
-            return next
-          })
-        switch (e.key) {
-          case 'j':
-            setTreeSelected((i) => Math.min(i + 1, treeNodes.length - 1))
-            break
-          case 'k':
-            setTreeSelected((i) => Math.max(i - 1, 0))
-            break
-          case 'l':
-            if (node?.dir) toggle(node.path, true)
-            break
-          case 'h':
-            if (node?.dir) toggle(node.path, false)
-            break
-          case 'Enter':
-            if (node?.dir) toggle(node.path, !treeExpanded.has(node.path))
-            else if (node) setOpenFile(node.path)
-            break
-          case '/':
-            filterRef.current?.focus()
-            break
-          case '1':
-          case 'Escape':
-            setView('log')
-            break
-          default:
-            return
-        }
-        e.preventDefault()
         return
       }
       if (view === 'oplog' || view === 'evolog' || view === 'conflicts') {
@@ -443,10 +394,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           break
         case 'F':
           if (selectedCommit) {
-            setTreeTarget(selectedCommit)
-            setTreeSelected(0)
-            setTreeFilter('')
-            setOpenFile(undefined)
+            setTreeTarget({ commitId: selectedCommit.commitId, changeId: selectedCommit.changeId })
             setView('files')
           }
           break
@@ -557,10 +505,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [
     view,
-    treeNodes,
     conflicts,
-    treeSelected,
-    treeExpanded,
     operations,
     evolog,
     restoring,
@@ -622,7 +567,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           {error.message}
         </Alert>
       )}
-      <Stack direction="row" sx={{ flex: 1, minHeight: 0 }}>
+      <Stack direction="row" sx={{ flex: 1, minHeight: 0, display: view === 'files' ? 'none' : 'flex' }}>
         <Box sx={{ width: '45%', flexShrink: 0, overflow: 'auto', borderRight: 1, borderColor: 'divider' }}>
           {view === 'bookmarks' && <BookmarksPanel bookmarks={bookmarks} selected={bookmarkSelected} onSelect={setBookmarkSelected} />}
           {view === 'oplog' && (
@@ -638,31 +583,6 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           )}
           {view === 'evolog' && <EvologPanel entries={evolog} selected={evologSelected} onSelect={setEvologSelected} />}
           {view === 'conflicts' && <ConflictsPanel entries={conflicts} selected={conflictSelected} onSelect={setConflictSelected} />}
-          {view === 'files' && (
-            <FileTreePanel
-              nodes={treeNodes}
-              selected={treeSelected}
-              filter={treeFilter}
-              filterRef={filterRef}
-              onFilterChange={(f) => {
-                setTreeFilter(f)
-                setTreeSelected(0)
-              }}
-              onSelect={(i) => {
-                setTreeSelected(i)
-                const n = treeNodes[i]
-                if (n.dir) {
-                  setTreeExpanded((s) => {
-                    const next = new Set(s)
-                    if (!next.delete(n.path)) next.add(n.path)
-                    return next
-                  })
-                } else {
-                  setOpenFile(n.path)
-                }
-              }}
-            />
-          )}
           {view === 'log' && (
             <RevisionGraph
               rows={rows}
@@ -681,15 +601,6 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           )}
         </Box>
         <Box ref={detailRef} sx={{ flex: 1, minWidth: 0, overflow: 'auto' }}>
-          {view === 'files' &&
-            treeTarget &&
-            (openFile ? (
-              <FileView key={openFile} repoPath={path} revision={treeTarget.commitId} file={openFile} onHistory={() => showHistory(openFile)} />
-            ) : (
-              <Typography color="text.secondary" sx={{ p: 2 }}>
-                Files at {treeTarget.changeId.slice(0, 8)}
-              </Typography>
-            ))}
           {view === 'conflicts' && conflicts[conflictSelected] && (
             <MergeEditor
               key={`${conflicts[conflictSelected].commit.commitId}:${conflicts[conflictSelected].file.path}`}
@@ -741,6 +652,9 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           )}
         </Box>
       </Stack>
+      {treeTarget && (
+        <FileBrowser repoPath={path} revision={treeTarget} hidden={view !== 'files'} onRestore={restoreFiles} onClose={closeFiles} onHistory={showHistory} />
+      )}
 
       <Menu open={opMenu !== undefined} onClose={() => setOpMenu(undefined)} anchorReference="anchorPosition" anchorPosition={opMenu ? { top: opMenu.y, left: opMenu.x } : undefined}>
         <MenuItem
