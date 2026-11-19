@@ -44,6 +44,7 @@ import { FileBrowser } from './FileTree.tsx'
 import { ConflictsPanel, conflictEntries } from './ConflictsPanel.tsx'
 import { EvologPanel, OperationsPanel } from './HistoryPanels.tsx'
 import { MergeEditor } from './MergeEditor.tsx'
+import { PullRequestDialog } from './PullRequestDialog.tsx'
 import { RevisionDetail } from './RevisionDetail.tsx'
 import { RevisionGraph } from './RevisionGraph.tsx'
 import { SplitDialog } from './SplitDialog.tsx'
@@ -121,6 +122,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   const [bookmarkSelected, setBookmarkSelected] = useState(0)
   const [settingBookmark, setSettingBookmark] = useState<Commit>()
   const [pushing, setPushing] = useState(false)
+  const [submittingPR, setSubmittingPR] = useState<Commit[]>()
   const [menu, setMenu] = useState<{ x: number; y: number; commit: Commit }>()
   const [opSelected, setOpSelected] = useState(0)
   const [opMenu, setOpMenu] = useState<{ x: number; y: number; id: string }>()
@@ -428,6 +430,11 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
         case 'p':
           setPushing(true)
           break
+        case 'P':
+          if (targets().length > 0) {
+            setSubmittingPR(targets())
+          }
+          break
         case 'R':
           if (targets().length > 0) {
             setMode({ kind: 'rebase', sources: targets(), source: RebaseSource.REVISIONS, target: RebaseTarget.ONTO })
@@ -715,6 +722,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           <MenuItem key="describe" disabled={menu.commit.immutable} onClick={() => { setMenu(undefined); startDescribe(menu.commit) }}>Describe (e)</MenuItem>,
           <MenuItem key="abandon" disabled={menu.commit.immutable} onClick={() => { setMenu(undefined); setAbandoning(checkedCommits.length > 0 ? checkedCommits : [menu.commit]) }}>Abandon</MenuItem>,
           <MenuItem key="review" onClick={() => { setMenu(undefined); startReview(checkedCommits.length > 0 ? checkedCommits : [menu.commit]) }}>Review (v)</MenuItem>,
+          <MenuItem key="pr" onClick={() => { setMenu(undefined); setSubmittingPR(checkedCommits.length > 0 ? checkedCommits : [menu.commit]) }}>Create the pull request (P)</MenuItem>,
         ]}
       </Menu>
 
@@ -821,6 +829,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
                   { label: 'Show the evolog', shortcut: 'E', run: () => pressKey('E') },
                   { label: 'Browse the files', shortcut: 'F', run: () => pressKey('F') },
                   { label: 'Start the review of the revisions', shortcut: 'v', run: () => startReview(targets()) },
+                  { label: 'Create the pull request (jj pr submit)', shortcut: 'P', run: () => setSubmittingPR(targets()) },
                 ]
               : []),
             { label: 'Commit the working copy', shortcut: 'c', run: () => startCommit() },
@@ -896,6 +905,19 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
             setWorkspaceOpen(false)
             run(() => repositoryClient.updateStale({ path }), false)
           }}
+        />
+      )}
+
+      {submittingPR && (
+        <PullRequestDialog
+          repoPath={path}
+          commits={submittingPR}
+          onSubmitted={() => {
+            setChecked(new Set())
+            refetch()
+            refetchBookmarks()
+          }}
+          onClose={() => setSubmittingPR(undefined)}
         />
       )}
 

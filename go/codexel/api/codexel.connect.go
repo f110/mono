@@ -26,6 +26,8 @@ const (
 	RepositoryServiceName = "mono.codexel.RepositoryService"
 	// ReviewServiceName is the fully-qualified name of the ReviewService service.
 	ReviewServiceName = "mono.codexel.ReviewService"
+	// PullRequestServiceName is the fully-qualified name of the PullRequestService service.
+	PullRequestServiceName = "mono.codexel.PullRequestService"
 	// SystemServiceName is the fully-qualified name of the SystemService service.
 	SystemServiceName = "mono.codexel.SystemService"
 )
@@ -211,6 +213,15 @@ const (
 	ReviewServiceRoundDiffProcedure = "/mono.codexel.ReviewService/RoundDiff"
 	// ReviewServiceSetViewedProcedure is the fully-qualified name of the ReviewService's SetViewed RPC.
 	ReviewServiceSetViewedProcedure = "/mono.codexel.ReviewService/SetViewed"
+	// PullRequestServiceListTemplatesProcedure is the fully-qualified name of the PullRequestService's
+	// ListTemplates RPC.
+	PullRequestServiceListTemplatesProcedure = "/mono.codexel.PullRequestService/ListTemplates"
+	// PullRequestServiceValidateProcedure is the fully-qualified name of the PullRequestService's
+	// Validate RPC.
+	PullRequestServiceValidateProcedure = "/mono.codexel.PullRequestService/Validate"
+	// PullRequestServiceSubmitProcedure is the fully-qualified name of the PullRequestService's Submit
+	// RPC.
+	PullRequestServiceSubmitProcedure = "/mono.codexel.PullRequestService/Submit"
 	// SystemServiceGetStatusProcedure is the fully-qualified name of the SystemService's GetStatus RPC.
 	SystemServiceGetStatusProcedure = "/mono.codexel.SystemService/GetStatus"
 )
@@ -2061,6 +2072,128 @@ func (UnimplementedReviewServiceHandler) RoundDiff(context.Context, *connect.Req
 
 func (UnimplementedReviewServiceHandler) SetViewed(context.Context, *connect.Request[RequestSetViewed]) (*connect.Response[ResponseSetViewed], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.SetViewed is not implemented"))
+}
+
+// PullRequestServiceClient is a client for the mono.codexel.PullRequestService service.
+type PullRequestServiceClient interface {
+	ListTemplates(context.Context, *connect.Request[RequestListPullRequestTemplates]) (*connect.Response[ResponseListPullRequestTemplates], error)
+	Validate(context.Context, *connect.Request[RequestValidatePullRequest]) (*connect.Response[ResponseValidatePullRequest], error)
+	Submit(context.Context, *connect.Request[RequestSubmitPullRequest]) (*connect.Response[ResponseSubmitPullRequest], error)
+}
+
+// NewPullRequestServiceClient constructs a client for the mono.codexel.PullRequestService service.
+// By default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped
+// responses, and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
+// connect.WithGRPC() or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewPullRequestServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) PullRequestServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	pullRequestServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("PullRequestService").Methods()
+	return &pullRequestServiceClient{
+		listTemplates: connect.NewClient[RequestListPullRequestTemplates, ResponseListPullRequestTemplates](
+			httpClient,
+			baseURL+PullRequestServiceListTemplatesProcedure,
+			connect.WithSchema(pullRequestServiceMethods.ByName("ListTemplates")),
+			connect.WithClientOptions(opts...),
+		),
+		validate: connect.NewClient[RequestValidatePullRequest, ResponseValidatePullRequest](
+			httpClient,
+			baseURL+PullRequestServiceValidateProcedure,
+			connect.WithSchema(pullRequestServiceMethods.ByName("Validate")),
+			connect.WithClientOptions(opts...),
+		),
+		submit: connect.NewClient[RequestSubmitPullRequest, ResponseSubmitPullRequest](
+			httpClient,
+			baseURL+PullRequestServiceSubmitProcedure,
+			connect.WithSchema(pullRequestServiceMethods.ByName("Submit")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// pullRequestServiceClient implements PullRequestServiceClient.
+type pullRequestServiceClient struct {
+	listTemplates *connect.Client[RequestListPullRequestTemplates, ResponseListPullRequestTemplates]
+	validate      *connect.Client[RequestValidatePullRequest, ResponseValidatePullRequest]
+	submit        *connect.Client[RequestSubmitPullRequest, ResponseSubmitPullRequest]
+}
+
+// ListTemplates calls mono.codexel.PullRequestService.ListTemplates.
+func (c *pullRequestServiceClient) ListTemplates(ctx context.Context, req *connect.Request[RequestListPullRequestTemplates]) (*connect.Response[ResponseListPullRequestTemplates], error) {
+	return c.listTemplates.CallUnary(ctx, req)
+}
+
+// Validate calls mono.codexel.PullRequestService.Validate.
+func (c *pullRequestServiceClient) Validate(ctx context.Context, req *connect.Request[RequestValidatePullRequest]) (*connect.Response[ResponseValidatePullRequest], error) {
+	return c.validate.CallUnary(ctx, req)
+}
+
+// Submit calls mono.codexel.PullRequestService.Submit.
+func (c *pullRequestServiceClient) Submit(ctx context.Context, req *connect.Request[RequestSubmitPullRequest]) (*connect.Response[ResponseSubmitPullRequest], error) {
+	return c.submit.CallUnary(ctx, req)
+}
+
+// PullRequestServiceHandler is an implementation of the mono.codexel.PullRequestService service.
+type PullRequestServiceHandler interface {
+	ListTemplates(context.Context, *connect.Request[RequestListPullRequestTemplates]) (*connect.Response[ResponseListPullRequestTemplates], error)
+	Validate(context.Context, *connect.Request[RequestValidatePullRequest]) (*connect.Response[ResponseValidatePullRequest], error)
+	Submit(context.Context, *connect.Request[RequestSubmitPullRequest]) (*connect.Response[ResponseSubmitPullRequest], error)
+}
+
+// NewPullRequestServiceHandler builds an HTTP handler from the service implementation. It returns
+// the path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewPullRequestServiceHandler(svc PullRequestServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	pullRequestServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("PullRequestService").Methods()
+	pullRequestServiceListTemplatesHandler := connect.NewUnaryHandler(
+		PullRequestServiceListTemplatesProcedure,
+		svc.ListTemplates,
+		connect.WithSchema(pullRequestServiceMethods.ByName("ListTemplates")),
+		connect.WithHandlerOptions(opts...),
+	)
+	pullRequestServiceValidateHandler := connect.NewUnaryHandler(
+		PullRequestServiceValidateProcedure,
+		svc.Validate,
+		connect.WithSchema(pullRequestServiceMethods.ByName("Validate")),
+		connect.WithHandlerOptions(opts...),
+	)
+	pullRequestServiceSubmitHandler := connect.NewUnaryHandler(
+		PullRequestServiceSubmitProcedure,
+		svc.Submit,
+		connect.WithSchema(pullRequestServiceMethods.ByName("Submit")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/mono.codexel.PullRequestService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case PullRequestServiceListTemplatesProcedure:
+			pullRequestServiceListTemplatesHandler.ServeHTTP(w, r)
+		case PullRequestServiceValidateProcedure:
+			pullRequestServiceValidateHandler.ServeHTTP(w, r)
+		case PullRequestServiceSubmitProcedure:
+			pullRequestServiceSubmitHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedPullRequestServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedPullRequestServiceHandler struct{}
+
+func (UnimplementedPullRequestServiceHandler) ListTemplates(context.Context, *connect.Request[RequestListPullRequestTemplates]) (*connect.Response[ResponseListPullRequestTemplates], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.PullRequestService.ListTemplates is not implemented"))
+}
+
+func (UnimplementedPullRequestServiceHandler) Validate(context.Context, *connect.Request[RequestValidatePullRequest]) (*connect.Response[ResponseValidatePullRequest], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.PullRequestService.Validate is not implemented"))
+}
+
+func (UnimplementedPullRequestServiceHandler) Submit(context.Context, *connect.Request[RequestSubmitPullRequest]) (*connect.Response[ResponseSubmitPullRequest], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.PullRequestService.Submit is not implemented"))
 }
 
 // SystemServiceClient is a client for the mono.codexel.SystemService service.

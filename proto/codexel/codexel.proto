@@ -152,6 +152,20 @@ service ReviewService {
   rpc SetViewed(RequestSetViewed) returns (ResponseSetViewed);
 }
 
+// PullRequestService creates the pull requests on GitHub from the commits of the opened repository like jj pr submit.
+// The token of GitHub is retrieved by gh.
+service PullRequestService {
+  // ListTemplates returns the templates of the pull request. If there is one template, it is used without the
+  // selection.
+  rpc ListTemplates(RequestListPullRequestTemplates) returns (ResponseListPullRequestTemplates);
+  // Validate reports whether the revisions can be submitted. One revision is submitted with the stack from trunk to it.
+  // Multiple revisions are submitted as one pull request only if they are the whole stack from trunk.
+  rpc Validate(RequestValidatePullRequest) returns (ResponseValidatePullRequest);
+  // Submit pushes the commits and creates or updates the pull requests. One revision is the same as
+  // jj pr submit -r <revision>, and multiple revisions are the same as jj pr submit -r <the newest> --single-pr.
+  rpc Submit(RequestSubmitPullRequest) returns (ResponseSubmitPullRequest);
+}
+
 // SystemService provides the status of Codexel itself.
 service SystemService {
   // GetStatus returns the status found at startup.
@@ -1126,4 +1140,53 @@ message RequestGetStatus {}
 message ResponseGetStatus {
   // missing_binaries are the binaries Codexel depends on and not found in PATH.
   repeated string missing_binaries = 1;
+}
+
+message RequestListPullRequestTemplates {
+  string path = 1;
+}
+
+message ResponseListPullRequestTemplates {
+  // templates are the paths relative to the root of the workspace.
+  repeated string templates = 1;
+}
+
+message RequestValidatePullRequest {
+  string path = 1;
+  // revisions are the commit IDs.
+  repeated string revisions = 2;
+}
+
+message ResponseValidatePullRequest {
+  // reason is why the revisions can't be submitted. It is empty if they can be submitted.
+  string reason = 1;
+}
+
+message RequestSubmitPullRequest {
+  string path = 1;
+  // revisions are the commit IDs.
+  repeated string revisions = 2;
+  // template is one of the templates returned by ListTemplates. The template is not used if it is empty.
+  string template = 3;
+}
+
+enum PullRequestAction {
+  PULL_REQUEST_ACTION_UNSPECIFIED = 0;
+  PULL_REQUEST_ACTION_CREATED     = 1;
+  PULL_REQUEST_ACTION_UPDATED     = 2;
+  // PULL_REQUEST_ACTION_EXISTING is the pull request which already exists and is not changed.
+  PULL_REQUEST_ACTION_EXISTING = 3;
+}
+
+message SubmittedPullRequest {
+  string            change_id = 1;
+  string            url       = 2;
+  PullRequestAction action    = 3;
+}
+
+message ResponseSubmitPullRequest {
+  // pushed are the change IDs pushed to the remote.
+  repeated string pushed = 1;
+  // pull_requests are in order of the operations.
+  repeated SubmittedPullRequest pull_requests = 2;
 }

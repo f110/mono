@@ -4,6 +4,7 @@ go_library(
     name = "server",
     srcs = [
         "mcp.go",
+        "pullrequest.go",
         "repository.go",
         "review.go",
         "server.go",
@@ -16,24 +17,34 @@ go_library(
         "//go/codexel/config",
         "//go/codexel/review",
         "//go/gitattributes",
+        "//go/github",
         "//go/herdr",
         "//go/jujutsu",
         "//go/logger",
         "@com_connectrpc_connect//:connect",
         "@com_github_fsnotify_fsnotify//:fsnotify",
+        "@com_github_google_go_github_v85//github",
         "@com_github_modelcontextprotocol_go_sdk//mcp",
         "@dev_f110_go_xerrors//:xerrors",
         "@org_golang_google_protobuf//encoding/protojson",
         "@org_golang_google_protobuf//proto",
+        "@org_golang_x_oauth2//:oauth2",
     ],
 )
 
 go_test(
     name = "server_test",
     srcs = [
+        "pullrequest_test.go",
         "repository_test.go",
         "review_test.go",
         "server_test.go",
+    ],
+    args = [
+        "-test.jj-binary=../../../$(location @jj//:bin)",
+    ],
+    data = [
+        "@jj//:bin",
     ],
     embed = [":server"],
     deps = [
@@ -41,9 +52,13 @@ go_test(
         "//go/codexel/config",
         "//go/codexel/review",
         "//go/herdr",
+        "//go/jujutsu",
+        "//go/logger",
         "//go/testing/assertion",
         "@com_connectrpc_connect//:connect",
+        "@com_github_google_go_github_v85//github",
         "@com_github_modelcontextprotocol_go_sdk//mcp",
+        "@dev_f110_go_githubmock//:githubmock",
         "@org_golang_google_protobuf//encoding/protojson",
     ],
 )

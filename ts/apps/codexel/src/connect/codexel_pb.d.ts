@@ -3688,6 +3688,162 @@ export declare type ResponseGetStatus = Message<"mono.codexel.ResponseGetStatus"
 export declare const ResponseGetStatusSchema: GenMessage<ResponseGetStatus>;
 
 /**
+ * @generated from message mono.codexel.RequestListPullRequestTemplates
+ */
+export declare type RequestListPullRequestTemplates = Message<"mono.codexel.RequestListPullRequestTemplates"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestListPullRequestTemplates.
+ * Use `create(RequestListPullRequestTemplatesSchema)` to create a new message.
+ */
+export declare const RequestListPullRequestTemplatesSchema: GenMessage<RequestListPullRequestTemplates>;
+
+/**
+ * @generated from message mono.codexel.ResponseListPullRequestTemplates
+ */
+export declare type ResponseListPullRequestTemplates = Message<"mono.codexel.ResponseListPullRequestTemplates"> & {
+  /**
+   * templates are the paths relative to the root of the workspace.
+   *
+   * @generated from field: repeated string templates = 1;
+   */
+  templates: string[];
+};
+
+/**
+ * Describes the message mono.codexel.ResponseListPullRequestTemplates.
+ * Use `create(ResponseListPullRequestTemplatesSchema)` to create a new message.
+ */
+export declare const ResponseListPullRequestTemplatesSchema: GenMessage<ResponseListPullRequestTemplates>;
+
+/**
+ * @generated from message mono.codexel.RequestValidatePullRequest
+ */
+export declare type RequestValidatePullRequest = Message<"mono.codexel.RequestValidatePullRequest"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * revisions are the commit IDs.
+   *
+   * @generated from field: repeated string revisions = 2;
+   */
+  revisions: string[];
+};
+
+/**
+ * Describes the message mono.codexel.RequestValidatePullRequest.
+ * Use `create(RequestValidatePullRequestSchema)` to create a new message.
+ */
+export declare const RequestValidatePullRequestSchema: GenMessage<RequestValidatePullRequest>;
+
+/**
+ * @generated from message mono.codexel.ResponseValidatePullRequest
+ */
+export declare type ResponseValidatePullRequest = Message<"mono.codexel.ResponseValidatePullRequest"> & {
+  /**
+   * reason is why the revisions can't be submitted. It is empty if they can be submitted.
+   *
+   * @generated from field: string reason = 1;
+   */
+  reason: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseValidatePullRequest.
+ * Use `create(ResponseValidatePullRequestSchema)` to create a new message.
+ */
+export declare const ResponseValidatePullRequestSchema: GenMessage<ResponseValidatePullRequest>;
+
+/**
+ * @generated from message mono.codexel.RequestSubmitPullRequest
+ */
+export declare type RequestSubmitPullRequest = Message<"mono.codexel.RequestSubmitPullRequest"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * revisions are the commit IDs.
+   *
+   * @generated from field: repeated string revisions = 2;
+   */
+  revisions: string[];
+
+  /**
+   * template is one of the templates returned by ListTemplates. The template is not used if it is empty.
+   *
+   * @generated from field: string template = 3;
+   */
+  template: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestSubmitPullRequest.
+ * Use `create(RequestSubmitPullRequestSchema)` to create a new message.
+ */
+export declare const RequestSubmitPullRequestSchema: GenMessage<RequestSubmitPullRequest>;
+
+/**
+ * @generated from message mono.codexel.SubmittedPullRequest
+ */
+export declare type SubmittedPullRequest = Message<"mono.codexel.SubmittedPullRequest"> & {
+  /**
+   * @generated from field: string change_id = 1;
+   */
+  changeId: string;
+
+  /**
+   * @generated from field: string url = 2;
+   */
+  url: string;
+
+  /**
+   * @generated from field: mono.codexel.PullRequestAction action = 3;
+   */
+  action: PullRequestAction;
+};
+
+/**
+ * Describes the message mono.codexel.SubmittedPullRequest.
+ * Use `create(SubmittedPullRequestSchema)` to create a new message.
+ */
+export declare const SubmittedPullRequestSchema: GenMessage<SubmittedPullRequest>;
+
+/**
+ * @generated from message mono.codexel.ResponseSubmitPullRequest
+ */
+export declare type ResponseSubmitPullRequest = Message<"mono.codexel.ResponseSubmitPullRequest"> & {
+  /**
+   * pushed are the change IDs pushed to the remote.
+   *
+   * @generated from field: repeated string pushed = 1;
+   */
+  pushed: string[];
+
+  /**
+   * pull_requests are in order of the operations.
+   *
+   * @generated from field: repeated mono.codexel.SubmittedPullRequest pull_requests = 2;
+   */
+  pullRequests: SubmittedPullRequest[];
+};
+
+/**
+ * Describes the message mono.codexel.ResponseSubmitPullRequest.
+ * Use `create(ResponseSubmitPullRequestSchema)` to create a new message.
+ */
+export declare const ResponseSubmitPullRequestSchema: GenMessage<ResponseSubmitPullRequest>;
+
+/**
  * @generated from enum mono.codexel.AgentStatus
  */
 export enum AgentStatus {
@@ -3983,6 +4139,38 @@ export enum DiffSide {
  * Describes the enum mono.codexel.DiffSide.
  */
 export declare const DiffSideSchema: GenEnum<DiffSide>;
+
+/**
+ * @generated from enum mono.codexel.PullRequestAction
+ */
+export enum PullRequestAction {
+  /**
+   * @generated from enum value: PULL_REQUEST_ACTION_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: PULL_REQUEST_ACTION_CREATED = 1;
+   */
+  CREATED = 1,
+
+  /**
+   * @generated from enum value: PULL_REQUEST_ACTION_UPDATED = 2;
+   */
+  UPDATED = 2,
+
+  /**
+   * PULL_REQUEST_ACTION_EXISTING is the pull request which already exists and is not changed.
+   *
+   * @generated from enum value: PULL_REQUEST_ACTION_EXISTING = 3;
+   */
+  EXISTING = 3,
+}
+
+/**
+ * Describes the enum mono.codexel.PullRequestAction.
+ */
+export declare const PullRequestActionSchema: GenEnum<PullRequestAction>;
 
 /**
  * AgentService provides the coding agents running in herdr.
@@ -4638,6 +4826,48 @@ export declare const ReviewService: GenService<{
     methodKind: "unary";
     input: typeof RequestSetViewedSchema;
     output: typeof ResponseSetViewedSchema;
+  },
+}>;
+
+/**
+ * PullRequestService creates the pull requests on GitHub from the commits of the opened repository like jj pr submit.
+ * The token of GitHub is retrieved by gh.
+ *
+ * @generated from service mono.codexel.PullRequestService
+ */
+export declare const PullRequestService: GenService<{
+  /**
+   * ListTemplates returns the templates of the pull request. If there is one template, it is used without the
+   * selection.
+   *
+   * @generated from rpc mono.codexel.PullRequestService.ListTemplates
+   */
+  listTemplates: {
+    methodKind: "unary";
+    input: typeof RequestListPullRequestTemplatesSchema;
+    output: typeof ResponseListPullRequestTemplatesSchema;
+  },
+  /**
+   * Validate reports whether the revisions can be submitted. One revision is submitted with the stack from trunk to it.
+   * Multiple revisions are submitted as one pull request only if they are the whole stack from trunk.
+   *
+   * @generated from rpc mono.codexel.PullRequestService.Validate
+   */
+  validate: {
+    methodKind: "unary";
+    input: typeof RequestValidatePullRequestSchema;
+    output: typeof ResponseValidatePullRequestSchema;
+  },
+  /**
+   * Submit pushes the commits and creates or updates the pull requests. One revision is the same as
+   * jj pr submit -r <revision>, and multiple revisions are the same as jj pr submit -r <the newest> --single-pr.
+   *
+   * @generated from rpc mono.codexel.PullRequestService.Submit
+   */
+  submit: {
+    methodKind: "unary";
+    input: typeof RequestSubmitPullRequestSchema;
+    output: typeof ResponseSubmitPullRequestSchema;
   },
 }>;
 

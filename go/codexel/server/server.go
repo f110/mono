@@ -33,6 +33,7 @@ func New(herdrClient *herdr.Client, conf *config.File, reviews *review.Store, fr
 	mux.Handle("/mcp", NewMCPHandler(reviewHandler))
 	mux.Handle(api.NewAgentServiceHandler(NewAgentHandler(herdrClient, conf, claudeProjectsDir)))
 	mux.Handle(api.NewRepositoryServiceHandler(NewRepositoryHandler(conf)))
+	mux.Handle(api.NewPullRequestServiceHandler(NewPullRequestHandler(conf)))
 	mux.Handle(api.NewSystemServiceHandler(NewSystemHandler(missingBinaries)))
 	mux.Handle("/", newFrontendHandler(frontend))
 	return mux

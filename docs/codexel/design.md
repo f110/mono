@@ -298,6 +298,12 @@ jj-pr の `--single-pr` は「trunk から `-r` までのスタック」を 1 �
 trunk から連続したスタック (`ancestors(latest(<default>@origin) & remote_bookmarks())..change_id(<最上位>) ~ empty()` と一致する)
 の場合だけ許可する。一致しなければ PR 作成の操作を無効にし、理由を表示する。
 
+- 最上位は選択したコミットの `heads()` で決める。1 つに決まらなければ許可しない
+- 判定は `PullRequestService.Validate` で行い、`Submit` でも同じ判定をする
+- 1 つ選択した場合も、trunk からのスタックが空 (選択したコミットが trunk に含まれる等) なら許可しない
+- テンプレートが複数あるときは jj-pr と同じく選択を必須にする (「使わない」も選べる)。1 つならそれを使う
+- 結果として push した change ID と、PR ごとの操作と URL をダイアログに表示する
+
 ## 8. API
 
 `proto/codexel/codexel.proto` に定義する。サービスは機能ごとに分ける。
@@ -307,7 +313,7 @@ trunk から連続したスタック (`ancestors(latest(<default>@origin) & remo
 | `AgentService` | `List`, `Watch` (stream), `ReadOutput`, `SendPrompt`, `SendKeys`, `Focus`, `ListWorkspaces`, `Start`, `WatchTranscript` (stream) |
 | `RepositoryService` | `List`, `Open`, `Close`, `Watch` (stream, op ID の変化), `Log`, `GetRevision`, `Diff`, `DiffRange`, `Files`, `FileTree`, `FileHistory`, ... と §4.2 の各操作 (リビジョン、ブックマーク、Git、オペレーション、ファイル、コンフリクト、ワークスペース、エイリアス) |
 | `ReviewService` | `List`, `Get`, `Start`, `AddComment`, `EditComment`, `DeleteComment`, `Reply`, `ResolveComment`, `Finish`, `StartNextRound`, `RoundDiff`, `SetViewed` |
-| `PullRequestService` | `ListTemplates`, `Submit` |
+| `PullRequestService` | `ListTemplates`, `Validate`, `Submit` |
 | `SystemService` | `GetStatus` (起動時に PATH に見つからなかった `herdr` と `jj`) |
 
 lightjj の HTTP API を 1:1 で Connect の RPC に写す。git push/fetch や alias のようにストリーミング出力があるものは server streaming にする。
