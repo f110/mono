@@ -538,6 +538,13 @@ export declare type Commit = Message<"mono.codexel.Commit"> & {
    * @generated from field: repeated mono.codexel.Trailer trailers = 18;
    */
   trailers: Trailer[];
+
+  /**
+   * working_copies is the names of the workspaces whose working copy is the commit.
+   *
+   * @generated from field: repeated string working_copies = 19;
+   */
+  workingCopies: string[];
 };
 
 /**

@@ -10,6 +10,7 @@ import (
 
 	"go.f110.dev/mono/go/codexel/api"
 	"go.f110.dev/mono/go/codexel/config"
+	"go.f110.dev/mono/go/jujutsu"
 	"go.f110.dev/mono/go/testing/assertion"
 )
 
@@ -94,4 +95,10 @@ func TestOpenAgentRepositories(t *testing.T) {
 	assertion.MustLen(t, c.Repositories, 2)
 	assertion.Equal(t, c.Repositories[0].Path, "/src/mono")
 	assertion.Equal(t, c.Repositories[1].Path, "/src/ops")
+}
+
+func TestToCommit(t *testing.T) {
+	c := toCommit(&jujutsu.Commit{ChangeID: "abc", WorkingCopies: []string{"default", "second"}})
+	assertion.Equal(t, c.GetChangeId(), "abc")
+	assertion.Equal(t, c.GetWorkingCopies(), []string{"default", "second"})
 }

@@ -290,6 +290,8 @@ message Commit {
   repeated string         local_bookmarks      = 16;
   repeated RemoteBookmark remote_bookmarks     = 17;
   repeated Trailer        trailers             = 18;
+  // working_copies is the names of the workspaces whose working copy is the commit.
+  repeated string         working_copies       = 19;
 }
 
 // GraphLine is a line of the graph. gutter is the characters of the graph.

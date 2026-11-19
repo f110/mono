@@ -901,6 +901,7 @@ func toCommit(c *jujutsu.Commit) *api.Commit {
 		LocalBookmarks:     c.LocalBookmarks,
 		RemoteBookmarks:    remotes,
 		Trailers:           trailers,
+		WorkingCopies:      c.WorkingCopies,
 	}.Build()
 }
 

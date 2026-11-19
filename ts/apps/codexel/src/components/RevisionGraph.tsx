@@ -100,6 +100,9 @@ const CommitLine = ({
     <AgentBadge commit={commit} agents={agents} />
     {approved && <ApprovedBadge />}
     <ReviewBadge reviews={reviews} />
+    {commit.workingCopies.map((w) => (
+      <Chip key={`${w}@`} label={`${w}@`} size="small" color="success" variant="outlined" sx={{ height: 18 }} />
+    ))}
     {commit.localBookmarks.map((b) => (
       <Chip key={b} label={b} size="small" color="primary" variant="outlined" sx={{ height: 18 }} />
     ))}

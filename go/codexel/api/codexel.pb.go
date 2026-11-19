@@ -2449,6 +2449,7 @@ type Commit struct {
 	xxx_hidden_LocalBookmarks     []string               `protobuf:"bytes,16,rep,name=local_bookmarks,json=localBookmarks"`
 	xxx_hidden_RemoteBookmarks    *[]*RemoteBookmark     `protobuf:"bytes,17,rep,name=remote_bookmarks,json=remoteBookmarks"`
 	xxx_hidden_Trailers           *[]*Trailer            `protobuf:"bytes,18,rep,name=trailers"`
+	xxx_hidden_WorkingCopies      []string               `protobuf:"bytes,19,rep,name=working_copies,json=workingCopies"`
 	XXX_raceDetectHookData        protoimpl.RaceDetectHookData
 	XXX_presence                  [1]uint32
 	unknownFields                 protoimpl.UnknownFields
@@ -2631,74 +2632,81 @@ func (x *Commit) GetTrailers() []*Trailer {
 	return nil
 }
 
+func (x *Commit) GetWorkingCopies() []string {
+	if x != nil {
+		return x.xxx_hidden_WorkingCopies
+	}
+	return nil
+}
+
 func (x *Commit) SetChangeId(v string) {
 	x.xxx_hidden_ChangeId = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 19)
 }
 
 func (x *Commit) SetChangeIdPrefix(v string) {
 	x.xxx_hidden_ChangeIdPrefix = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 19)
 }
 
 func (x *Commit) SetCommitId(v string) {
 	x.xxx_hidden_CommitId = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 19)
 }
 
 func (x *Commit) SetCommitIdPrefix(v string) {
 	x.xxx_hidden_CommitIdPrefix = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 19)
 }
 
 func (x *Commit) SetDescription(v string) {
 	x.xxx_hidden_Description = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 19)
 }
 
 func (x *Commit) SetAuthor(v string) {
 	x.xxx_hidden_Author = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 19)
 }
 
 func (x *Commit) SetEmail(v string) {
 	x.xxx_hidden_Email = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 19)
 }
 
 func (x *Commit) SetTimestamp(v int64) {
 	x.xxx_hidden_Timestamp = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 19)
 }
 
 func (x *Commit) SetCurrentWorkingCopy(v bool) {
 	x.xxx_hidden_CurrentWorkingCopy = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 19)
 }
 
 func (x *Commit) SetImmutable(v bool) {
 	x.xxx_hidden_Immutable = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 19)
 }
 
 func (x *Commit) SetConflict(v bool) {
 	x.xxx_hidden_Conflict = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 19)
 }
 
 func (x *Commit) SetEmpty(v bool) {
 	x.xxx_hidden_Empty = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 19)
 }
 
 func (x *Commit) SetDivergent(v bool) {
 	x.xxx_hidden_Divergent = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 12, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 12, 19)
 }
 
 func (x *Commit) SetHidden(v bool) {
 	x.xxx_hidden_Hidden = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 13, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 13, 19)
 }
 
 func (x *Commit) SetParents(v []string) {
@@ -2715,6 +2723,10 @@ func (x *Commit) SetRemoteBookmarks(v []*RemoteBookmark) {
 
 func (x *Commit) SetTrailers(v []*Trailer) {
 	x.xxx_hidden_Trailers = &v
+}
+
+func (x *Commit) SetWorkingCopies(v []string) {
+	x.xxx_hidden_WorkingCopies = v
 }
 
 func (x *Commit) HasChangeId() bool {
@@ -2906,6 +2918,7 @@ type Commit_builder struct {
 	LocalBookmarks     []string
 	RemoteBookmarks    []*RemoteBookmark
 	Trailers           []*Trailer
+	WorkingCopies      []string
 }
 
 func (b0 Commit_builder) Build() *Commit {
@@ -2913,65 +2926,66 @@ func (b0 Commit_builder) Build() *Commit {
 	b, x := &b0, m0
 	_, _ = b, x
 	if b.ChangeId != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 19)
 		x.xxx_hidden_ChangeId = b.ChangeId
 	}
 	if b.ChangeIdPrefix != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 19)
 		x.xxx_hidden_ChangeIdPrefix = b.ChangeIdPrefix
 	}
 	if b.CommitId != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 19)
 		x.xxx_hidden_CommitId = b.CommitId
 	}
 	if b.CommitIdPrefix != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 19)
 		x.xxx_hidden_CommitIdPrefix = b.CommitIdPrefix
 	}
 	if b.Description != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 19)
 		x.xxx_hidden_Description = b.Description
 	}
 	if b.Author != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 19)
 		x.xxx_hidden_Author = b.Author
 	}
 	if b.Email != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 19)
 		x.xxx_hidden_Email = b.Email
 	}
 	if b.Timestamp != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 19)
 		x.xxx_hidden_Timestamp = *b.Timestamp
 	}
 	if b.CurrentWorkingCopy != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 19)
 		x.xxx_hidden_CurrentWorkingCopy = *b.CurrentWorkingCopy
 	}
 	if b.Immutable != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 19)
 		x.xxx_hidden_Immutable = *b.Immutable
 	}
 	if b.Conflict != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 19)
 		x.xxx_hidden_Conflict = *b.Conflict
 	}
 	if b.Empty != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 19)
 		x.xxx_hidden_Empty = *b.Empty
 	}
 	if b.Divergent != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 12, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 12, 19)
 		x.xxx_hidden_Divergent = *b.Divergent
 	}
 	if b.Hidden != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 13, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 13, 19)
 		x.xxx_hidden_Hidden = *b.Hidden
 	}
 	x.xxx_hidden_Parents = b.Parents
 	x.xxx_hidden_LocalBookmarks = b.LocalBookmarks
 	x.xxx_hidden_RemoteBookmarks = &b.RemoteBookmarks
 	x.xxx_hidden_Trailers = &b.Trailers
+	x.xxx_hidden_WorkingCopies = b.WorkingCopies
 	return m0
 }
 
@@ -18064,7 +18078,7 @@ const file_proto_codexel_codexel_proto_rawDesc = "" +
 	"\x06remote\x18\x02 \x01(\tR\x06remote\"1\n" +
 	"\aTrailer\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value\"\xfb\x04\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value\"\xa2\x05\n" +
 	"\x06Commit\x12\x1b\n" +
 	"\tchange_id\x18\x01 \x01(\tR\bchangeId\x12(\n" +
 	"\x10change_id_prefix\x18\x02 \x01(\tR\x0echangeIdPrefix\x12\x1b\n" +
@@ -18084,7 +18098,8 @@ const file_proto_codexel_codexel_proto_rawDesc = "" +
 	"\aparents\x18\x0f \x03(\tR\aparents\x12'\n" +
 	"\x0flocal_bookmarks\x18\x10 \x03(\tR\x0elocalBookmarks\x12G\n" +
 	"\x10remote_bookmarks\x18\x11 \x03(\v2\x1c.mono.codexel.RemoteBookmarkR\x0fremoteBookmarks\x121\n" +
-	"\btrailers\x18\x12 \x03(\v2\x15.mono.codexel.TrailerR\btrailers\"Q\n" +
+	"\btrailers\x18\x12 \x03(\v2\x15.mono.codexel.TrailerR\btrailers\x12%\n" +
+	"\x0eworking_copies\x18\x13 \x03(\tR\rworkingCopies\"Q\n" +
 	"\tGraphLine\x12\x16\n" +
 	"\x06gutter\x18\x01 \x01(\tR\x06gutter\x12\x18\n" +
 	"\acontent\x18\x02 \x01(\tR\acontent\x12\x12\n" +

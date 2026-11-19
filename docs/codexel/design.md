@@ -103,7 +103,7 @@ lightjj の機能を次のとおり分類する。キーバインドは lightjj 
 
 | 分類 | 機能 | キー |
 |---|---|---|
-| リビジョングラフ | revset 入力、SVG の DAG、`@`/immutable/conflict/divergent の表示、bookmark・PR バッジ、`?change=` 等のリンク | `j`/`k`, `/`, `@`, `r` |
+| リビジョングラフ | revset 入力、SVG の DAG、`@`/immutable/conflict/divergent の表示、各 workspace の working copy (`<name>@`)・bookmark・PR バッジ、`?change=` 等のリンク | `j`/`k`, `/`, `@`, `r` |
 | 差分 | unified/split、シンタックスハイライト、単語単位の差分、コンテキスト展開、hunk 移動、Markdown プレビュー、画像差分、エディタで開く | `]`/`[`, `\|`, `m`, `f` |
 | ファイル | リビジョン時点の全ファイルツリー、パス検索、ファイル履歴と 2 点比較、インライン編集 (`@` のみ) | `F` |
 | 変更操作 | new / edit / abandon / describe / commit / restore / squash / split (ファイル・hunk) / slide / undo | `n`, `e`, `c`, `s`, `S`, `J`/`K`, `u` |
