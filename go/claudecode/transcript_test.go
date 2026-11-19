@@ -34,8 +34,8 @@ const transcriptLines = `{"type":"user","isMeta":true,"message":{"role":"user","
 {"type":"user","message":{"role":"user","content":"<command-name>/clear</command-name>"},"timestamp":"2026-11-18T10:00:00Z"}
 {"type":"user","origin":{"kind":"human"},"message":{"role":"user","content":"Fix the bug\nwith the details"},"timestamp":"2026-11-18T10:00:01Z"}
 {"type":"assistant","message":{"role":"assistant","content":[{"type":"thinking","thinking":"hmm"}]},"timestamp":"2026-11-18T10:00:02Z"}
-{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"I'll look at it."}]},"timestamp":"2026-11-18T10:00:03Z"}
-{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"t1","name":"Bash","input":{"command":"ls","description":"List"}}]},"timestamp":"2026-11-18T10:00:04Z"}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"I'll look at it."}],"usage":{"input_tokens":3,"output_tokens":20,"cache_read_input_tokens":1000,"cache_creation_input_tokens":200}},"timestamp":"2026-11-18T10:00:03Z"}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"t1","name":"Bash","input":{"command":"ls","description":"List"}}],"usage":{"input_tokens":3,"output_tokens":20,"cache_read_input_tokens":1000,"cache_creation_input_tokens":200}},"timestamp":"2026-11-18T10:00:04Z"}
 {"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"t1","content":"a.go","is_error":false}]},"toolUseResult":{"stdout":"a.go"},"timestamp":"2026-11-18T10:00:05Z"}
 {"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"t2","name":"Read","input":{"file_path":"/repo/a.go"}}]},"timestamp":"2026-11-18T10:00:06Z"}
 {"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"t2","content":[{"type":"text","text":"no such file"}],"is_error":true}]},"timestamp":"2026-11-18T10:00:07Z"}
@@ -53,10 +53,11 @@ func TestTranscript(t *testing.T) {
 	entries, err := tr.Update()
 	assertion.MustNoError(t, err)
 	at := func(sec int) time.Time { return time.Date(2026, 11, 18, 10, 0, sec, 0, time.UTC) }
+	usage := &Usage{InputTokens: 3, OutputTokens: 20, CacheReadInputTokens: 1000, CacheCreationInputTokens: 200}
 	assertion.Equal(t, entries, []*Entry{
 		{Kind: EntryKindUserPrompt, Time: at(1), Text: "Fix the bug\nwith the details"},
-		{Kind: EntryKindAssistantText, Time: at(3), Text: "I'll look at it."},
-		{Kind: EntryKindToolUse, Time: at(4), Text: "ls", ToolName: "Bash", ToolUseID: "t1"},
+		{Kind: EntryKindAssistantText, Time: at(3), Text: "I'll look at it.", Usage: usage},
+		{Kind: EntryKindToolUse, Time: at(4), Text: "ls", ToolName: "Bash", ToolUseID: "t1", Usage: usage},
 		{Kind: EntryKindToolResult, Time: at(5), Text: "a.go", ToolUseID: "t1"},
 		{Kind: EntryKindToolUse, Time: at(6), Text: "/repo/a.go", ToolName: "Read", ToolUseID: "t2"},
 		{Kind: EntryKindToolResult, Time: at(7), Text: "no such file", ToolUseID: "t2", IsError: true},

@@ -876,6 +876,16 @@ message TranscriptEntry {
   // tool_use_id links the result to the tool call.
   string tool_use_id = 5;
   bool   is_error    = 6;
+  // usage is the usage of the API response which produced the entry. The entries from the same response have the same
+  // usage. It is set only for ASSISTANT_TEXT and TOOL_USE.
+  TranscriptUsage usage = 7;
+}
+
+message TranscriptUsage {
+  int64 input_tokens                = 1;
+  int64 output_tokens               = 2;
+  int64 cache_read_input_tokens     = 3;
+  int64 cache_creation_input_tokens = 4;
 }
 
 message RequestWatchTranscript {

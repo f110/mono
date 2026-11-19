@@ -370,6 +370,15 @@ func toAgentStatus(s herdr.AgentStatus) api.AgentStatus {
 func toTranscriptEntries(entries []*claudecode.Entry) []*api.TranscriptEntry {
 	res := make([]*api.TranscriptEntry, 0, len(entries))
 	for _, v := range entries {
+		var usage *api.TranscriptUsage
+		if v.Usage != nil {
+			usage = api.TranscriptUsage_builder{
+				InputTokens:              new(v.Usage.InputTokens),
+				OutputTokens:             new(v.Usage.OutputTokens),
+				CacheReadInputTokens:     new(v.Usage.CacheReadInputTokens),
+				CacheCreationInputTokens: new(v.Usage.CacheCreationInputTokens),
+			}.Build()
+		}
 		res = append(res, api.TranscriptEntry_builder{
 			Kind:      new(toTranscriptEntryKind(v.Kind)),
 			Time:      new(v.Time.UnixMilli()),
@@ -377,6 +386,7 @@ func toTranscriptEntries(entries []*claudecode.Entry) []*api.TranscriptEntry {
 			ToolName:  new(v.ToolName),
 			ToolUseId: new(v.ToolUseID),
 			IsError:   new(v.IsError),
+			Usage:     usage,
 		}.Build())
 	}
 	return res

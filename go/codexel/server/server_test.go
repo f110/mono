@@ -299,13 +299,14 @@ func TestWatchTranscript(t *testing.T) {
 
 	f, err := os.OpenFile(p, os.O_APPEND|os.O_WRONLY, 0)
 	assertion.MustNoError(t, err)
-	_, err = f.WriteString(`{"type":"assistant","message":{"content":[{"type":"text","text":"Done"}]},"timestamp":"2026-11-18T10:00:01Z"}` + "\n")
+	_, err = f.WriteString(`{"type":"assistant","message":{"content":[{"type":"text","text":"Done"}],"usage":{"output_tokens":5}},"timestamp":"2026-11-18T10:00:01Z"}` + "\n")
 	assertion.MustNoError(t, err)
 	assertion.MustNoError(t, f.Close())
 
 	assertion.True(t, stream.Receive())
 	assertion.MustLen(t, stream.Msg().GetEntries(), 1)
 	assertion.Equal(t, stream.Msg().GetEntries()[0].GetText(), "Done")
+	assertion.Equal(t, stream.Msg().GetEntries()[0].GetUsage().GetOutputTokens(), int64(5))
 }
 
 func TestGetStatus(t *testing.T) {

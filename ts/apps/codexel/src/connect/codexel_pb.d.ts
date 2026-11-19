@@ -2735,6 +2735,14 @@ export declare type TranscriptEntry = Message<"mono.codexel.TranscriptEntry"> & 
    * @generated from field: bool is_error = 6;
    */
   isError: boolean;
+
+  /**
+   * usage is the usage of the API response which produced the entry. The entries from the same response have the same
+   * usage. It is set only for ASSISTANT_TEXT and TOOL_USE.
+   *
+   * @generated from field: mono.codexel.TranscriptUsage usage = 7;
+   */
+  usage?: TranscriptUsage;
 };
 
 /**
@@ -2742,6 +2750,37 @@ export declare type TranscriptEntry = Message<"mono.codexel.TranscriptEntry"> & 
  * Use `create(TranscriptEntrySchema)` to create a new message.
  */
 export declare const TranscriptEntrySchema: GenMessage<TranscriptEntry>;
+
+/**
+ * @generated from message mono.codexel.TranscriptUsage
+ */
+export declare type TranscriptUsage = Message<"mono.codexel.TranscriptUsage"> & {
+  /**
+   * @generated from field: int64 input_tokens = 1;
+   */
+  inputTokens: bigint;
+
+  /**
+   * @generated from field: int64 output_tokens = 2;
+   */
+  outputTokens: bigint;
+
+  /**
+   * @generated from field: int64 cache_read_input_tokens = 3;
+   */
+  cacheReadInputTokens: bigint;
+
+  /**
+   * @generated from field: int64 cache_creation_input_tokens = 4;
+   */
+  cacheCreationInputTokens: bigint;
+};
+
+/**
+ * Describes the message mono.codexel.TranscriptUsage.
+ * Use `create(TranscriptUsageSchema)` to create a new message.
+ */
+export declare const TranscriptUsageSchema: GenMessage<TranscriptUsage>;
 
 /**
  * @generated from message mono.codexel.RequestWatchTranscript

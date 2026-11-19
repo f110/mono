@@ -40,6 +40,17 @@ type Entry struct {
 	ToolName  string
 	ToolUseID string
 	IsError   bool
+	// Usage is the usage of the API response which produced the entry. The entries from the same response have the same
+	// usage.
+	Usage *Usage
+}
+
+// Usage is the number of the tokens of the API response.
+type Usage struct {
+	InputTokens              int64 `json:"input_tokens"`
+	OutputTokens             int64 `json:"output_tokens"`
+	CacheReadInputTokens     int64 `json:"cache_read_input_tokens"`
+	CacheCreationInputTokens int64 `json:"cache_creation_input_tokens"`
 }
 
 var sessionIDPattern = regexp.MustCompile(`^[0-9A-Za-z-]+$`)
@@ -137,6 +148,7 @@ type record struct {
 	} `json:"origin"`
 	Message *struct {
 		Content json.RawMessage `json:"content"`
+		Usage   *Usage          `json:"usage"`
 	} `json:"message"`
 	AITitle    string `json:"aiTitle"`
 	LastPrompt string `json:"lastPrompt"`
@@ -192,7 +204,7 @@ func (t *Transcript) parseLine(line []byte) []*Entry {
 	for _, b := range blocks {
 		switch {
 		case r.Type == "assistant" && b.Type == "text":
-			entries = append(entries, &Entry{Kind: EntryKindAssistantText, Time: r.Timestamp, Text: b.Text})
+			entries = append(entries, &Entry{Kind: EntryKindAssistantText, Time: r.Timestamp, Text: b.Text, Usage: r.Message.Usage})
 		case r.Type == "assistant" && b.Type == "tool_use":
 			entries = append(entries, &Entry{
 				Kind:      EntryKindToolUse,
@@ -200,6 +212,7 @@ func (t *Transcript) parseLine(line []byte) []*Entry {
 				Text:      truncate(toolInputSummary(b.Name, b.Input)),
 				ToolName:  b.Name,
 				ToolUseID: b.ID,
+				Usage:     r.Message.Usage,
 			})
 		case r.Type == "user" && b.Type == "tool_result":
 			entries = append(entries, &Entry{
