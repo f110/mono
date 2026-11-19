@@ -14,6 +14,8 @@ import {
   MenuItem,
   Snackbar,
   Stack,
+  Tab,
+  Tabs,
   TextField,
 } from '@mui/material'
 import {
@@ -568,38 +570,48 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
         </Alert>
       )}
       <Stack direction="row" sx={{ flex: 1, minHeight: 0, display: view === 'files' ? 'none' : 'flex' }}>
-        <Box sx={{ width: '45%', flexShrink: 0, overflow: 'auto', borderRight: 1, borderColor: 'divider' }}>
-          {view === 'bookmarks' && <BookmarksPanel bookmarks={bookmarks} selected={bookmarkSelected} onSelect={setBookmarkSelected} />}
-          {view === 'oplog' && (
-            <OperationsPanel
-              operations={operations}
-              selected={opSelected}
-              onSelect={setOpSelected}
-              onContextMenu={(i, x, y) => {
-                setOpSelected(i)
-                setOpMenu({ x, y, id: operations[i].id })
-              }}
-            />
-          )}
-          {view === 'evolog' && <EvologPanel entries={evolog} selected={evologSelected} onSelect={setEvologSelected} />}
-          {view === 'conflicts' && <ConflictsPanel entries={conflicts} selected={conflictSelected} onSelect={setConflictSelected} />}
-          {view === 'log' && (
-            <RevisionGraph
-              rows={rows}
-              selected={selected}
-              checked={checked}
-              marks={marks}
-              approved={approved}
-              reviews={reviews}
-              agents={agents ?? []}
-              onSelect={selectIndex}
-              onContextMenu={(i, x, y) => {
-                selectIndex(i)
-                setMenu({ x, y, commit: commits[i] })
-              }}
-            />
-          )}
-        </Box>
+        <Stack sx={{ width: '45%', flexShrink: 0, borderRight: 1, borderColor: 'divider' }}>
+          <Tabs
+            value={view === 'log' || view === 'bookmarks' ? view : false}
+            onChange={(_, v) => setView(v)}
+            sx={{ minHeight: 36, borderBottom: 1, borderColor: 'divider' }}
+          >
+            <Tab value="log" label="Revisions" sx={{ minHeight: 36 }} />
+            <Tab value="bookmarks" label="Bookmarks" sx={{ minHeight: 36 }} />
+          </Tabs>
+          <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+            {view === 'bookmarks' && <BookmarksPanel bookmarks={bookmarks} selected={bookmarkSelected} onSelect={setBookmarkSelected} />}
+            {view === 'oplog' && (
+              <OperationsPanel
+                operations={operations}
+                selected={opSelected}
+                onSelect={setOpSelected}
+                onContextMenu={(i, x, y) => {
+                  setOpSelected(i)
+                  setOpMenu({ x, y, id: operations[i].id })
+                }}
+              />
+            )}
+            {view === 'evolog' && <EvologPanel entries={evolog} selected={evologSelected} onSelect={setEvologSelected} />}
+            {view === 'conflicts' && <ConflictsPanel entries={conflicts} selected={conflictSelected} onSelect={setConflictSelected} />}
+            {view === 'log' && (
+              <RevisionGraph
+                rows={rows}
+                selected={selected}
+                checked={checked}
+                marks={marks}
+                approved={approved}
+                reviews={reviews}
+                agents={agents ?? []}
+                onSelect={selectIndex}
+                onContextMenu={(i, x, y) => {
+                  selectIndex(i)
+                  setMenu({ x, y, commit: commits[i] })
+                }}
+              />
+            )}
+          </Box>
+        </Stack>
         <Box ref={detailRef} sx={{ flex: 1, minWidth: 0, overflow: 'auto' }}>
           {view === 'conflicts' && conflicts[conflictSelected] && (
             <MergeEditor

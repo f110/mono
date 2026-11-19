@@ -116,6 +116,8 @@ lightjj の機能を次のとおり分類する。キーバインドは lightjj 
 | workspace | 一覧 / add / forget / rename / stale の復旧 | — |
 | その他 | コマンドパレット (Cmd+K)、jj alias の実行、設定 | — |
 
+リビジョングラフと bookmark 一覧は、キーに加えて左ペイン上部のタブでも切り替えられる。
+
 ### 4.3 再実装しない機能
 
 - lightjj の annotation (change_id 単位のレビューコメント) とレビューモード (`v`): Codexel のレビュー (§5) に置き換える
