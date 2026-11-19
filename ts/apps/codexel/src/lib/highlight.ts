@@ -1,6 +1,7 @@
+import protobuf from 'highlight.js/lib/languages/protobuf'
 import { common, createLowlight } from 'lowlight'
 
-const lowlight = createLowlight(common)
+const lowlight = createLowlight({ ...common, protobuf })
 
 export type Token = { text: string; className?: string }
 

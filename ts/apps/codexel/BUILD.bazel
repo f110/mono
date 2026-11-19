@@ -38,6 +38,7 @@ NPM_DEPS = [
     "//ts/apps/codexel:node_modules/@tanstack/react-router",
     "//ts/apps/codexel:node_modules/anser",
     "//ts/apps/codexel:node_modules/diff",
+    "//ts/apps/codexel:node_modules/highlight.js",
     "//ts/apps/codexel:node_modules/lowlight",
     "//ts/apps/codexel:node_modules/mermaid",
     "//ts/apps/codexel:node_modules/react",
