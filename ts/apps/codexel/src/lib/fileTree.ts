@@ -1,5 +1,6 @@
-// TreeNode is a line of the file tree. The directories are shown before the files.
-export type TreeNode = { path: string; name: string; depth: number; dir: boolean }
+// TreeNode is a line of the file tree. The directories are shown before the files. expanded is true for the expanded
+// directories.
+export type TreeNode = { path: string; name: string; depth: number; dir: boolean; expanded: boolean }
 
 // visibleNodes returns the nodes of the tree which are not in the collapsed directories. Only the directories in
 // expanded are expanded.
@@ -24,13 +25,14 @@ export const visibleNodes = (files: string[], expanded: Set<string>): TreeNode[]
   const walk = (d: Dir, prefix: string, depth: number) => {
     for (const name of [...d.dirs.keys()].sort()) {
       const path = prefix + name
-      nodes.push({ path, name, depth, dir: true })
-      if (expanded.has(path)) {
+      const open = expanded.has(path)
+      nodes.push({ path, name, depth, dir: true, expanded: open })
+      if (open) {
         walk(d.dirs.get(name)!, path + '/', depth + 1)
       }
     }
     for (const name of [...d.files].sort()) {
-      nodes.push({ path: prefix + name, name, depth, dir: false })
+      nodes.push({ path: prefix + name, name, depth, dir: false, expanded: false })
     }
   }
   walk(root, '', 0)

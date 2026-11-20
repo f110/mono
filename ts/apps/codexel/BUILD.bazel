@@ -32,6 +32,7 @@ NPM_DEPS = [
     "//ts/apps/codexel:node_modules/@connectrpc/connect-web",
     "//ts/apps/codexel:node_modules/@emotion/react",
     "//ts/apps/codexel:node_modules/@emotion/styled",
+    "//ts/apps/codexel:node_modules/@jetbrains/icons",
     "//ts/apps/codexel:node_modules/@mui/icons-material",
     "//ts/apps/codexel:node_modules/@mui/material",
     "//ts/apps/codexel:node_modules/@tanstack/react-query",
