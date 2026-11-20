@@ -35,10 +35,11 @@ export const useDiffNavigation = (container: RefObject<HTMLElement | null>): Dif
       }
       const top = el.getBoundingClientRect().top
       const hunks = [...el.querySelectorAll<HTMLElement>('[data-hunk]')]
-      const offsets = hunks.map((h) => h.getBoundingClientRect().top - top)
-      // The hunk at the top is the current one. scrollMarginTop of the hunk leaves the space for the sticky header.
-      const above = hunks.filter((_, i) => offsets[i] < 40)
-      const target = direction === 'next' ? hunks.find((_, i) => offsets[i] > 60) : above[above.length - 1]
+      // The offset is from the position where scrollIntoView puts the hunk. scrollMarginTop of the hunk leaves the space for
+      // the sticky headers. The hunk at the position is the current one.
+      const offsets = hunks.map((h) => h.getBoundingClientRect().top - top - parseFloat(getComputedStyle(h).scrollMarginTop))
+      const above = hunks.filter((_, i) => offsets[i] < -8)
+      const target = direction === 'next' ? hunks.find((_, i) => offsets[i] > 12) : above[above.length - 1]
       target?.scrollIntoView({ block: 'start' })
     },
     [container],

@@ -129,8 +129,8 @@ const ChangeReview = ({
   }
   const commit = data.commit
   return (
-    // scrollMarginTop of the files leaves the space for the sticky header of the change.
-    <Box ref={ref} data-change={changeId} sx={{ mb: 4, '& [data-file]': { scrollMarginTop: 56 } }}>
+    // --sticky-top is the height of the sticky header of the change. The headers of the files stick under it.
+    <Box ref={ref} data-change={changeId} sx={{ mb: 4, '--sticky-top': '48px' }}>
       <Stack direction="row" spacing={1} sx={{ alignItems: 'baseline', position: 'sticky', top: 0, zIndex: 2, bgcolor: 'background.default', py: 1 }}>
         <Typography variant="h6" sx={{ flex: 1, minWidth: 0 }} noWrap>
           {commit?.description || '(no description set)'}

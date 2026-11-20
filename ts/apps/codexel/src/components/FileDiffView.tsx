@@ -120,7 +120,7 @@ const LineContent = ({ line, lang, ranges, emphasis }: { line: DiffLine; lang: s
 const HunkHeader = ({ hunk }: { hunk: Hunk }) => {
   const theme = useTheme()
   return (
-    <Box data-hunk sx={{ px: 1, color: 'text.secondary', bgcolor: alpha(theme.palette.info.main, 0.08), scrollMarginTop: 48 }}>
+    <Box data-hunk sx={{ px: 1, color: 'text.secondary', bgcolor: alpha(theme.palette.info.main, 0.08) }}>
       @@ -{hunk.oldStart},{hunk.oldLines} +{hunk.newStart},{hunk.newLines} @@ {hunk.section}
     </Box>
   )
@@ -355,9 +355,25 @@ export const FileDiffView = ({
     return context.map((l, j) => (split ? splitRow(l, l, undefined, undefined, `g${j}`) : row(l, undefined, `g${j}`)))
   }
 
+  // --sticky-top is the height of the sticky elements above the files in the scroll container. The header of the file sticks
+  // under them, and scrollMarginTop leaves the space for them and the header.
   return (
-    <Box data-file={file.path} sx={{ border: 1, borderColor: 'divider', borderRadius: 1, mb: 2, scrollMarginTop: 8 }}>
-      <Stack direction="row" spacing={1} sx={{ p: 1, alignItems: 'center', bgcolor: 'background.paper', position: 'sticky', top: 0, zIndex: 1, borderBottom: 1, borderColor: 'divider' }}>
+    <Box
+      data-file={file.path}
+      sx={{
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: 1,
+        mb: 2,
+        scrollMarginTop: 'calc(var(--sticky-top, 0px) + 8px)',
+        '& [data-hunk], & [data-line]': { scrollMarginTop: 'calc(var(--sticky-top, 0px) + 48px)' },
+      }}
+    >
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{ p: 1, alignItems: 'center', bgcolor: 'background.paper', position: 'sticky', top: 'var(--sticky-top, 0px)', zIndex: 1, borderBottom: 1, borderColor: 'divider' }}
+      >
         {title === undefined ? (
           <>
             <FileStatusChip status={file.status} />
