@@ -55,3 +55,4 @@
 
 - Build: 自作のCIツール docs/build.md
 - Issue: 自作のIssue Tracker docs/issue-tracker/design.md
+- Codexel: 自作のエージェントダッシュボード docs/codexel/design.md
