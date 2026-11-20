@@ -34,6 +34,7 @@ import { useApprovedCommits } from '../hooks/useApprovedCommits.ts'
 import { useDiffNavigation } from '../hooks/useDiffNavigation.ts'
 import { useOperation } from '../hooks/useOperation.ts'
 import { useTranscript } from '../hooks/useTranscript.ts'
+import { isSubmitKey } from '../lib/keys.ts'
 import { transport } from '../providers/AppProvider.tsx'
 
 const reviewClient = createClient(ReviewService, transport)
@@ -247,7 +248,7 @@ const AgentDetail = ({ agent }: { agent: Agent }) => {
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+            if (isSubmitKey(e.nativeEvent)) {
               e.preventDefault()
               submit()
             }

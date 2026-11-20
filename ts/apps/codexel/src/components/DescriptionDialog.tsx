@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material'
+import { isSubmitKey } from '../lib/keys.ts'
 
 // DescriptionDialog edits the description of the revision. Cmd/Ctrl+Enter submits it.
 export const DescriptionDialog = ({
@@ -27,7 +28,7 @@ export const DescriptionDialog = ({
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+            if (isSubmitKey(e.nativeEvent)) {
               e.preventDefault()
               onSubmit(description)
             }

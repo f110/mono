@@ -18,3 +18,8 @@ export const ignoreKey = (e: KeyboardEvent): boolean => {
   const editing = target !== null && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
   return editing || e.metaKey || e.ctrlKey || e.altKey || document.querySelector('[role="dialog"], [role="menu"]') !== null
 }
+
+// isSubmitKey reports whether the key submits the multi-line input: Cmd/Ctrl+Enter except while the IME is composing.
+// The key which commits the composition may have isComposing false on some browsers, so keyCode 229 is also checked.
+// See docs/ui-conventions.md.
+export const isSubmitKey = (e: KeyboardEvent): boolean => e.key === 'Enter' && (e.metaKey || e.ctrlKey) && !e.isComposing && e.keyCode !== 229

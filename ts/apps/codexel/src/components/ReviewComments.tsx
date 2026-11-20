@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Box, Button, Chip, Stack, TextField, Typography } from '@mui/material'
 import { DiffSide, type ReviewComment } from '../connect/codexel_pb.js'
+import { isSubmitKey } from '../lib/keys.ts'
 import { Markdown } from './Markdown.tsx'
 
 const CommentBody = ({ text }: { text: string }) => (
@@ -46,7 +47,7 @@ export const CommentComposer = ({
         value={body}
         onChange={(e) => setBody(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+          if (isSubmitKey(e.nativeEvent)) {
             e.preventDefault()
             submit()
           } else if (e.key === 'Escape' && onCancel) {
