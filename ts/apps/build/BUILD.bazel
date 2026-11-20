@@ -2,6 +2,7 @@ load("@aspect_rules_js//js:defs.bzl", "js_library", "js_run_binary", "js_run_dev
 load("@aspect_rules_ts//ts:defs.bzl", "ts_config", "ts_project")
 load("@npm//:defs.bzl", "npm_link_all_packages")
 load("@npm//ts/apps/build:vite/package_json.bzl", "bin")
+load("//build/rules/ts:def.bzl", "exec_filegroup")
 
 SRC_PATTERNS = [
     "**/*.tsx",
@@ -91,7 +92,7 @@ js_run_binary(
 )
 
 js_run_binary(
-    name = "vite_build_prod",
+    name = "vite_build_prod_target",
     srcs = glob(
         include = SRC_PATTERNS + ASSET_PATTERNS,
         allow_empty = True,
@@ -107,6 +108,11 @@ js_run_binary(
         "dist_prod",
     ],
     tool = ":vite",
+)
+
+exec_filegroup(
+    name = "vite_build_prod",
+    srcs = [":vite_build_prod_target"],
     visibility = ["//visibility:public"],
 )
 
