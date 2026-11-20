@@ -28,7 +28,7 @@ export const MarkdownEditor = ({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key !== 'Enter' || !(e.metaKey || e.ctrlKey) || e.nativeEvent.isComposing) {
+            if (e.key !== 'Enter' || !(e.metaKey || e.ctrlKey) || e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229) {
               return
             }
             e.preventDefault()
