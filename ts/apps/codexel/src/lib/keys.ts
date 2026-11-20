@@ -8,15 +8,28 @@ export const pressKey = (key: string) => {
   window.dispatchEvent(e)
 }
 
-// ignoreKey reports whether the shortcut key should be ignored: the key for the input, the key with the modifier and the
-// key while any dialog or menu is open.
+// ignoreKey reports whether the shortcut key should be ignored: the key while the IME is composing, the key already
+// handled, the key for the input, the key handled by the focused element, the key with the modifier and the key while any
+// dialog, menu or listbox is open. See docs/ui-conventions.md.
 export const ignoreKey = (e: KeyboardEvent): boolean => {
   if (fromPaletteKey in e) {
     return false
   }
   const target = e.target as HTMLElement | null
-  const editing = target !== null && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
-  return editing || e.metaKey || e.ctrlKey || e.altKey || document.querySelector('[role="dialog"], [role="menu"]') !== null
+  const editing =
+    target !== null && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)
+  const activating = e.key === 'Enter' && target !== document.body
+  return (
+    e.isComposing ||
+    e.keyCode === 229 ||
+    e.defaultPrevented ||
+    editing ||
+    activating ||
+    e.metaKey ||
+    e.ctrlKey ||
+    e.altKey ||
+    document.querySelector('[role="dialog"], [role="menu"], [role="listbox"]') !== null
+  )
 }
 
 // isSubmitKey reports whether the key submits the multi-line input: Cmd/Ctrl+Enter except while the IME is composing.
