@@ -306,6 +306,14 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
     selectIndex(commits.findIndex((c) => c.currentWorkingCopy))
     setView('log')
   }, [commits, selectIndex])
+  const copyChangeId = useCallback(async (c: Commit) => {
+    try {
+      await navigator.clipboard.writeText(c.changeId)
+      setMessage({ text: `Copied ${c.changeId}`, error: false })
+    } catch (e) {
+      setMessage({ text: e instanceof Error ? e.message : String(e), error: true })
+    }
+  }, [])
   const showView = useCallback((v: View) => {
     if (v === 'oplog') {
       setOpSelected(0)
@@ -622,6 +630,11 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
         case 'v':
           startReview(targets())
           break
+        case 'y':
+          if (selectedCommit) {
+            copyChangeId(selectedCommit)
+          }
+          break
         case 'Escape':
           clearChecked()
           break
@@ -673,6 +686,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
     showView,
     gitFetch,
     jumpToWorkingCopy,
+    copyChangeId,
     deleteBookmark,
     forgetBookmark,
     toggleTracking,
@@ -717,6 +731,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
     revisionMenuItem('Add a workspace', undefined, !single, () => setAddingWorkspace(c)),
     revisionMenuItem('Show the evolog', 'E', false, () => showEvolog(c)),
     revisionMenuItem('Browse the files', 'F', false, () => browseFiles(c)),
+    revisionMenuItem('Copy the change ID', 'y', false, () => copyChangeId(c)),
     <Divider key="d3" />,
     revisionMenuItem('Review', 'v', false, () => startReview(targets())),
     revisionMenuItem('Create the pull request', 'P', false, () => setSubmittingPR(targets())),
@@ -1091,6 +1106,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
                   { label: 'Browse the files', shortcut: 'F', run: () => pressKey('F') },
                   { label: 'Start the review of the revisions', shortcut: 'v', run: () => startReview(targets()) },
                   { label: 'Create the pull request (jj pr submit)', shortcut: 'P', run: () => setSubmittingPR(targets()) },
+                  { label: 'Copy the change ID', shortcut: 'y', run: () => copyChangeId(selectedCommit) },
                 ]
               : []),
             { label: 'Commit the working copy', shortcut: 'c', run: () => startCommit() },

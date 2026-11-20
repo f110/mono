@@ -1,6 +1,10 @@
+import { useState } from 'react'
 import { useQuery } from '@connectrpc/connect-query'
+import CheckIcon from '@mui/icons-material/Check'
+import ContentCopyIcon from '@mui/icons-material/ContentCopy'
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline'
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz'
-import { Alert, Box, Chip, Divider, IconButton, Link, Stack, Typography } from '@mui/material'
+import { Alert, Box, Chip, Divider, IconButton, Link, Stack, Tooltip, Typography } from '@mui/material'
 import { useNavigate } from '@tanstack/react-router'
 import { RepositoryService, SystemService, type Commit, type Review } from '../connect/codexel_pb.js'
 import { stateChip } from '../lib/review.ts'
@@ -57,6 +61,33 @@ const Description = ({ description, hasTrailers, issueUrl }: { description: stri
   )
 }
 
+// CopyButton copies the text to the clipboard. The icon shows the result for a while after clicking.
+const CopyButton = ({ text, label }: { text: string; label: string }) => {
+  const [result, setResult] = useState<'copied' | 'failed'>()
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setResult('copied')
+    } catch {
+      setResult('failed')
+    }
+    setTimeout(() => setResult(undefined), 1500)
+  }
+  return (
+    <Tooltip title={result === 'copied' ? 'Copied' : result === 'failed' ? 'Failed to copy' : label}>
+      <IconButton size="small" aria-label={label} onClick={copy}>
+        {result === 'copied' ? (
+          <CheckIcon fontSize="inherit" color="success" />
+        ) : result === 'failed' ? (
+          <ErrorOutlineIcon fontSize="inherit" color="error" />
+        ) : (
+          <ContentCopyIcon fontSize="inherit" />
+        )}
+      </IconButton>
+    </Tooltip>
+  )
+}
+
 // RevisionDetail shows the whole description and the diff of the revision. The revision is identified by the commit ID,
 // so the result doesn't change while the commit exists.
 export const RevisionDetail = ({
@@ -93,6 +124,7 @@ export const RevisionDetail = ({
         <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
           {commit.changeId}
         </Typography>
+        <CopyButton text={commit.changeId} label="Copy the change ID" />
         <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
           {commit.commitId}
         </Typography>
