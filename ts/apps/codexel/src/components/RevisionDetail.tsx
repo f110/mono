@@ -92,9 +92,9 @@ export const RevisionDetail = ({
         {data?.description || '(no description set)'}
       </Box>
       <Divider sx={{ mb: 2 }} />
-      {data?.files.length === 0 && <Typography color="text.secondary">No changes</Typography>}
-      {data && data.files.length > 0 && (
-        <ChangedFiles files={data.files} findFile={(p) => document.querySelector(`[data-file="${CSS.escape(p)}"]`)} />
+      {data?.files.length === 0 && data.conflicts.length === 0 && <Typography color="text.secondary">No changes</Typography>}
+      {data && (data.files.length > 0 || data.conflicts.length > 0) && (
+        <ChangedFiles files={data.files} conflicts={data.conflicts} findFile={(p) => document.querySelector(`[data-file="${CSS.escape(p)}"]`)} />
       )}
       {data?.files.map((f) => (
         <FileDiffView

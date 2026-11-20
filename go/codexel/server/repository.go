@@ -198,10 +198,18 @@ func (h *RepositoryHandler) GetRevision(ctx context.Context, req *connect.Reques
 	if err != nil {
 		return nil, toJujutsuError(err)
 	}
+	var conflicts []jujutsu.ConflictedFile
+	if commit.Conflict {
+		conflicts, err = repo.ConflictedFiles(ctx, req.Msg.GetRevision())
+		if err != nil {
+			return nil, toJujutsuError(err)
+		}
+	}
 	return connect.NewResponse(api.ResponseGetRevision_builder{
 		Commit:      toCommit(commit),
 		Description: new(commit.FullDescription),
 		Files:       toFileDiffs(files),
+		Conflicts:   toConflictedFiles(conflicts),
 	}.Build()), nil
 }
 
@@ -582,15 +590,11 @@ func (h *RepositoryHandler) ListConflicts(ctx context.Context, req *connect.Requ
 	}
 	res := make([]*api.ConflictedCommit, 0, len(commits))
 	for _, c := range commits {
-		files := make([]*api.ConflictedFile, 0, len(c.Files))
-		for _, f := range c.Files {
-			files = append(files, api.ConflictedFile_builder{Path: new(f.Path), Sides: new(int32(f.Sides))}.Build())
-		}
 		res = append(res, api.ConflictedCommit_builder{
 			ChangeId:    new(c.ChangeID),
 			CommitId:    new(c.CommitID),
 			Description: new(c.Description),
-			Files:       files,
+			Files:       toConflictedFiles(c.Files),
 			WorkingCopy: new(c.WorkingCopy),
 		}.Build())
 	}
@@ -823,6 +827,14 @@ func toFileDiffs(files []*jujutsu.FileDiff) []*api.FileDiff {
 	res := make([]*api.FileDiff, 0, len(files))
 	for _, f := range files {
 		res = append(res, toFileDiff(f))
+	}
+	return res
+}
+
+func toConflictedFiles(files []jujutsu.ConflictedFile) []*api.ConflictedFile {
+	res := make([]*api.ConflictedFile, 0, len(files))
+	for _, f := range files {
+		res = append(res, api.ConflictedFile_builder{Path: new(f.Path), Sides: new(int32(f.Sides))}.Build())
 	}
 	return res
 }

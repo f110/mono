@@ -280,6 +280,7 @@ func TestInterdiffArgs(t *testing.T) {
 }
 
 func TestConflictArgs(t *testing.T) {
+	assertion.Equal(t, conflictsArgs("abc"), []string{"log", "--no-graph", "--ignore-working-copy", "--revisions=abc", "-T", conflictTemplate})
 	assertion.Equal(t, conflictFileArgs("abc", "a b.txt"), []string{"file", "show", "--ignore-working-copy", "--config", "ui.conflict-marker-style=snapshot", "--revision=abc", "--", `root-file:"a b.txt"`})
 	assertion.Equal(t, resolveArgs("abc", "f", ResolveOurs), []string{"resolve", "--revision=abc", "--tool=:ours", "--", `root-file:"f"`})
 }

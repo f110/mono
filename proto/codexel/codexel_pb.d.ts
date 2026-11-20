@@ -972,6 +972,14 @@ export declare type ResponseGetRevision = Message<"mono.codexel.ResponseGetRevis
    * @generated from field: repeated mono.codexel.FileDiff files = 3;
    */
   files: FileDiff[];
+
+  /**
+   * conflicts is the conflicted files. It includes the files which aren't in files because the conflict is inherited
+   * from the parents.
+   *
+   * @generated from field: repeated mono.codexel.ConflictedFile conflicts = 4;
+   */
+  conflicts: ConflictedFile[];
 };
 
 /**

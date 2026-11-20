@@ -117,3 +117,12 @@ func TestToCommit(t *testing.T) {
 	assertion.Equal(t, c.GetChangeId(), "abc")
 	assertion.Equal(t, c.GetWorkingCopies(), []string{"default", "second"})
 }
+
+func TestToConflictedFiles(t *testing.T) {
+	files := toConflictedFiles([]jujutsu.ConflictedFile{{Path: "a.txt", Sides: 2}, {Path: "b.txt", Sides: 3}})
+	assertion.MustLen(t, files, 2)
+	assertion.Equal(t, files[0].GetPath(), "a.txt")
+	assertion.Equal(t, files[0].GetSides(), int32(2))
+	assertion.Equal(t, files[1].GetPath(), "b.txt")
+	assertion.Equal(t, files[1].GetSides(), int32(3))
+}

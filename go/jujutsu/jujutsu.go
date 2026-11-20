@@ -460,7 +460,24 @@ func (r *Repository) Interdiff(ctx context.Context, from, to string) ([]*FileDif
 
 // Conflicts returns the mutable commits which have the conflicts.
 func (r *Repository) Conflicts(ctx context.Context) ([]*ConflictedCommit, error) {
-	out, err := run(ctx, r.root, conflictsArgs()...)
+	return r.conflicts(ctx, "conflicts() & mutable()")
+}
+
+// ConflictedFiles returns the conflicted files of the revision. It includes the files which aren't changed by the
+// revision because the conflict is inherited from the parents.
+func (r *Repository) ConflictedFiles(ctx context.Context, rev string) ([]ConflictedFile, error) {
+	commits, err := r.conflicts(ctx, rev)
+	if err != nil {
+		return nil, err
+	}
+	if len(commits) != 1 {
+		return nil, xerrors.Newf("the revision must be a commit: %s", rev)
+	}
+	return commits[0].Files, nil
+}
+
+func (r *Repository) conflicts(ctx context.Context, revset string) ([]*ConflictedCommit, error) {
+	out, err := run(ctx, r.root, conflictsArgs(revset)...)
 	if err != nil {
 		return nil, err
 	}
@@ -1127,8 +1144,8 @@ func interdiffArgs(from, to string) []string {
 	return []string{"interdiff", "--git", "--color", "never", "--ignore-working-copy", "--config", "diff.git.show-path-prefix=true", "--from=" + from, "--to=" + to}
 }
 
-func conflictsArgs() []string {
-	return []string{"log", "--no-graph", "--ignore-working-copy", "--revisions=conflicts() & mutable()", "-T", conflictTemplate}
+func conflictsArgs(revset string) []string {
+	return []string{"log", "--no-graph", "--ignore-working-copy", "--revisions=" + revset, "-T", conflictTemplate}
 }
 
 // conflictFileArgs returns the arguments to read the conflicted file. The markers are the snapshot style which has the
