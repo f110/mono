@@ -55,12 +55,16 @@ if (e.isComposing || e.keyCode === 229) {
 | Esc   | 入力欄からフォーカスを外す    |
 
 - 上下の移動は `j`/`k` とカーソルキーの両方を受け付ける
+- `Esc` はフォーカスを外すだけで、入力内容は消さない。編集中の内容を失わないようにするため
 - ヘルプはキーと説明の表をダイアログで表示する。キーを忘れても辿れるように、ヘッダーなどにヘルプを開くボタンも置く
 
 ### 単キーを無視する条件
 
 次の場合は単キーのショートカットを処理しない。
 
-- 入力欄（`input`, `textarea`, contenteditable な要素）にフォーカスがある
+- IME で変換中である。判定は「IME 変換中の扱い」と同じく `isComposing` と `keyCode === 229` の両方を見る
+- 他の要素がそのキーを処理済みである（`defaultPrevented` が `true`）
+- 入力欄（`input`, `textarea`, `select`, contenteditable な要素）にフォーカスがある
+- `Enter` が押された時に `body` 以外の要素にフォーカスがある。フォーカス中のボタンやリンクの操作を優先するため
 - 修飾キー（`metaKey`, `ctrlKey`, `altKey`）が押されている
-- ダイアログやメニュー（`role="dialog"`, `role="menu"`）が開いている
+- ダイアログやメニュー、Select のメニュー（`role="dialog"`, `role="menu"`, `role="listbox"`）が開いている
