@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { useQuery } from '@connectrpc/connect-query'
 import { Alert, Box, Chip, Divider, Stack, Typography } from '@mui/material'
 import { useNavigate } from '@tanstack/react-router'
@@ -39,6 +40,7 @@ export const RevisionDetail = ({
   onHistory,
   onRestore,
   onResolveDivergence,
+  actions,
 }: {
   path: string
   commit: Commit
@@ -50,6 +52,8 @@ export const RevisionDetail = ({
   onHistory?: (file: string) => void
   onRestore?: (commit: Commit, file: string) => void
   onResolveDivergence?: (commit: Commit) => void
+  // actions is the buttons of the operations on the revision shown under the header.
+  actions?: ReactNode
 }) => {
   const { data, error } = useQuery(RepositoryService.method.getRevision, { path, revision: commit.commitId }, { staleTime: Infinity })
 
@@ -76,6 +80,7 @@ export const RevisionDetail = ({
       <Typography variant="caption" color="text.secondary">
         {commit.author} &lt;{commit.email}&gt; · {new Date(Number(commit.timestamp) * 1000).toLocaleString()}
       </Typography>
+      {actions}
       {reviews && reviews.length > 0 && <Reviews reviews={reviews} />}
       {error && <Alert severity="error">{error.message}</Alert>}
       <Box component="pre" sx={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: 13, my: 1 }}>

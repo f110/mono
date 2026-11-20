@@ -10,6 +10,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   Menu,
   MenuItem,
   Snackbar,
@@ -257,6 +258,35 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
     [path, navigate],
   )
 
+  const toggleChecked = useCallback((c: Commit) => {
+    setChecked((s) => {
+      const next = new Set(s)
+      if (!next.delete(c.commitId)) {
+        next.add(c.commitId)
+      }
+      return next
+    })
+  }, [])
+  const startRebase = useCallback(() => {
+    if (targets().length > 0) {
+      setMode({ kind: 'rebase', sources: targets(), source: RebaseSource.REVISIONS, target: RebaseTarget.ONTO })
+    }
+  }, [targets])
+  const startSquash = useCallback(() => {
+    if (targets().length > 0) {
+      setMode({ kind: 'squash', sources: targets(), combine: false })
+    }
+  }, [targets])
+  const showEvolog = useCallback((c: Commit) => {
+    setEvologTarget(c)
+    setEvologSelected(0)
+    setView('evolog')
+  }, [])
+  const browseFiles = useCallback((c: Commit) => {
+    setTreeTarget({ commitId: c.commitId, changeId: c.changeId })
+    setView('files')
+  }, [])
+
   const slide = useCallback(
     (direction: 'down' | 'up') => {
       const s = computeSlide(commits, selected, direction)
@@ -400,8 +430,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           break
         case 'F':
           if (selectedCommit) {
-            setTreeTarget({ commitId: selectedCommit.commitId, changeId: selectedCommit.changeId })
-            setView('files')
+            browseFiles(selectedCommit)
           }
           break
         case '3':
@@ -416,9 +445,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
         case '5':
         case 'E':
           if (selectedCommit) {
-            setEvologTarget(selectedCommit)
-            setEvologSelected(0)
-            setView('evolog')
+            showEvolog(selectedCommit)
           }
           break
         case 'B':
@@ -438,14 +465,10 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           }
           break
         case 'R':
-          if (targets().length > 0) {
-            setMode({ kind: 'rebase', sources: targets(), source: RebaseSource.REVISIONS, target: RebaseTarget.ONTO })
-          }
+          startRebase()
           break
         case 'S':
-          if (targets().length > 0) {
-            setMode({ kind: 'squash', sources: targets(), combine: false })
-          }
+          startSquash()
           break
         case 'w':
           setWorkspaceOpen(true)
@@ -472,13 +495,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           break
         case ' ':
           if (selectedCommit) {
-            setChecked((s) => {
-              const next = new Set(s)
-              if (!next.delete(selectedCommit.commitId)) {
-                next.add(selectedCommit.commitId)
-              }
-              return next
-            })
+            toggleChecked(selectedCommit)
           }
           break
         case '/':
@@ -543,7 +560,82 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
     slide,
     executeMode,
     startReview,
+    toggleChecked,
+    startRebase,
+    startSquash,
+    showEvolog,
+    browseFiles,
   ])
+
+  const single = checked.size === 0
+  const revisionActions = selectedCommit && !mode && (
+    <Stack
+      direction="row"
+      divider={<Divider orientation="vertical" flexItem />}
+      sx={{ flexWrap: 'wrap', alignItems: 'center', columnGap: 0.5, my: 0.5, '& .MuiButton-root': { minWidth: 0 } }}
+    >
+      <Box>
+        <Button size="small" title="n" onClick={() => newRevision(targets())}>
+          New
+        </Button>
+        <Button size="small" disabled={selectedCommit.immutable || !single} onClick={() => edit(selectedCommit)}>
+          Edit
+        </Button>
+        <Button size="small" title="e" disabled={selectedCommit.immutable || !single} onClick={() => startDescribe(selectedCommit)}>
+          Describe
+        </Button>
+        <Button size="small" color="error" disabled={targets().some((c) => c.immutable)} onClick={() => setAbandoning(targets())}>
+          Abandon
+        </Button>
+        <Button size="small" title="s" disabled={selectedCommit.immutable || !single} onClick={() => setSplitting(selectedCommit)}>
+          Split
+        </Button>
+      </Box>
+      <Box>
+        <Button size="small" title="R" onClick={startRebase}>
+          Rebase
+        </Button>
+        <Button size="small" title="S" onClick={startSquash}>
+          Squash
+        </Button>
+        <Button size="small" title="J" disabled={!single} onClick={() => slide('down')}>
+          Slide down
+        </Button>
+        <Button size="small" title="K" disabled={!single} onClick={() => slide('up')}>
+          Slide up
+        </Button>
+      </Box>
+      <Box>
+        <Button size="small" title="B" disabled={!single} onClick={() => setSettingBookmark(selectedCommit)}>
+          Bookmark
+        </Button>
+        <Button size="small" title="E" onClick={() => showEvolog(selectedCommit)}>
+          Evolog
+        </Button>
+        <Button size="small" title="F" onClick={() => browseFiles(selectedCommit)}>
+          Files
+        </Button>
+      </Box>
+      <Box>
+        <Button size="small" title="v" onClick={() => startReview(targets())}>
+          Review
+        </Button>
+        <Button size="small" title="P" onClick={() => setSubmittingPR(targets())}>
+          Pull request
+        </Button>
+      </Box>
+      <Box>
+        <Button size="small" title="Space" onClick={() => toggleChecked(selectedCommit)}>
+          {checked.has(selectedCommit.commitId) ? 'Uncheck' : 'Check'}
+        </Button>
+        {!single && (
+          <Button size="small" title="Esc" onClick={() => setChecked(new Set())}>
+            Clear {checked.size} checked
+          </Button>
+        )}
+      </Box>
+    </Stack>
+  )
 
   return (
     <Stack sx={{ height: '100%' }}>
@@ -670,6 +762,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
               onHistory={showHistory}
               onRestore={(commit, file) => setRestoringFile({ commit, file })}
               onResolveDivergence={setDivergent}
+              actions={view === 'log' ? revisionActions : undefined}
             />
           )}
         </Box>
