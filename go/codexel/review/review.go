@@ -33,9 +33,10 @@ var (
 type State string
 
 const (
-	StateOpen     State = "open"
-	StateFinished State = "finished"
-	StateApproved State = "approved"
+	StateOpen      State = "open"
+	StateFinished  State = "finished"
+	StateApproved  State = "approved"
+	StateDiscarded State = "discarded"
 )
 
 // Side is the side of the diff which the lines of the comment belong to.
@@ -216,8 +217,8 @@ func (r *Review) Commit(round int, changeID string) (string, bool) {
 // anchors. The viewed marks of the files changed from the previous round are removed, and then the changed files which
 // match autoViewed and have no mark are marked as viewed. The review is opened again.
 func (r *Review) NextRound(ctx context.Context, repo Repository, autoViewed []string, now time.Time) error {
-	if r.State == StateApproved {
-		return xerrors.WithMessage(ErrInvalidState, "the review is approved")
+	if r.State == StateApproved || r.State == StateDiscarded {
+		return xerrors.WithMessagef(ErrInvalidState, "the review is %s", r.State)
 	}
 	commits, err := currentCommits(ctx, repo, r.Changes)
 	if err != nil {
@@ -344,8 +345,8 @@ func (r *Review) AddComment(ctx context.Context, repo Repository, changeID, path
 	if body == "" {
 		return nil, xerrors.WithMessage(ErrInvalidArgument, "body is required")
 	}
-	if r.State == StateApproved {
-		return nil, xerrors.WithMessage(ErrInvalidState, "the review is approved")
+	if r.State == StateApproved || r.State == StateDiscarded {
+		return nil, xerrors.WithMessagef(ErrInvalidState, "the review is %s", r.State)
 	}
 	c := &Comment{ChangeID: changeID, Round: r.LatestRound(), Body: body, Author: author, CreatedAt: now, UpdatedAt: now}
 	if changeID != "" {
@@ -485,6 +486,17 @@ func (r *Review) Finish(now time.Time) error {
 	} else {
 		r.State = StateApproved
 	}
+	r.UpdatedAt = now
+	return nil
+}
+
+// Discard ends the review without the approval. The comments and the rounds are kept, and the review can't be
+// finished or start the next round anymore.
+func (r *Review) Discard(now time.Time) error {
+	if r.State != StateOpen && r.State != StateFinished {
+		return xerrors.WithMessagef(ErrInvalidState, "the review is %s", r.State)
+	}
+	r.State = StateDiscarded
 	r.UpdatedAt = now
 	return nil
 }

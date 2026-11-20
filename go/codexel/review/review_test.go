@@ -157,6 +157,43 @@ func TestReviewRounds(t *testing.T) {
 	assertion.MustError(t, err)
 }
 
+func TestReviewDiscard(t *testing.T) {
+	ctx := t.Context()
+	now := time.Date(2026, 11, 19, 0, 0, 0, 0, time.UTC)
+	later := now.Add(time.Hour)
+	repo := &fakeRepository{commits: map[string]string{"kkkk": "c1"}}
+
+	for _, state := range []State{StateOpen, StateFinished} {
+		t.Run(string(state), func(t *testing.T) {
+			r := &Review{
+				Changes:   []string{"kkkk"},
+				State:     state,
+				Rounds:    []*Round{{Commits: map[string]string{"kkkk": "c1"}, CreatedAt: now}},
+				Comments:  []*Comment{{ID: "a", Round: 1, Body: "open", Author: AuthorUser}},
+				CreatedAt: now,
+				UpdatedAt: now,
+			}
+
+			assertion.MustNoError(t, r.Discard(later))
+			assertion.Equal(t, r.State, StateDiscarded)
+			assertion.Equal(t, r.UpdatedAt, later)
+			assertion.MustLen(t, r.Comments, 1)
+			assertion.Equal(t, r.LatestRound(), 1)
+
+			assertion.MustError(t, r.Discard(later))
+			assertion.MustError(t, r.Finish(later))
+			assertion.MustError(t, r.NextRound(ctx, repo, nil, later))
+			assertion.Equal(t, r.LatestRound(), 1)
+			_, err := r.AddComment(ctx, repo, "", "", "", 0, 0, "after discard", AuthorUser, later)
+			assertion.MustError(t, err)
+		})
+	}
+
+	approved := &Review{State: StateApproved}
+	assertion.MustError(t, approved.Discard(later))
+	assertion.Equal(t, approved.State, StateApproved)
+}
+
 func TestNewRejectsInvalidChange(t *testing.T) {
 	repo := &fakeRepository{commits: map[string]string{"kkkk": "c1"}}
 

@@ -246,6 +246,14 @@ func finishedPrompt(id string) string {
 		"Address each comment, and reply to it or resolve it. Then call the start_next_round tool."
 }
 
+func (h *ReviewHandler) Discard(_ context.Context, req *connect.Request[api.RequestDiscard]) (*connect.Response[api.ResponseDiscard], error) {
+	r, err := h.store.Update(req.Msg.GetReviewId(), func(r *review.Review) error { return r.Discard(h.now()) })
+	if err != nil {
+		return nil, toReviewError(err)
+	}
+	return connect.NewResponse(api.ResponseDiscard_builder{Review: toReview(r)}.Build()), nil
+}
+
 func (h *ReviewHandler) StartNextRound(ctx context.Context, req *connect.Request[api.RequestStartNextRound]) (*connect.Response[api.ResponseStartNextRound], error) {
 	conf, err := h.config.Load()
 	if err != nil {
@@ -382,9 +390,10 @@ func toReviewError(err error) error {
 }
 
 var reviewStates = map[review.State]api.ReviewState{
-	review.StateOpen:     api.ReviewState_REVIEW_STATE_OPEN,
-	review.StateFinished: api.ReviewState_REVIEW_STATE_FINISHED,
-	review.StateApproved: api.ReviewState_REVIEW_STATE_APPROVED,
+	review.StateOpen:      api.ReviewState_REVIEW_STATE_OPEN,
+	review.StateFinished:  api.ReviewState_REVIEW_STATE_FINISHED,
+	review.StateApproved:  api.ReviewState_REVIEW_STATE_APPROVED,
+	review.StateDiscarded: api.ReviewState_REVIEW_STATE_DISCARDED,
 }
 
 var diffSides = map[review.Side]api.DiffSide{

@@ -5,4 +5,5 @@ export const stateChip: Record<ReviewState, { label: string; color: 'default' | 
   [ReviewState.OPEN]: { label: 'open', color: 'primary' },
   [ReviewState.FINISHED]: { label: 'finished', color: 'warning' },
   [ReviewState.APPROVED]: { label: 'approved', color: 'success' },
+  [ReviewState.DISCARDED]: { label: 'discarded', color: 'default' },
 }

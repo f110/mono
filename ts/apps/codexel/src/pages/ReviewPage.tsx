@@ -302,6 +302,7 @@ export const ReviewPage = () => {
   const [selection, setSelection] = useState<Selection>()
   const [focus, setFocus] = useState<LinePosition>()
   const [helpOpen, setHelpOpen] = useState(false)
+  const [discardOpen, setDiscardOpen] = useState(false)
   // waitingClosedRound is the round in which the dialog waiting for the agent is closed. The dialog is shown again when
   // the review is finished in the next round.
   const [waitingClosedRound, setWaitingClosedRound] = useState<number>()
@@ -341,7 +342,17 @@ export const ReviewPage = () => {
   const latest = review?.rounds.length ?? 0
   const toRound = selectedToRound || latest
   const inline = fromRound === 0 && toRound === latest
-  const commentable = inline && review !== undefined && review.state !== ReviewState.APPROVED
+  const ended = review?.state === ReviewState.APPROVED || review?.state === ReviewState.DISCARDED
+  const commentable = inline && review !== undefined && !ended
+  const discard = useCallback(
+    () =>
+      run(async () => {
+        setDiscardOpen(false)
+        await client.discard({ reviewId })
+        setMessage({ text: 'Discarded', error: false })
+      }).catch(() => {}),
+    [reviewId, run],
+  )
   const finish = useCallback(
     () =>
       run(async () => {
@@ -469,6 +480,9 @@ export const ReviewPage = () => {
         >
           {unresolved > 0 ? 'Finish' : 'Approve'}
         </Button>
+        <Button variant="outlined" color="error" disabled={ended} onClick={() => setDiscardOpen(true)}>
+          Discard
+        </Button>
         <Button size="small" onClick={() => setHelpOpen(true)} title="?">
           Keys
         </Button>
@@ -484,7 +498,7 @@ export const ReviewPage = () => {
           {reviewComments.map((c) => (
             <CommentThread key={c.id} comment={c} {...actions.thread(c)} />
           ))}
-          {review.state !== ReviewState.APPROVED &&
+          {!ended &&
             (composing ? (
               <CommentComposer
                 label="Comment on the review"
@@ -541,6 +555,19 @@ export const ReviewPage = () => {
             </TableBody>
           </Table>
         </DialogContent>
+      </Dialog>
+
+      <Dialog open={discardOpen} onClose={() => setDiscardOpen(false)}>
+        <DialogTitle>Discard the review?</DialogTitle>
+        <DialogContent>
+          <Typography>The review ends without the approval. The comments are kept, but the next round can't be started.</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDiscardOpen(false)}>Cancel</Button>
+          <Button color="error" onClick={discard}>
+            Discard
+          </Button>
+        </DialogActions>
       </Dialog>
 
       {/* The dialog is closed by the polling of the review when the agent starts the next round. */}

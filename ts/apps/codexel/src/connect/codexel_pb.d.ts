@@ -3579,6 +3579,38 @@ export declare type ResponseFinish = Message<"mono.codexel.ResponseFinish"> & {
 export declare const ResponseFinishSchema: GenMessage<ResponseFinish>;
 
 /**
+ * @generated from message mono.codexel.RequestDiscard
+ */
+export declare type RequestDiscard = Message<"mono.codexel.RequestDiscard"> & {
+  /**
+   * @generated from field: string review_id = 1;
+   */
+  reviewId: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestDiscard.
+ * Use `create(RequestDiscardSchema)` to create a new message.
+ */
+export declare const RequestDiscardSchema: GenMessage<RequestDiscard>;
+
+/**
+ * @generated from message mono.codexel.ResponseDiscard
+ */
+export declare type ResponseDiscard = Message<"mono.codexel.ResponseDiscard"> & {
+  /**
+   * @generated from field: mono.codexel.Review review = 1;
+   */
+  review?: Review;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseDiscard.
+ * Use `create(ResponseDiscardSchema)` to create a new message.
+ */
+export declare const ResponseDiscardSchema: GenMessage<ResponseDiscard>;
+
+/**
  * @generated from message mono.codexel.RequestStartNextRound
  */
 export declare type RequestStartNextRound = Message<"mono.codexel.RequestStartNextRound"> & {
@@ -4253,6 +4285,11 @@ export enum ReviewState {
    * @generated from enum value: REVIEW_STATE_APPROVED = 3;
    */
   APPROVED = 3,
+
+  /**
+   * @generated from enum value: REVIEW_STATE_DISCARDED = 4;
+   */
+  DISCARDED = 4,
 }
 
 /**
@@ -4962,6 +4999,17 @@ export declare const ReviewService: GenService<{
     methodKind: "unary";
     input: typeof RequestFinishSchema;
     output: typeof ResponseFinishSchema;
+  },
+  /**
+   * Discard ends the open or finished review without the approval. The comments and the rounds are kept. The agents
+   * are not told, and the next round can't be started.
+   *
+   * @generated from rpc mono.codexel.ReviewService.Discard
+   */
+  discard: {
+    methodKind: "unary";
+    input: typeof RequestDiscardSchema;
+    output: typeof ResponseDiscardSchema;
   },
   /**
    * StartNextRound starts the next round with the current commits of the changes after the agent addresses the

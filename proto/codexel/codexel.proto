@@ -147,6 +147,9 @@ service ReviewService {
   // Finish finishes the round. The review is approved if all comments are resolved. Otherwise the agents which created
   // the changes are told that the review is finished.
   rpc Finish(RequestFinish) returns (ResponseFinish);
+  // Discard ends the open or finished review without the approval. The comments and the rounds are kept. The agents
+  // are not told, and the next round can't be started.
+  rpc Discard(RequestDiscard) returns (ResponseDiscard);
   // StartNextRound starts the next round with the current commits of the changes after the agent addresses the
   // comments. The comments are moved to the lines of the anchors.
   rpc StartNextRound(RequestStartNextRound) returns (ResponseStartNextRound);
@@ -947,6 +950,7 @@ enum ReviewState {
   REVIEW_STATE_OPEN        = 1;
   REVIEW_STATE_FINISHED    = 2;
   REVIEW_STATE_APPROVED    = 3;
+  REVIEW_STATE_DISCARDED   = 4;
 }
 
 // DiffSide is the side of the diff. NEW is the file at the commit and OLD is the file at the parent.
@@ -1119,6 +1123,14 @@ message ResponseFinish {
   // notified_agents are the agents which were told that the review is finished. The agents are found by the
   // Agent and Agent-Session trailers of the changes.
   repeated Agent notified_agents = 2;
+}
+
+message RequestDiscard {
+  string review_id = 1;
+}
+
+message ResponseDiscard {
+  Review review = 1;
 }
 
 message RequestStartNextRound {

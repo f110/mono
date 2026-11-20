@@ -184,7 +184,7 @@ crit の機能を踏襲する。crit とのファイル形式の互換は持た�
 crit はブランチと作業ツリーを単位にするが、Codexel は jj の change ID を単位にする。change ID はリビジョンを書き換えても
 変わらないので、エージェントが `jj squash` や `jj describe` で修正してもコメントの対象を見失わない。
 
-- レビュー: 対象リポジトリ、対象リビジョンの change ID の集合、ラウンドの一覧、状態 (open / finished / approved)
+- レビュー: 対象リポジトリ、対象リビジョンの change ID の集合、ラウンドの一覧、状態 (open / finished / approved / discarded)
 - ラウンド: ラウンド開始時の各 change ID の commit ID
 - コメント: 対象 (§5.2)、行範囲、差分の側 (old / new)、行の内容 (anchor)、本文、作者、resolved、返信
 - 既読: change ID + パスごとの既読・未読。未読の記録は自動で既読にするパターンより優先する
@@ -221,13 +221,17 @@ crit はブランチと作業ツリーを単位にするが、Codexel は jj の
     - ベースからの差分は、ラウンド N の commit ID と親の差分 (通常の表示) にする
     - ラウンド M からの差分は change ごとに各ラウンドで記録した commit ID 同士の `jj diff --from --to` で出す。コミットメッセージも同じ始点・終点で差分を表示する
 - Finish: 未 resolve のコメントがあれば finished にしてエージェントに伝える。なければ approved にする (#142)
+- Discard (#176): open か finished のレビューを approve せずに終わらせ、discarded にする。approved のレビューは対象外
+    - ラウンドで記録した commit が古くなった場合など、進め方を変えたいレビューを終わらせるため
+    - コメント・ラウンド・既読は残す。エージェントには伝えず、次のラウンドの開始とコメントの追加は approved と同じく拒否する
+    - 戻す手段がなく Finish の隣にあるので、確認のダイアログを出す
 - Approve したコミットは、リビジョングラフとエージェント画面のコミット一覧でマークする (#135)
     - マークは保存せず、レビューから導く。approved のレビューの最新ラウンドの commit と、同じ change の今の commit を
       `jj interdiff --git` で比べ、差分がなければマークする
     - interdiff は親の違いを無視するので、rebase してもマークは外れない。内容かコミットメッセージを変えると外れる
     - commit ID は内容のハッシュなので、比較の結果は commit ID の組でキャッシュする
 - リポジトリ画面からコミットのレビューに移動できる (#141)
-    - change ID でレビューと対応付ける。同じ change のレビューは状態 (open / finished / approved) に関わらずすべて対象にする
+    - change ID でレビューと対応付ける。同じ change のレビューは状態 (open / finished / approved / discarded) に関わらずすべて対象にする
     - リビジョングラフの行には最新のレビューの状態とレビューの数をバッジで表示し、クリックで最新のレビューを開く
     - 詳細パネルにはその change のレビューをすべて表示し、選んだレビューを開く
 - 次のラウンドはエージェントが指摘に対応した後に MCP のツールで開始する (crit で再度 `crit` を実行するのと同じ)。その時点の各 change ID の
@@ -362,7 +366,7 @@ UI から作成した PR の URL を保存し、リビジョングラフの PR �
 |---|---|
 | `AgentService` | `List`, `Watch` (stream), `ReadOutput`, `SendPrompt`, `SendKeys`, `Focus`, `ListWorkspaces`, `Start`, `Stop`, `WatchTranscript` (stream) |
 | `RepositoryService` | `List`, `Open`, `Close`, `Watch` (stream, op ID の変化), `Log`, `GetRevision`, `Diff`, `DiffRange`, `Files`, `FileTree`, `FileHistory`, ... と §4.2 の各操作 (リビジョン、ブックマーク、Git、オペレーション、ファイル、コンフリクト、ワークスペース、エイリアス) |
-| `ReviewService` | `List`, `Get`, `Start`, `AddComment`, `EditComment`, `DeleteComment`, `Reply`, `ResolveComment`, `Finish`, `StartNextRound`, `RoundDiff`, `SetViewed` |
+| `ReviewService` | `List`, `Get`, `Start`, `AddComment`, `EditComment`, `DeleteComment`, `Reply`, `ResolveComment`, `Finish`, `Discard`, `StartNextRound`, `RoundDiff`, `SetViewed` |
 | `PullRequestService` | `List`, `ListTemplates`, `Validate`, `Submit` |
 | `SystemService` | `GetStatus` (起動時に PATH に見つからなかった `herdr` と `jj`) |
 

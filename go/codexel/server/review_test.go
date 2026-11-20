@@ -88,6 +88,22 @@ func TestReviewHandler(t *testing.T) {
 	assertion.Equal(t, connect.CodeOf(err), connect.CodeNotFound)
 }
 
+func TestReviewHandlerDiscard(t *testing.T) {
+	h := NewReviewHandler(newConfig(t), newReviewStore(t), nil)
+
+	discarded, err := h.Discard(t.Context(), connect.NewRequest(api.RequestDiscard_builder{ReviewId: new("01")}.Build()))
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, discarded.Msg.GetReview().GetState(), api.ReviewState_REVIEW_STATE_DISCARDED)
+	assertion.MustLen(t, discarded.Msg.GetReview().GetComments(), 2)
+
+	_, err = h.Discard(t.Context(), connect.NewRequest(api.RequestDiscard_builder{ReviewId: new("01")}.Build()))
+	assertion.Equal(t, connect.CodeOf(err), connect.CodeFailedPrecondition)
+	_, err = h.Finish(t.Context(), connect.NewRequest(api.RequestFinish_builder{ReviewId: new("01")}.Build()))
+	assertion.Equal(t, connect.CodeOf(err), connect.CodeFailedPrecondition)
+	_, err = h.Discard(t.Context(), connect.NewRequest(api.RequestDiscard_builder{ReviewId: new("02")}.Build()))
+	assertion.Equal(t, connect.CodeOf(err), connect.CodeNotFound)
+}
+
 func TestReviewMCP(t *testing.T) {
 	h := NewReviewHandler(newConfig(t), newReviewStore(t), nil)
 	srv := httptest.NewServer(NewMCPHandler(h))
