@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useQuery } from '@connectrpc/connect-query'
 import { useRouter } from '@tanstack/react-router'
 import { Box, Button, IconButton, Stack, Tab, Tabs, TextField, Typography } from '@mui/material'
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import CloseIcon from '@mui/icons-material/Close'
 import { RepositoryService } from '../connect/codexel_pb.js'
 import { fileLocation, parentDirs, visibleNodes, withFileLocation, type FileRevision, type TreeNode } from '../lib/fileTree.ts'
@@ -310,12 +311,17 @@ export const FileBrowser = ({
   return (
     <Stack direction="row" sx={{ flex: 1, minHeight: 0, display: hidden ? 'none' : 'flex' }}>
       <Box sx={{ width: '30%', flexShrink: 0, overflow: 'auto', borderRight: 1, borderColor: 'divider' }}>
-        <Typography variant="body2" color="text.secondary" sx={{ px: 1, pt: 1 }}>
-          Files at{' '}
-          <Box component="span" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
-            {revision.changeId.slice(0, 8)}
-          </Box>
-        </Typography>
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center', px: 1, pt: 1 }}>
+          <Button size="small" title="1 / Esc" startIcon={<ArrowBackIcon />} onClick={onClose}>
+            Log
+          </Button>
+          <Typography variant="body2" color="text.secondary">
+            Files at{' '}
+            <Box component="span" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+              {revision.changeId.slice(0, 8)}
+            </Box>
+          </Typography>
+        </Stack>
         <FileTreePanel
           nodes={nodes}
           selected={selected}

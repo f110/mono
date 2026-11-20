@@ -62,7 +62,9 @@ const reviewClient = createClient(ReviewService, transport)
 // operationLimit is the number of the operations shown in the operation log.
 const operationLimit = 200
 
-type Editing = { kind: 'describe'; commit: Commit; initial: string } | { kind: 'commit'; initial: string }
+type View = 'log' | 'bookmarks' | 'oplog' | 'evolog' | 'files' | 'conflicts'
+
+type Editing ={ kind: 'describe'; commit: Commit; initial: string } | { kind: 'commit'; initial: string }
 
 // Mode is the inline mode to pick the destination by moving the cursor. The sources are fixed when it starts.
 type Mode =
@@ -113,13 +115,14 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   const [mode, setMode] = useState<Mode>()
   const { history } = useRouter()
   const [treeTarget, setTreeTarget] = useState<FileRevision | undefined>(() => fileLocation(history.location.state, path)?.revision)
-  const [view, setView] = useState<'log' | 'bookmarks' | 'oplog' | 'evolog' | 'files' | 'conflicts'>(() => (treeTarget ? 'files' : 'log'))
+  const [view, setView] = useState<View>(() => (treeTarget ? 'files' : 'log'))
   const [conflictSelected, setConflictSelected] = useState(0)
   const [splitting, setSplitting] = useState<Commit>()
   const [workspaceOpen, setWorkspaceOpen] = useState(false)
   const [divergent, setDivergent] = useState<Commit>()
   const [paletteOpen, setPaletteOpen] = useState(false)
-  const { data: aliasData } = useQuery(RepositoryService.method.listAliases, { path }, { enabled: paletteOpen })
+  const [aliasAnchor, setAliasAnchor] = useState<HTMLElement>()
+  const { data: aliasData } = useQuery(RepositoryService.method.listAliases, { path }, { enabled: paletteOpen || aliasAnchor !== undefined })
   const [restoringFile, setRestoringFile] = useState<{ commit: Commit; file: string }>()
   const [bookmarkSelected, setBookmarkSelected] = useState(0)
   const [settingBookmark, setSettingBookmark] = useState<Commit>()
@@ -258,6 +261,19 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
     [path, navigate],
   )
 
+  const gitFetch = useCallback(() => run(() => repositoryClient.fetch({ path }), false), [path, run])
+  const jumpToWorkingCopy = useCallback(() => {
+    selectIndex(commits.findIndex((c) => c.currentWorkingCopy))
+    setView('log')
+  }, [commits, selectIndex])
+  const showView = useCallback((v: View) => {
+    if (v === 'conflicts') {
+      setConflictSelected(0)
+    } else if (v === 'oplog') {
+      setOpSelected(0)
+    }
+    setView(v)
+  }, [])
   const toggleChecked = useCallback((c: Commit) => {
     setChecked((s) => {
       const next = new Set(s)
@@ -434,13 +450,11 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           }
           break
         case '3':
-          setConflictSelected(0)
-          setView('conflicts')
+          showView('conflicts')
           break
         case '4':
         case 'O':
-          setOpSelected(0)
-          setView('oplog')
+          showView('oplog')
           break
         case '5':
         case 'E':
@@ -454,7 +468,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           }
           break
         case 'f':
-          run(() => repositoryClient.fetch({ path }), false)
+          gitFetch()
           break
         case 'p':
           setPushing(true)
@@ -491,7 +505,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           selectIndex(selected - 1)
           break
         case '@':
-          selectIndex(commits.findIndex((c) => c.currentWorkingCopy))
+          jumpToWorkingCopy()
           break
         case ' ':
           if (selectedCommit) {
@@ -565,6 +579,9 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
     startSquash,
     showEvolog,
     browseFiles,
+    showView,
+    gitFetch,
+    jumpToWorkingCopy,
   ])
 
   const single = checked.size === 0
@@ -639,7 +656,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
 
   return (
     <Stack sx={{ height: '100%' }}>
-      <Box sx={{ p: 1 }}>
+      <Stack direction="row" spacing={1} sx={{ p: 1, alignItems: 'center' }}>
         <TextField
           inputRef={revsetRef}
           size="small"
@@ -659,7 +676,33 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           }}
           slotProps={{ input: { sx: { fontFamily: 'monospace' } } }}
         />
-      </Box>
+        <Stack direction="row" sx={{ flexShrink: 0, '& .MuiButton-root': { minWidth: 0 } }}>
+          <Button size="small" title="c" disabled={mode !== undefined} onClick={startCommit}>
+            Commit
+          </Button>
+          <Button size="small" title="u" disabled={mode !== undefined} onClick={undo}>
+            Undo
+          </Button>
+          <Button size="small" title="f" disabled={mode !== undefined} onClick={gitFetch}>
+            Fetch
+          </Button>
+          <Button size="small" title="p" disabled={mode !== undefined} onClick={() => setPushing(true)}>
+            Push
+          </Button>
+          <Button size="small" title="w" disabled={mode !== undefined} onClick={() => setWorkspaceOpen(true)}>
+            Workspaces
+          </Button>
+          <Button size="small" disabled={mode !== undefined} onClick={(e) => setAliasAnchor(e.currentTarget)}>
+            Aliases
+          </Button>
+          <Button size="small" title="@" disabled={mode !== undefined} onClick={jumpToWorkingCopy}>
+            @
+          </Button>
+          <Button size="small" title="r" disabled={mode !== undefined} onClick={() => refetch()}>
+            Refresh
+          </Button>
+        </Stack>
+      </Stack>
       {mode && (
         <Alert severity="warning" sx={{ borderRadius: 0 }}>
           {modeDescription(mode)}
@@ -673,12 +716,15 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
       <Stack direction="row" sx={{ flex: 1, minHeight: 0, display: view === 'files' ? 'none' : 'flex' }}>
         <Stack sx={{ width: '45%', flexShrink: 0, borderRight: 1, borderColor: 'divider' }}>
           <Tabs
-            value={view === 'log' || view === 'bookmarks' ? view : false}
-            onChange={(_, v) => setView(v)}
+            value={view === 'log' || view === 'bookmarks' || view === 'conflicts' || view === 'oplog' ? view : false}
+            onChange={(_, v) => showView(v)}
+            variant="scrollable"
             sx={{ minHeight: 36, borderBottom: 1, borderColor: 'divider' }}
           >
             <Tab value="log" label="Revisions" sx={{ minHeight: 36 }} />
             <Tab value="bookmarks" label="Bookmarks" sx={{ minHeight: 36 }} />
+            <Tab value="conflicts" label="Conflicts" sx={{ minHeight: 36 }} />
+            <Tab value="oplog" label="Operations" sx={{ minHeight: 36 }} />
           </Tabs>
           <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
             {view === 'bookmarks' && <BookmarksPanel bookmarks={bookmarks} selected={bookmarkSelected} onSelect={setBookmarkSelected} />}
@@ -789,6 +835,21 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
         >
           Restore to this operation…
         </MenuItem>
+      </Menu>
+
+      <Menu open={aliasAnchor !== undefined} anchorEl={aliasAnchor} onClose={() => setAliasAnchor(undefined)}>
+        {aliasData?.aliases.length === 0 && <MenuItem disabled>No aliases</MenuItem>}
+        {aliasData?.aliases.map((a) => (
+          <MenuItem
+            key={a.name}
+            onClick={() => {
+              setAliasAnchor(undefined)
+              run(() => repositoryClient.runAlias({ path, name: a.name }), false)
+            }}
+          >
+            {a.name} (jj {a.args.join(' ')})
+          </MenuItem>
+        ))}
       </Menu>
 
       <Dialog open={restoring !== undefined} onClose={() => setRestoring(undefined)}>
@@ -930,14 +991,14 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
               : []),
             { label: 'Commit the working copy', shortcut: 'c', run: () => startCommit() },
             { label: 'Undo', shortcut: 'u', run: () => undo() },
-            { label: 'Git fetch', shortcut: 'f', run: () => run(() => repositoryClient.fetch({ path }), false) },
+            { label: 'Git fetch', shortcut: 'f', run: gitFetch },
             { label: 'Git push', shortcut: 'p', run: () => setPushing(true) },
             { label: 'Show the log', shortcut: '1', run: () => setView('log') },
             { label: 'Show the bookmarks', shortcut: '2', run: () => setView('bookmarks') },
             { label: 'Show the conflicts', shortcut: '3', run: () => setView('conflicts') },
             { label: 'Show the operation log', shortcut: '4', run: () => setView('oplog') },
             { label: 'Workspaces', shortcut: 'w', run: () => setWorkspaceOpen(true) },
-            { label: 'Jump to the working copy', shortcut: '@', run: () => selectIndex(commits.findIndex((c) => c.currentWorkingCopy)) },
+            { label: 'Jump to the working copy', shortcut: '@', run: jumpToWorkingCopy },
             { label: 'Refresh', shortcut: 'r', run: () => refetch() },
             { label: 'Focus the revset', shortcut: '/', run: () => setTimeout(() => revsetRef.current?.focus(), 0) },
             { label: 'Toggle the split view', shortcut: '|', run: () => pressKey('|') },
