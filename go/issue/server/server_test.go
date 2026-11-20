@@ -87,6 +87,7 @@ func TestEnumConversion(t *testing.T) {
 		database.TicketStatusDone:              api.TicketStatus_TICKET_STATUS_DONE,
 		database.TicketStatusWontFix:           api.TicketStatus_TICKET_STATUS_WONT_FIX,
 		database.TicketStatusNeedInvestigation: api.TicketStatus_TICKET_STATUS_NEED_INVESTIGATION,
+		database.TicketStatusInReview:          api.TicketStatus_TICKET_STATUS_IN_REVIEW,
 	}
 	for db, a := range statuses {
 		assertion.Equal(t, toTicket(&issue.Ticket{Ticket: &database.Ticket{Status: db}}).GetStatus(), a)

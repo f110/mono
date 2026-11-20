@@ -35,7 +35,7 @@ import { RelativeTime } from '../components/RelativeTime.tsx'
 import { useMasters } from '../hooks/useMasters.ts'
 import { priorityLabels, statusColors, statusLabels, statuses, typeLabels } from '../labels.ts'
 
-const defaultStatuses = [TicketStatus.OPEN, TicketStatus.NEED_INVESTIGATION, TicketStatus.IN_PROGRESS].map((s) => TicketStatus[s])
+const defaultStatuses = [TicketStatus.OPEN, TicketStatus.NEED_INVESTIGATION, TicketStatus.IN_PROGRESS, TicketStatus.IN_REVIEW].map((s) => TicketStatus[s])
 const statusLabelByName = Object.fromEntries(statuses.map((s) => [TicketStatus[s], statusLabels[s]]))
 const defaultOrder = 'last_activity_at desc'
 const pageSize = 100

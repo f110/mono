@@ -60,6 +60,7 @@ const statusNames: Record<string, string> = {
   done: statusLabels[TicketStatus.DONE],
   wont_fix: statusLabels[TicketStatus.WONT_FIX],
   need_investigation: statusLabels[TicketStatus.NEED_INVESTIGATION],
+  in_review: statusLabels[TicketStatus.IN_REVIEW],
 }
 
 const typeNames: Record<string, string> = {

@@ -13,6 +13,7 @@ enum TicketStatus {
   TICKET_STATUS_DONE               = 2;
   TICKET_STATUS_WONT_FIX           = 3;
   TICKET_STATUS_NEED_INVESTIGATION = 4;
+  TICKET_STATUS_IN_REVIEW          = 5;
 }
 
 // Priority of the ticket. PRIORITY_NONE means that the priority is not set.

@@ -38,6 +38,7 @@ var statuses = map[string]any{
 	"DONE":               database.TicketStatusDone,
 	"WONT_FIX":           database.TicketStatusWontFix,
 	"NEED_INVESTIGATION": database.TicketStatusNeedInvestigation,
+	"IN_REVIEW":          database.TicketStatusInReview,
 }
 
 var types = map[string]any{

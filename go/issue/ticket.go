@@ -470,6 +470,7 @@ var statusNames = map[database.TicketStatus]string{
 	database.TicketStatusDone:              "done",
 	database.TicketStatusWontFix:           "wont_fix",
 	database.TicketStatusNeedInvestigation: "need_investigation",
+	database.TicketStatusInReview:          "in_review",
 }
 
 func statusName(s database.TicketStatus) string {

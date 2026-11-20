@@ -47,6 +47,7 @@ enum TicketStatus {
   TICKET_STATUS_DONE               = 3;
   TICKET_STATUS_WONT_FIX           = 4;
   TICKET_STATUS_NEED_INVESTIGATION = 5;
+  TICKET_STATUS_IN_REVIEW          = 6;
 }
 
 enum Priority {

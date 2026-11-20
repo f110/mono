@@ -231,6 +231,16 @@ func TestTicketUpdate(t *testing.T) {
 		assertion.Len(t, activities(t, ticket), 1)
 	})
 
+	t.Run("in review status is recorded", func(t *testing.T) {
+		f := newFixture(t)
+		ticket := f.create(t, "title")
+		assertion.MustNoError(t, ticket.Update(f.as(f.human), nil, nil, new(database.TicketStatusInReview), nil, nil, nil, nil))
+		a := activities(t, ticket)
+		assertion.Equal(t, a[len(a)-1].Kind, database.ActivityKindStatus)
+		assertion.Equal(t, a[len(a)-1].FromValue, "open")
+		assertion.Equal(t, a[len(a)-1].ToValue, "in_review")
+	})
+
 	t.Run("system can change only the status", func(t *testing.T) {
 		f := newFixture(t)
 		ticket := f.create(t, "title")

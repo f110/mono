@@ -8,6 +8,7 @@ const icons = {
   [TicketStatus.OPEN]: AdjustIcon,
   [TicketStatus.NEED_INVESTIGATION]: AdjustIcon,
   [TicketStatus.IN_PROGRESS]: AdjustIcon,
+  [TicketStatus.IN_REVIEW]: AdjustIcon,
   [TicketStatus.DONE]: CheckCircleOutlineIcon,
   [TicketStatus.WONT_FIX]: BlockIcon,
 }

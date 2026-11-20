@@ -99,6 +99,7 @@ const (
 	TicketStatusDone              TicketStatus = 2
 	TicketStatusWontFix           TicketStatus = 3
 	TicketStatusNeedInvestigation TicketStatus = 4
+	TicketStatusInReview          TicketStatus = 5
 )
 
 type TicketType uint32
