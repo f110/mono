@@ -1,1 +1,3 @@
 third_party/**/* linguist-vendored
+ts/**/*_pb.js linguist-generated
+ts/**/*_pb.d.ts linguist-generated
