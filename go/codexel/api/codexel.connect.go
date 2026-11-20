@@ -171,6 +171,9 @@ const (
 	// RepositoryServiceForgetWorkspaceProcedure is the fully-qualified name of the RepositoryService's
 	// ForgetWorkspace RPC.
 	RepositoryServiceForgetWorkspaceProcedure = "/mono.codexel.RepositoryService/ForgetWorkspace"
+	// RepositoryServiceRemoveWorkspaceProcedure is the fully-qualified name of the RepositoryService's
+	// RemoveWorkspace RPC.
+	RepositoryServiceRemoveWorkspaceProcedure = "/mono.codexel.RepositoryService/RemoveWorkspace"
 	// RepositoryServiceRenameWorkspaceProcedure is the fully-qualified name of the RepositoryService's
 	// RenameWorkspace RPC.
 	RepositoryServiceRenameWorkspaceProcedure = "/mono.codexel.RepositoryService/RenameWorkspace"
@@ -576,6 +579,7 @@ type RepositoryServiceClient interface {
 	ListWorkspaces(context.Context, *connect.Request[RequestListRepositoryWorkspaces]) (*connect.Response[ResponseListRepositoryWorkspaces], error)
 	AddWorkspace(context.Context, *connect.Request[RequestAddRepositoryWorkspace]) (*connect.Response[ResponseAddRepositoryWorkspace], error)
 	ForgetWorkspace(context.Context, *connect.Request[RequestForgetRepositoryWorkspace]) (*connect.Response[ResponseForgetRepositoryWorkspace], error)
+	RemoveWorkspace(context.Context, *connect.Request[RequestRemoveRepositoryWorkspace]) (*connect.Response[ResponseRemoveRepositoryWorkspace], error)
 	RenameWorkspace(context.Context, *connect.Request[RequestRenameRepositoryWorkspace]) (*connect.Response[ResponseRenameRepositoryWorkspace], error)
 	UpdateStale(context.Context, *connect.Request[RequestUpdateStale]) (*connect.Response[ResponseUpdateStale], error)
 	ListAliases(context.Context, *connect.Request[RequestListAliases]) (*connect.Response[ResponseListAliases], error)
@@ -833,6 +837,12 @@ func NewRepositoryServiceClient(httpClient connect.HTTPClient, baseURL string, o
 			connect.WithSchema(repositoryServiceMethods.ByName("ForgetWorkspace")),
 			connect.WithClientOptions(opts...),
 		),
+		removeWorkspace: connect.NewClient[RequestRemoveRepositoryWorkspace, ResponseRemoveRepositoryWorkspace](
+			httpClient,
+			baseURL+RepositoryServiceRemoveWorkspaceProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("RemoveWorkspace")),
+			connect.WithClientOptions(opts...),
+		),
 		renameWorkspace: connect.NewClient[RequestRenameRepositoryWorkspace, ResponseRenameRepositoryWorkspace](
 			httpClient,
 			baseURL+RepositoryServiceRenameWorkspaceProcedure,
@@ -902,6 +912,7 @@ type repositoryServiceClient struct {
 	listWorkspaces   *connect.Client[RequestListRepositoryWorkspaces, ResponseListRepositoryWorkspaces]
 	addWorkspace     *connect.Client[RequestAddRepositoryWorkspace, ResponseAddRepositoryWorkspace]
 	forgetWorkspace  *connect.Client[RequestForgetRepositoryWorkspace, ResponseForgetRepositoryWorkspace]
+	removeWorkspace  *connect.Client[RequestRemoveRepositoryWorkspace, ResponseRemoveRepositoryWorkspace]
 	renameWorkspace  *connect.Client[RequestRenameRepositoryWorkspace, ResponseRenameRepositoryWorkspace]
 	updateStale      *connect.Client[RequestUpdateStale, ResponseUpdateStale]
 	listAliases      *connect.Client[RequestListAliases, ResponseListAliases]
@@ -1108,6 +1119,11 @@ func (c *repositoryServiceClient) ForgetWorkspace(ctx context.Context, req *conn
 	return c.forgetWorkspace.CallUnary(ctx, req)
 }
 
+// RemoveWorkspace calls mono.codexel.RepositoryService.RemoveWorkspace.
+func (c *repositoryServiceClient) RemoveWorkspace(ctx context.Context, req *connect.Request[RequestRemoveRepositoryWorkspace]) (*connect.Response[ResponseRemoveRepositoryWorkspace], error) {
+	return c.removeWorkspace.CallUnary(ctx, req)
+}
+
 // RenameWorkspace calls mono.codexel.RepositoryService.RenameWorkspace.
 func (c *repositoryServiceClient) RenameWorkspace(ctx context.Context, req *connect.Request[RequestRenameRepositoryWorkspace]) (*connect.Response[ResponseRenameRepositoryWorkspace], error) {
 	return c.renameWorkspace.CallUnary(ctx, req)
@@ -1170,6 +1186,7 @@ type RepositoryServiceHandler interface {
 	ListWorkspaces(context.Context, *connect.Request[RequestListRepositoryWorkspaces]) (*connect.Response[ResponseListRepositoryWorkspaces], error)
 	AddWorkspace(context.Context, *connect.Request[RequestAddRepositoryWorkspace]) (*connect.Response[ResponseAddRepositoryWorkspace], error)
 	ForgetWorkspace(context.Context, *connect.Request[RequestForgetRepositoryWorkspace]) (*connect.Response[ResponseForgetRepositoryWorkspace], error)
+	RemoveWorkspace(context.Context, *connect.Request[RequestRemoveRepositoryWorkspace]) (*connect.Response[ResponseRemoveRepositoryWorkspace], error)
 	RenameWorkspace(context.Context, *connect.Request[RequestRenameRepositoryWorkspace]) (*connect.Response[ResponseRenameRepositoryWorkspace], error)
 	UpdateStale(context.Context, *connect.Request[RequestUpdateStale]) (*connect.Response[ResponseUpdateStale], error)
 	ListAliases(context.Context, *connect.Request[RequestListAliases]) (*connect.Response[ResponseListAliases], error)
@@ -1423,6 +1440,12 @@ func NewRepositoryServiceHandler(svc RepositoryServiceHandler, opts ...connect.H
 		connect.WithSchema(repositoryServiceMethods.ByName("ForgetWorkspace")),
 		connect.WithHandlerOptions(opts...),
 	)
+	repositoryServiceRemoveWorkspaceHandler := connect.NewUnaryHandler(
+		RepositoryServiceRemoveWorkspaceProcedure,
+		svc.RemoveWorkspace,
+		connect.WithSchema(repositoryServiceMethods.ByName("RemoveWorkspace")),
+		connect.WithHandlerOptions(opts...),
+	)
 	repositoryServiceRenameWorkspaceHandler := connect.NewUnaryHandler(
 		RepositoryServiceRenameWorkspaceProcedure,
 		svc.RenameWorkspace,
@@ -1529,6 +1552,8 @@ func NewRepositoryServiceHandler(svc RepositoryServiceHandler, opts ...connect.H
 			repositoryServiceAddWorkspaceHandler.ServeHTTP(w, r)
 		case RepositoryServiceForgetWorkspaceProcedure:
 			repositoryServiceForgetWorkspaceHandler.ServeHTTP(w, r)
+		case RepositoryServiceRemoveWorkspaceProcedure:
+			repositoryServiceRemoveWorkspaceHandler.ServeHTTP(w, r)
 		case RepositoryServiceRenameWorkspaceProcedure:
 			repositoryServiceRenameWorkspaceHandler.ServeHTTP(w, r)
 		case RepositoryServiceUpdateStaleProcedure:
@@ -1704,6 +1729,10 @@ func (UnimplementedRepositoryServiceHandler) AddWorkspace(context.Context, *conn
 
 func (UnimplementedRepositoryServiceHandler) ForgetWorkspace(context.Context, *connect.Request[RequestForgetRepositoryWorkspace]) (*connect.Response[ResponseForgetRepositoryWorkspace], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.ForgetWorkspace is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) RemoveWorkspace(context.Context, *connect.Request[RequestRemoveRepositoryWorkspace]) (*connect.Response[ResponseRemoveRepositoryWorkspace], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.RemoveWorkspace is not implemented"))
 }
 
 func (UnimplementedRepositoryServiceHandler) RenameWorkspace(context.Context, *connect.Request[RequestRenameRepositoryWorkspace]) (*connect.Response[ResponseRenameRepositoryWorkspace], error) {

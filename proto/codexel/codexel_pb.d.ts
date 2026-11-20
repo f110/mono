@@ -2490,6 +2490,43 @@ export declare type ResponseForgetRepositoryWorkspace = Message<"mono.codexel.Re
 export declare const ResponseForgetRepositoryWorkspaceSchema: GenMessage<ResponseForgetRepositoryWorkspace>;
 
 /**
+ * @generated from message mono.codexel.RequestRemoveRepositoryWorkspace
+ */
+export declare type RequestRemoveRepositoryWorkspace = Message<"mono.codexel.RequestRemoveRepositoryWorkspace"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestRemoveRepositoryWorkspace.
+ * Use `create(RequestRemoveRepositoryWorkspaceSchema)` to create a new message.
+ */
+export declare const RequestRemoveRepositoryWorkspaceSchema: GenMessage<RequestRemoveRepositoryWorkspace>;
+
+/**
+ * @generated from message mono.codexel.ResponseRemoveRepositoryWorkspace
+ */
+export declare type ResponseRemoveRepositoryWorkspace = Message<"mono.codexel.ResponseRemoveRepositoryWorkspace"> & {
+  /**
+   * @generated from field: string output = 1;
+   */
+  output: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseRemoveRepositoryWorkspace.
+ * Use `create(ResponseRemoveRepositoryWorkspaceSchema)` to create a new message.
+ */
+export declare const ResponseRemoveRepositoryWorkspaceSchema: GenMessage<ResponseRemoveRepositoryWorkspace>;
+
+/**
  * @generated from message mono.codexel.RequestRenameRepositoryWorkspace
  */
 export declare type RequestRenameRepositoryWorkspace = Message<"mono.codexel.RequestRenameRepositoryWorkspace"> & {
@@ -4775,6 +4812,17 @@ export declare const RepositoryService: GenService<{
     methodKind: "unary";
     input: typeof RequestForgetRepositoryWorkspaceSchema;
     output: typeof ResponseForgetRepositoryWorkspaceSchema;
+  },
+  /**
+   * RemoveWorkspace removes the workspace and its directory. The working copy is snapshotted before removing. The
+   * workspace opened in Codexel can't be removed.
+   *
+   * @generated from rpc mono.codexel.RepositoryService.RemoveWorkspace
+   */
+  removeWorkspace: {
+    methodKind: "unary";
+    input: typeof RequestRemoveRepositoryWorkspaceSchema;
+    output: typeof ResponseRemoveRepositoryWorkspaceSchema;
   },
   /**
    * RenameWorkspace renames the workspace of the repository.

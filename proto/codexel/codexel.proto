@@ -114,6 +114,9 @@ service RepositoryService {
   // ForgetWorkspace stops tracking the workspace. The directory is left. The workspace opened in Codexel can't be
   // forgotten.
   rpc ForgetWorkspace(RequestForgetRepositoryWorkspace) returns (ResponseForgetRepositoryWorkspace);
+  // RemoveWorkspace removes the workspace and its directory. The working copy is snapshotted before removing. The
+  // workspace opened in Codexel can't be removed.
+  rpc RemoveWorkspace(RequestRemoveRepositoryWorkspace) returns (ResponseRemoveRepositoryWorkspace);
   // RenameWorkspace renames the workspace of the repository.
   rpc RenameWorkspace(RequestRenameRepositoryWorkspace) returns (ResponseRenameRepositoryWorkspace);
   // UpdateStale updates the stale working copy of the workspace.
@@ -824,6 +827,15 @@ message RequestForgetRepositoryWorkspace {
 }
 
 message ResponseForgetRepositoryWorkspace {
+  string output = 1;
+}
+
+message RequestRemoveRepositoryWorkspace {
+  string path = 1;
+  string name = 2;
+}
+
+message ResponseRemoveRepositoryWorkspace {
   string output = 1;
 }
 

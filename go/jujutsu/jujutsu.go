@@ -352,6 +352,11 @@ func (r *Repository) WorkspaceForget(ctx context.Context, name string) (string, 
 	return r.mutate(ctx, "workspace", "forget", "--", name)
 }
 
+// WorkspaceRemove removes the workspace and its directory. The working copy is snapshotted before removing.
+func (r *Repository) WorkspaceRemove(ctx context.Context, name string) (string, error) {
+	return r.mutate(ctx, "workspace", "remove", "--", name)
+}
+
 // WorkspaceRename renames the workspace of the repository.
 func (r *Repository) WorkspaceRename(ctx context.Context, name string) (string, error) {
 	return r.mutate(ctx, "workspace", "rename", "--", name)

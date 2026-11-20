@@ -663,31 +663,21 @@ func (h *RepositoryHandler) AddWorkspace(ctx context.Context, req *connect.Reque
 }
 
 func (h *RepositoryHandler) ForgetWorkspace(ctx context.Context, req *connect.Request[api.RequestForgetRepositoryWorkspace]) (*connect.Response[api.ResponseForgetRepositoryWorkspace], error) {
-	if req.Msg.GetName() == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("name is required"))
-	}
-	repo, err := openedRepository(h.config, req.Msg.GetPath())
-	if err != nil {
-		return nil, err
-	}
-	workspaces, err := repo.Workspaces(ctx)
-	if err != nil {
-		return nil, toJujutsuError(err)
-	}
-	conf, err := h.config.Load()
-	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
-	}
-	for _, w := range workspaces {
-		if w.Name == req.Msg.GetName() && slices.ContainsFunc(conf.Repositories, func(r *config.Repository) bool { return sameDir(r.Path, w.Root) }) {
-			return nil, connect.NewError(connect.CodeFailedPrecondition, xerrors.Newf("%s is opened. Close it first", w.Root))
-		}
-	}
-	out, err := mutate(h.config, req.Msg.GetPath(), func(r *jujutsu.Repository) (string, error) { return r.WorkspaceForget(ctx, req.Msg.GetName()) })
+	name := req.Msg.GetName()
+	out, err := mutateClosedWorkspace(ctx, h.config, req.Msg.GetPath(), name, func(r *jujutsu.Repository) (string, error) { return r.WorkspaceForget(ctx, name) })
 	if err != nil {
 		return nil, err
 	}
 	return connect.NewResponse(api.ResponseForgetRepositoryWorkspace_builder{Output: new(out)}.Build()), nil
+}
+
+func (h *RepositoryHandler) RemoveWorkspace(ctx context.Context, req *connect.Request[api.RequestRemoveRepositoryWorkspace]) (*connect.Response[api.ResponseRemoveRepositoryWorkspace], error) {
+	name := req.Msg.GetName()
+	out, err := mutateClosedWorkspace(ctx, h.config, req.Msg.GetPath(), name, func(r *jujutsu.Repository) (string, error) { return r.WorkspaceRemove(ctx, name) })
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(api.ResponseRemoveRepositoryWorkspace_builder{Output: new(out)}.Build()), nil
 }
 
 func (h *RepositoryHandler) RenameWorkspace(ctx context.Context, req *connect.Request[api.RequestRenameRepositoryWorkspace]) (*connect.Response[api.ResponseRenameRepositoryWorkspace], error) {
@@ -815,6 +805,36 @@ func mutate(conf *config.File, path string, fn func(*jujutsu.Repository) (string
 	repo, err := openedRepository(conf, path)
 	if err != nil {
 		return "", err
+	}
+	out, err := fn(repo)
+	if err != nil {
+		return "", toJujutsuError(err)
+	}
+	return out, nil
+}
+
+// mutateClosedWorkspace runs fn on the workspace of name in the repository of path. The workspace opened in Codexel is
+// rejected because fn stops tracking the workspace.
+func mutateClosedWorkspace(ctx context.Context, conf *config.File, path, name string, fn func(*jujutsu.Repository) (string, error)) (string, error) {
+	if name == "" {
+		return "", connect.NewError(connect.CodeInvalidArgument, errors.New("name is required"))
+	}
+	repo, err := openedRepository(conf, path)
+	if err != nil {
+		return "", err
+	}
+	workspaces, err := repo.Workspaces(ctx)
+	if err != nil {
+		return "", toJujutsuError(err)
+	}
+	c, err := conf.Load()
+	if err != nil {
+		return "", connect.NewError(connect.CodeInternal, err)
+	}
+	for _, w := range workspaces {
+		if w.Name == name && slices.ContainsFunc(c.Repositories, func(r *config.Repository) bool { return sameDir(r.Path, w.Root) }) {
+			return "", connect.NewError(connect.CodeFailedPrecondition, xerrors.Newf("%s is opened. Close it first", w.Root))
+		}
 	}
 	out, err := fn(repo)
 	if err != nil {

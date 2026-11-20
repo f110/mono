@@ -142,6 +142,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   const [workspaceSelected, setWorkspaceSelected] = useState(0)
   const [addingWorkspace, setAddingWorkspace] = useState<Commit>()
   const [renamingWorkspace, setRenamingWorkspace] = useState(false)
+  const [removingWorkspace, setRemovingWorkspace] = useState<RepositoryWorkspace>()
   const [divergent, setDivergent] = useState<Commit>()
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [aliasAnchor, setAliasAnchor] = useState<HTMLElement>()
@@ -494,6 +495,11 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           case 'o':
             if (other) {
               openWorkspace(w)
+            }
+            break
+          case 'd':
+            if (other) {
+              setRemovingWorkspace(w)
             }
             break
           case 'f':
@@ -868,6 +874,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
                 selected={workspaceSelected}
                 onSelect={setWorkspaceSelected}
                 onOpen={openWorkspace}
+                onRemove={setRemovingWorkspace}
                 onForget={forgetWorkspace}
                 onRename={() => setRenamingWorkspace(true)}
                 onUpdateStale={() => run(() => repositoryClient.updateStale({ path }), false)}
@@ -1215,6 +1222,28 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           }}
         />
       )}
+
+      <Dialog open={removingWorkspace !== undefined} onClose={() => setRemovingWorkspace(undefined)}>
+        <DialogTitle>Remove the workspace {removingWorkspace?.name}?</DialogTitle>
+        <DialogContent>
+          {removingWorkspace?.root} is deleted. The changes are snapshotted into a revision, but the ignored files are lost. Undo doesn't restore the directory.
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRemovingWorkspace(undefined)}>Cancel</Button>
+          <Button
+            color="error"
+            variant="contained"
+            autoFocus
+            onClick={() => {
+              const w = removingWorkspace!
+              setRemovingWorkspace(undefined)
+              run(() => repositoryClient.removeWorkspace({ path, name: w.name }), false)
+            }}
+          >
+            Remove
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {submittingPR && (
         <PullRequestDialog

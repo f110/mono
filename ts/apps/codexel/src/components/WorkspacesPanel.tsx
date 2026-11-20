@@ -10,6 +10,7 @@ export const WorkspacesPanel = ({
   selected,
   onSelect,
   onOpen,
+  onRemove,
   onForget,
   onRename,
   onUpdateStale,
@@ -19,6 +20,7 @@ export const WorkspacesPanel = ({
   selected: number
   onSelect: (index: number) => void
   onOpen: (w: RepositoryWorkspace) => void
+  onRemove: (w: RepositoryWorkspace) => void
   onForget: (w: RepositoryWorkspace) => void
   onRename: () => void
   onUpdateStale: () => void
@@ -33,7 +35,7 @@ export const WorkspacesPanel = ({
     <Box sx={{ py: 0.5 }}>
       <Stack direction="row" sx={{ px: 1, alignItems: 'center' }}>
         <Typography variant="caption" color="text.secondary" sx={{ flex: 1 }}>
-          j/k: move, o: open, f: forget, 1: log
+          j/k: move, o: open, d: remove, f: forget, 1: log
         </Typography>
         <Button size="small" sx={{ textTransform: 'none' }} onClick={onRename}>
           Rename the current
@@ -67,6 +69,9 @@ export const WorkspacesPanel = ({
               <>
                 <Button size="small" title="o" sx={{ minWidth: 0, py: 0, flexShrink: 0 }} onClick={() => onOpen(w)}>
                   Open
+                </Button>
+                <Button size="small" color="error" title="d" sx={{ minWidth: 0, py: 0, flexShrink: 0 }} onClick={() => onRemove(w)}>
+                  Remove
                 </Button>
                 <Button size="small" color="warning" title="f" sx={{ minWidth: 0, py: 0, flexShrink: 0 }} onClick={() => onForget(w)}>
                   Forget

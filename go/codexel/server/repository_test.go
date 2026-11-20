@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -64,6 +65,25 @@ func TestOperationRejectsRepositoryNotOpened(t *testing.T) {
 	connectErr, ok := errors.AsType[*connect.Error](err)
 	assertion.True(t, ok)
 	assertion.Equal(t, connectErr.Code(), connect.CodeNotFound)
+}
+
+func TestRemoveWorkspaceRejectsOpenedWorkspace(t *testing.T) {
+	if *jjBinaryPath == "" {
+		t.Skipf("Skip %s because -test.jj-binary is not set", t.Name())
+	}
+
+	repo, _ := newStackRepository(t)
+	workspace := repo + "-x"
+	runCommand(t, repo, "jj", "workspace", "add", "--name=x", workspace)
+	h := NewRepositoryHandler(newConfig(t, repo, workspace))
+
+	_, err := h.RemoveWorkspace(t.Context(), connect.NewRequest(api.RequestRemoveRepositoryWorkspace_builder{Path: new(repo), Name: new("x")}.Build()))
+	assertion.MustError(t, err)
+	connectErr, ok := errors.AsType[*connect.Error](err)
+	assertion.True(t, ok)
+	assertion.Equal(t, connectErr.Code(), connect.CodeFailedPrecondition)
+	_, err = os.Stat(workspace)
+	assertion.MustNoError(t, err)
 }
 
 func TestGetFileRejectsPathOutsideRepository(t *testing.T) {
