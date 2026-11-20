@@ -1,9 +1,8 @@
 import { useEffect, useRef, type MouseEvent } from 'react'
 import { Box, Chip, Stack, Typography } from '@mui/material'
 import { useNavigate } from '@tanstack/react-router'
-import type { Agent, Commit, LogRow, Review } from '../connect/codexel_pb.js'
+import { ReviewState, type Agent, type Commit, type LogRow, type Review } from '../connect/codexel_pb.js'
 import { stateChip } from '../lib/review.ts'
-import { ApprovedBadge } from './ApprovedBadge.tsx'
 import { GraphGutter, cellWidth } from './GraphGutter.tsx'
 
 const nodeHeight = 28
@@ -59,11 +58,11 @@ const AgentBadge = ({ commit, agents }: { commit: Commit; agents: Agent[] }) => 
 }
 
 // ReviewBadge shows the state of the latest review of the change and the number of the reviews. It links to the latest
-// review.
-const ReviewBadge = ({ reviews }: { reviews: Review[] }) => {
+// review. The approved review is hidden if the commit is not approved because it is rewritten after the approval.
+const ReviewBadge = ({ reviews, approved }: { reviews: Review[]; approved: boolean }) => {
   const navigate = useNavigate()
   const latest = reviews[0]
-  if (!latest) {
+  if (!latest || (latest.state === ReviewState.APPROVED && !approved)) {
     return null
   }
   return (
@@ -71,7 +70,7 @@ const ReviewBadge = ({ reviews }: { reviews: Review[] }) => {
       label={`review: ${stateChip[latest.state].label}${reviews.length > 1 ? ` (${reviews.length})` : ''}`}
       size="small"
       color={stateChip[latest.state].color}
-      variant="outlined"
+      variant={latest.state === ReviewState.APPROVED ? 'filled' : 'outlined'}
       sx={{ height: 18 }}
       onClick={(e: MouseEvent) => {
         e.stopPropagation()
@@ -98,8 +97,7 @@ const CommitLine = ({
     {mark && <Chip label={mark} size="small" color="warning" sx={{ height: 18 }} />}
     <ChangeId commit={commit} />
     <AgentBadge commit={commit} agents={agents} />
-    {approved && <ApprovedBadge />}
-    <ReviewBadge reviews={reviews} />
+    <ReviewBadge reviews={reviews} approved={approved} />
     {commit.workingCopies.map((w) => (
       <Chip key={`${w}@`} label={`${w}@`} size="small" color="success" variant="outlined" sx={{ height: 18 }} />
     ))}
