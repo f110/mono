@@ -20,20 +20,18 @@ export const OperationsPanel = ({
   onSelect,
   onRevert,
   onRestore,
-  onContextMenu,
 }: {
   operations: Operation[]
   selected: number
   onSelect: (index: number) => void
   onRevert: (index: number) => void
   onRestore: (index: number) => void
-  onContextMenu: (index: number, x: number, y: number) => void
 }) => {
   const selectedRef = useScrollToSelected(selected)
   return (
     <Box sx={{ py: 0.5 }}>
       <Typography variant="caption" color="text.secondary" sx={{ px: 1 }}>
-        j/k: move, right click: revert/restore, 1 or Esc: log
+        j/k: move, 1 or Esc: log
       </Typography>
       {operations.map((op, i) => (
         <Stack
@@ -42,10 +40,6 @@ export const OperationsPanel = ({
           direction="row"
           spacing={1}
           onClick={() => onSelect(i)}
-          onContextMenu={(e) => {
-            e.preventDefault()
-            onContextMenu(i, e.clientX, e.clientY)
-          }}
           sx={{ px: 1, py: 0.5, alignItems: 'center', cursor: 'pointer', bgcolor: i === selected ? 'action.selected' : undefined }}
         >
           <Typography variant="body2" sx={{ fontFamily: 'monospace', color: 'secondary.main', flexShrink: 0 }}>

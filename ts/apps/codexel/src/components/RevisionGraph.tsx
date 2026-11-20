@@ -162,7 +162,6 @@ export const RevisionGraph = ({
   selecting,
   onSelect,
   onToggleChecked,
-  onContextMenu,
 }: {
   rows: LogRow[]
   selected: number
@@ -182,7 +181,6 @@ export const RevisionGraph = ({
   selecting: boolean
   onSelect: (index: number) => void
   onToggleChecked: (index: number) => void
-  onContextMenu: (index: number, x: number, y: number) => void
 }) => {
   const width = Math.max(0, ...rows.flatMap((r) => r.lines.map((l) => [...l.gutter].length))) * cellWidth
   const lines = rows.flatMap((r) => r.lines.map((l) => l.gutter))
@@ -202,10 +200,6 @@ export const RevisionGraph = ({
             key={commit.commitId + commit.changeId}
             ref={i === selected ? selectedRef : undefined}
             onClick={() => onSelect(i)}
-            onContextMenu={(e) => {
-              e.preventDefault()
-              onContextMenu(i, e.clientX, e.clientY)
-            }}
             sx={{
               cursor: 'pointer',
               bgcolor: i === selected ? 'action.selected' : undefined,

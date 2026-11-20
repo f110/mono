@@ -149,13 +149,11 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   const [settingBookmark, setSettingBookmark] = useState<Commit>()
   const [pushing, setPushing] = useState(false)
   const [submittingPR, setSubmittingPR] = useState<Commit[]>()
-  // menu is the position of the menu of the operations on the selected revision opened by the right click, or the button
-  // which opens it.
-  const [menu, setMenu] = useState<{ x: number; y: number } | { anchor: HTMLElement }>()
+  // menu is the button which opens the menu of the operations on the selected revision.
+  const [menu, setMenu] = useState<HTMLElement>()
   const [repoMenuAnchor, setRepoMenuAnchor] = useState<HTMLElement>()
   const [selecting, setSelecting] = useState(false)
   const [opSelected, setOpSelected] = useState(0)
-  const [opMenu, setOpMenu] = useState<{ x: number; y: number; id: string }>()
   const [restoring, setRestoring] = useState<string>()
   const [evologTarget, setEvologTarget] = useState<Commit>()
   const [evologSelected, setEvologSelected] = useState(0)
@@ -846,10 +844,6 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
                 onSelect={setOpSelected}
                 onRevert={(i) => revertOperation(operations[i].id)}
                 onRestore={(i) => setRestoring(operations[i].id)}
-                onContextMenu={(i, x, y) => {
-                  setOpSelected(i)
-                  setOpMenu({ x, y, id: operations[i].id })
-                }}
               />
             )}
             {view === 'workspaces' && (
@@ -879,10 +873,6 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
                 selecting={selecting}
                 onSelect={selectIndex}
                 onToggleChecked={(i) => toggleChecked(commits[i])}
-                onContextMenu={(i, x, y) => {
-                  selectIndex(i)
-                  setMenu({ x, y })
-                }}
               />
             )}
           </Box>
@@ -919,7 +909,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
                 onHistory={showHistory}
                 onRestore={(commit, file) => setRestoringFile({ commit, file })}
                 onResolveDivergence={setDivergent}
-                onMenu={view === 'log' && !mode ? (anchor) => setMenu({ anchor }) : undefined}
+                onMenu={view === 'log' && !mode ? setMenu : undefined}
               />
             )}
           </Box>
@@ -928,26 +918,6 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
       {treeTarget && (
         <FileBrowser repoPath={path} revision={treeTarget} hidden={view !== 'files'} onRestore={restoreFiles} onClose={closeFiles} onHistory={showHistory} />
       )}
-
-      <Menu open={opMenu !== undefined} onClose={() => setOpMenu(undefined)} anchorReference="anchorPosition" anchorPosition={opMenu ? { top: opMenu.y, left: opMenu.x } : undefined}>
-        <MenuItem
-          onClick={() => {
-            const id = opMenu!.id
-            setOpMenu(undefined)
-            revertOperation(id)
-          }}
-        >
-          Revert this operation
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            setRestoring(opMenu!.id)
-            setOpMenu(undefined)
-          }}
-        >
-          Restore to this operation…
-        </MenuItem>
-      </Menu>
 
       <Menu open={repoMenuAnchor !== undefined} anchorEl={repoMenuAnchor} onClose={() => setRepoMenuAnchor(undefined)}>
         {repositoryMenuItem('Commit', 'c', startCommit)}
@@ -1004,13 +974,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
         </DialogActions>
       </Dialog>
 
-      <Menu
-        open={menu !== undefined && selectedCommit !== undefined}
-        onClose={() => setMenu(undefined)}
-        anchorReference={menu && 'anchor' in menu ? 'anchorEl' : 'anchorPosition'}
-        anchorEl={menu && 'anchor' in menu ? menu.anchor : undefined}
-        anchorPosition={menu && 'x' in menu ? { top: menu.y, left: menu.x } : undefined}
-      >
+      <Menu open={menu !== undefined && selectedCommit !== undefined} anchorEl={menu} onClose={() => setMenu(undefined)}>
         {menu && selectedCommit && revisionMenuItems(selectedCommit)}
       </Menu>
 
