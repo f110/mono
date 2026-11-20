@@ -1,7 +1,25 @@
+import type { LanguageFn } from 'highlight.js'
 import protobuf from 'highlight.js/lib/languages/protobuf'
+import python from 'highlight.js/lib/languages/python'
 import { common, createLowlight } from 'lowlight'
 
-const lowlight = createLowlight({ ...common, protobuf })
+// starlark is the grammar of Python with the function calls highlighted. The files of Bazel consist mostly of the
+// function calls, so they have little color as Python.
+const starlark: LanguageFn = (hljs) => {
+  const lang = python(hljs)
+  const keywords = (lang.keywords as { keyword: string[] }).keyword
+  return {
+    ...lang,
+    name: 'Starlark',
+    aliases: [],
+    contains: [
+      ...(lang.contains ?? []),
+      { scope: 'title.function.invoke', match: new RegExp(`\\b(?!(?:${keywords.join('|')})\\b)[A-Za-z_]\\w*(?=\\s*\\()`), relevance: 0 },
+    ],
+  }
+}
+
+const lowlight = createLowlight({ ...common, protobuf, starlark })
 
 export type Token = { text: string; className?: string }
 
@@ -46,16 +64,16 @@ const languages: Record<string, string> = {
   sql: 'sql',
   proto: 'protobuf',
   graphql: 'graphql',
-  bzl: 'python',
-  bazel: 'python',
+  bzl: 'starlark',
+  bazel: 'starlark',
 }
 
 const fileNames: Record<string, string> = {
   Makefile: 'makefile',
-  'BUILD.bazel': 'python',
-  BUILD: 'python',
-  'MODULE.bazel': 'python',
-  WORKSPACE: 'python',
+  'BUILD.bazel': 'starlark',
+  BUILD: 'starlark',
+  'MODULE.bazel': 'starlark',
+  WORKSPACE: 'starlark',
 }
 
 // languageOf returns the language of highlight.js for the path, or undefined if it is not supported.
