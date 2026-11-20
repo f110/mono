@@ -18,6 +18,8 @@ import {
   Tab,
   Tabs,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material'
 import {
   RebaseSource,
@@ -94,6 +96,19 @@ const modeKeys: Record<string, Partial<{ source: RebaseSource; target: RebaseTar
   a: { target: RebaseTarget.INSERT_AFTER },
   i: { target: RebaseTarget.INSERT_BEFORE },
 }
+
+// rebaseSources and rebaseTargets are the choices of the rebase mode with the keys to choose them.
+const rebaseSources: [string, RebaseSource][] = [
+  ['r', RebaseSource.REVISIONS],
+  ['s', RebaseSource.DESCENDANTS],
+  ['b', RebaseSource.BRANCH],
+]
+
+const rebaseTargets: [string, RebaseTarget][] = [
+  ['o', RebaseTarget.ONTO],
+  ['a', RebaseTarget.INSERT_AFTER],
+  ['i', RebaseTarget.INSERT_BEFORE],
+]
 
 const modeDescription = (mode: Mode): string =>
   mode.kind === 'rebase'
@@ -706,6 +721,43 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
       {mode && (
         <Alert severity="warning" sx={{ borderRadius: 0 }}>
           {modeDescription(mode)}
+          <Stack direction="row" sx={{ mt: 1, gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+            {mode.kind === 'rebase' ? (
+              <>
+                <ToggleButtonGroup size="small" exclusive value={mode.source} onChange={(_, v) => v !== null && setMode({ ...mode, source: v })}>
+                  {rebaseSources.map(([key, source]) => (
+                    <ToggleButton key={source} value={source} title={key} sx={{ textTransform: 'none', py: 0.25 }}>
+                      {sourceLabel[source]}
+                    </ToggleButton>
+                  ))}
+                </ToggleButtonGroup>
+                <ToggleButtonGroup size="small" exclusive value={mode.target} onChange={(_, v) => v !== null && setMode({ ...mode, target: v })}>
+                  {rebaseTargets.map(([key, target]) => (
+                    <ToggleButton key={target} value={target} title={key} sx={{ textTransform: 'none', py: 0.25 }}>
+                      {targetLabel[target]}
+                    </ToggleButton>
+                  ))}
+                </ToggleButtonGroup>
+              </>
+            ) : (
+              <ToggleButton
+                size="small"
+                value="combine"
+                selected={mode.combine}
+                onChange={() => setMode({ ...mode, combine: !mode.combine })}
+                title="c"
+                sx={{ textTransform: 'none', py: 0.25 }}
+              >
+                Combine the descriptions
+              </ToggleButton>
+            )}
+            <Button size="small" variant="contained" color="warning" title="Enter" onClick={() => executeMode(mode)}>
+              {mode.kind === 'rebase' ? 'Rebase' : 'Squash'}
+            </Button>
+            <Button size="small" color="inherit" title="Esc" onClick={() => setMode(undefined)}>
+              Cancel
+            </Button>
+          </Stack>
         </Alert>
       )}
       {error && (
