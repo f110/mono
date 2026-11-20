@@ -44,7 +44,7 @@ const imageTypes: Record<string, string> = {
 }
 
 const extension = (path: string) => path.split('.').pop()?.toLowerCase() ?? ''
-const isMarkdown = (path: string) => ['md', 'markdown'].includes(extension(path))
+export const isMarkdown = (path: string) => ['md', 'markdown'].includes(extension(path))
 
 const LineNumber = ({ n, onClick }: { n: number; onClick?: (e: MouseEvent) => void }) => (
   <Box

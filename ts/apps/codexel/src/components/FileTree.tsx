@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@connectrpc/connect-query'
 import { useRouter } from '@tanstack/react-router'
-import { Box, Button, IconButton, Stack, Tab, Tabs, TextField, Typography } from '@mui/material'
+import { Box, Button, IconButton, Stack, Tab, Tabs, TextField, ToggleButton, Typography } from '@mui/material'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import CloseIcon from '@mui/icons-material/Close'
@@ -40,6 +40,8 @@ import { RepositoryService } from '../connect/codexel_pb.js'
 import { fileLocation, parentDirs, visibleNodes, withFileLocation, type FileRevision, type TreeNode } from '../lib/fileTree.ts'
 import { languageOf, tokenize } from '../lib/highlight.ts'
 import { ignoreKey } from '../lib/keys.ts'
+import { isMarkdown } from './FileDiffView.tsx'
+import { Markdown } from './Markdown.tsx'
 
 // FileTreePanel shows the files of the revision. The keys are handled by the parent. filter shows the matching files
 // flatly instead of the tree.
@@ -80,7 +82,7 @@ export const FileTreePanel = ({
           }}
         />
         <Typography variant="caption" color="text.secondary">
-          j/k: move, h/l: fold/unfold, Enter: open, H/L: previous/next tab, x: close the tab, /: filter, 1 or Esc: log
+          j/k: move, h/l: fold/unfold, Enter: open, H/L: previous/next tab, x: close the tab, m: preview, /: filter, 1 or Esc: log
         </Typography>
       </Box>
       {nodes.map((n, i) => (
@@ -180,14 +182,16 @@ const FileIcon = ({ path }: { path: string }) => {
 
 const decoder = new TextDecoder()
 
-// FileView shows the content of the file at the revision with the syntax highlighting. scrollRef is scrolled to
-// scrollTop after the content is loaded.
+// FileView shows the content of the file at the revision with the syntax highlighting. Markdown is rendered while preview
+// is on. scrollRef is scrolled to scrollTop after the content is loaded.
 export const FileView = ({
   repoPath,
   revision,
   file,
   scrollRef,
   scrollTop,
+  preview,
+  onTogglePreview,
   onHistory,
 }: {
   repoPath: string
@@ -195,12 +199,16 @@ export const FileView = ({
   file: string
   scrollRef: React.RefObject<HTMLElement | null>
   scrollTop: number
+  preview: boolean
+  onTogglePreview: () => void
   onHistory: () => void
 }) => {
   const { data, error } = useQuery(RepositoryService.method.getFile, { path: repoPath, revision, file }, { staleTime: Infinity })
   const lang = languageOf(file)
-  const lines = useMemo(() => (data ? decoder.decode(data.content).split('\n') : []), [data])
+  const text = useMemo(() => (data ? decoder.decode(data.content) : undefined), [data])
+  const lines = useMemo(() => text?.split('\n') ?? [], [text])
   const binary = useMemo(() => data?.content.slice(0, 8000).includes(0) ?? false, [data])
+  const markdown = isMarkdown(file)
   useLayoutEffect(() => {
     if (data && scrollRef.current) {
       scrollRef.current.scrollTop = scrollTop
@@ -213,6 +221,11 @@ export const FileView = ({
         <Typography variant="body2" sx={{ fontFamily: 'monospace', flex: 1 }}>
           {file}
         </Typography>
+        {markdown && (
+          <ToggleButton size="small" value="preview" selected={preview} onChange={onTogglePreview} title="m" sx={{ textTransform: 'none', py: 0.25 }}>
+            Preview
+          </ToggleButton>
+        )}
         <Button size="small" onClick={onHistory}>
           History
         </Button>
@@ -220,6 +233,10 @@ export const FileView = ({
       {error && <Typography color="error">{error.message}</Typography>}
       {binary ? (
         <Typography color="text.secondary">Binary file</Typography>
+      ) : markdown && preview ? (
+        <Box className="markdown-body" sx={{ '& pre': { overflowX: 'auto' }, '& img': { maxWidth: '100%' } }}>
+          {text !== undefined && <Markdown text={text} />}
+        </Box>
       ) : (
         <Box sx={{ fontFamily: 'monospace', fontSize: 12, lineHeight: 1.5, border: 1, borderColor: 'divider', borderRadius: 1, overflowX: 'auto' }}>
           {lines.map((l, i) => (
@@ -248,11 +265,13 @@ type ActiveFile = { file: string; scrollTop: number; seq: number }
 // FileBrowser shows the file tree of the revision and the opened files in the tabs. Opening the file pushes the position
 // to the history, so the browser back returns to the file and the scroll position opened before. onRestore is called
 // with the revision of the position restored by the browser back and forward. The keys are handled only while it is
-// not hidden, and the tabs are kept while it is hidden.
+// not hidden, and the tabs are kept while it is hidden. preview is shared with the diff because m toggles it in both.
 export const FileBrowser = ({
   repoPath,
   revision,
   hidden,
+  preview,
+  onTogglePreview,
   onRestore,
   onClose,
   onHistory,
@@ -260,6 +279,8 @@ export const FileBrowser = ({
   repoPath: string
   revision: FileRevision
   hidden: boolean
+  preview: boolean
+  onTogglePreview: () => void
   onRestore: (revision: FileRevision) => void
   onClose: () => void
   onHistory: (file: string) => void
@@ -495,6 +516,8 @@ export const FileBrowser = ({
               file={active.file}
               scrollRef={contentRef}
               scrollTop={active.scrollTop}
+              preview={preview}
+              onTogglePreview={onTogglePreview}
               onHistory={() => onHistory(active.file)}
             />
           ) : (

@@ -916,7 +916,16 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
         </Stack>
       </Stack>
       {treeTarget && (
-        <FileBrowser repoPath={path} revision={treeTarget} hidden={view !== 'files'} onRestore={restoreFiles} onClose={closeFiles} onHistory={showHistory} />
+        <FileBrowser
+          repoPath={path}
+          revision={treeTarget}
+          hidden={view !== 'files'}
+          preview={preview}
+          onTogglePreview={diffNavigation.togglePreview}
+          onRestore={restoreFiles}
+          onClose={closeFiles}
+          onHistory={showHistory}
+        />
       )}
 
       <Menu open={repoMenuAnchor !== undefined} anchorEl={repoMenuAnchor} onClose={() => setRepoMenuAnchor(undefined)}>
