@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { timestampDate } from '@bufbuild/protobuf/wkt'
 import { useQuery } from '@connectrpc/connect-query'
 import { skipToken } from '@tanstack/react-query'
@@ -34,6 +34,7 @@ import { CopyTicketNumberButton } from '../components/CopyButton.tsx'
 import { RelativeTime } from '../components/RelativeTime.tsx'
 import { useMasters } from '../hooks/useMasters.ts'
 import { priorityLabels, statusColors, statusLabels, statuses, typeLabels } from '../labels.ts'
+import { listShortcuts, useShortcuts } from '../shortcuts.ts'
 
 const defaultStatuses = [TicketStatus.OPEN, TicketStatus.NEED_INVESTIGATION, TicketStatus.IN_PROGRESS, TicketStatus.IN_REVIEW].map((s) => TicketStatus[s])
 const statusLabelByName = Object.fromEntries(statuses.map((s) => [TicketStatus[s], statusLabels[s]]))
@@ -99,6 +100,41 @@ export const TicketListPage = () => {
   const movePage = (next: string[]) => {
     void navigate({ search: (prev) => ({ ...prev, pages: next.length > 0 ? next : undefined }) })
   }
+
+  const [cursor, setCursor] = useState<number>()
+  const filterRef = useRef<HTMLInputElement>(null)
+  const tickets = [...(p0?.tickets ?? []), ...(data?.tickets ?? [])]
+  const moveCursor = (step: number) => {
+    if (tickets.length === 0) {
+      return
+    }
+    const current = tickets.findIndex((t) => t.number === cursor)
+    const next = current < 0 ? (step > 0 ? 0 : tickets.length - 1) : Math.min(Math.max(current + step, 0), tickets.length - 1)
+    setCursor(tickets[next].number)
+  }
+  useShortcuts(listShortcuts, {
+    down: () => moveCursor(1),
+    up: () => moveCursor(-1),
+    open: () => {
+      if (tickets.some((t) => t.number === cursor)) {
+        void navigate({ to: '/$number', params: { number: String(cursor) } })
+      }
+    },
+    search: () => filterRef.current?.focus(),
+    nextPage: () => {
+      if (data?.nextPageToken) {
+        movePage([...pages, data.nextPageToken])
+      }
+    },
+    prevPage: () => {
+      if (pages.length > 0) {
+        movePage(pages.slice(0, -1))
+      }
+    },
+  })
+  useEffect(() => {
+    document.querySelector(`tr[data-ticket="${cursor}"]`)?.scrollIntoView({ block: 'nearest' })
+  }, [cursor])
 
   return (
     <Stack spacing={2}>
@@ -177,6 +213,7 @@ export const TicketListPage = () => {
             placeholder="priority <= P1 クラッシュ"
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            inputRef={filterRef}
             fullWidth
             size="small"
           />
@@ -187,10 +224,10 @@ export const TicketListPage = () => {
       {p0 && p0.tickets.length > 0 && (
         <Stack spacing={1}>
           <Typography variant="h6">P0</Typography>
-          <TicketTable tickets={p0.tickets} orderField={orderField} orderDirection={orderDirection} onSort={sortBy} />
+          <TicketTable tickets={p0.tickets} cursor={cursor} orderField={orderField} orderDirection={orderDirection} onSort={sortBy} />
         </Stack>
       )}
-      <TicketTable tickets={data?.tickets ?? []} orderField={orderField} orderDirection={orderDirection} onSort={sortBy} />
+      <TicketTable tickets={data?.tickets ?? []} cursor={cursor} orderField={orderField} orderDirection={orderDirection} onSort={sortBy} />
       {data && data.tickets.length === 0 && (
         <Typography color="text.secondary">チケットはありません</Typography>
       )}
@@ -209,11 +246,13 @@ export const TicketListPage = () => {
 
 const TicketTable = ({
   tickets,
+  cursor,
   orderField,
   orderDirection,
   onSort,
 }: {
   tickets: Ticket[]
+  cursor: number | undefined
   orderField: string
   orderDirection: string | undefined
   onSort: (field: string) => void
@@ -243,7 +282,7 @@ const TicketTable = ({
         </TableHead>
         <TableBody>
           {tickets.map((t) => (
-            <TableRow key={t.number} hover>
+            <TableRow key={t.number} hover selected={t.number === cursor} data-ticket={t.number}>
               <TableCell>
                 {t.number}
                 <CopyTicketNumberButton number={t.number} />

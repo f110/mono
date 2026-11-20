@@ -1,7 +1,7 @@
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, type Ref, useRef, useState } from 'react'
 import { useMutation, useQuery } from '@connectrpc/connect-query'
 import { useQueryClient } from '@tanstack/react-query'
-import { Link as RouterLink, useParams } from '@tanstack/react-router'
+import { Link as RouterLink, useNavigate, useParams } from '@tanstack/react-router'
 import {
   Alert,
   Box,
@@ -53,6 +53,9 @@ import {
   typeLabels,
   types,
 } from '../labels.ts'
+import { ticketShortcuts, useShortcuts } from '../shortcuts.ts'
+
+type SelectField = 'status' | 'assignee' | 'priority'
 
 const statusNames: Record<string, string> = {
   open: statusLabels[TicketStatus.OPEN],
@@ -101,6 +104,26 @@ export const TicketPage = () => {
   const update = useMutation(Issue.method.updateTicket, { onSuccess: invalidate })
   const [editingTitle, setEditingTitle] = useState<string | null>(null)
   const [editingBody, setEditingBody] = useState<string | null>(null)
+  const [openField, setOpenField] = useState<SelectField | null>(null)
+  const commentRef = useRef<HTMLTextAreaElement>(null)
+  const navigate = useNavigate()
+  useShortcuts(ticketShortcuts, {
+    comment: () => commentRef.current?.focus(),
+    editBody: () => {
+      if (data?.ticket && editingBody === null) {
+        setEditingBody(data.ticket.body)
+      }
+    },
+    editTitle: () => {
+      if (data?.ticket && editingTitle === null) {
+        setEditingTitle(data.ticket.title)
+      }
+    },
+    status: () => setOpenField('status'),
+    assignee: () => setOpenField('assignee'),
+    priority: () => setOpenField('priority'),
+    back: () => void navigate({ to: '/' }),
+  })
 
   if (error) {
     return <Alert severity="error">{error.message}</Alert>
@@ -180,7 +203,7 @@ export const TicketPage = () => {
                   setEditingBody(null)
                 }}
               >
-                <MarkdownEditor value={editingBody} onChange={setEditingBody} />
+                <MarkdownEditor value={editingBody} onChange={setEditingBody} autoFocus />
                 <Stack direction="row" spacing={1}>
                   <Button type="submit" variant="contained">
                     保存
@@ -191,7 +214,7 @@ export const TicketPage = () => {
             )}
           </PostCard>
           <Timeline activities={activities?.activities ?? []} comments={data.comments} mentions={data.mentions} reporterId={ticket.reporterId} />
-          <CommentForm number={number} />
+          <CommentForm number={number} inputRef={commentRef} />
         </Stack>
         <Box sx={{ gridArea: 'fields' }}>
           <Fields
@@ -200,6 +223,8 @@ export const TicketPage = () => {
             priority={ticket.priority}
             componentId={ticket.componentId}
             assigneeId={ticket.assigneeId}
+            openField={openField}
+            onOpenField={setOpenField}
             onChange={(fields) => update.mutate({ number, ...fields })}
           />
         </Box>
@@ -226,6 +251,8 @@ const Fields = ({
   priority,
   componentId,
   assigneeId,
+  openField,
+  onOpenField,
   onChange,
 }: {
   status: number
@@ -233,13 +260,25 @@ const Fields = ({
   priority: number
   componentId: number
   assigneeId: number
+  openField: SelectField | null
+  onOpenField: (field: SelectField | null) => void
   onChange: (fields: { status?: number; type?: number; priority?: number; componentId?: number; assigneeId?: number }) => void
 }) => {
   const { operators, components } = useMasters()
+  const selectProps = (field: SelectField) => ({
+    select: { open: openField === field, onOpen: () => onOpenField(field), onClose: () => onOpenField(null) },
+  })
 
   return (
     <Stack spacing={2}>
-      <TextField select size="small" label="Status" value={status} onChange={(e) => onChange({ status: Number(e.target.value) })}>
+      <TextField
+        select
+        size="small"
+        label="Status"
+        value={status}
+        onChange={(e) => onChange({ status: Number(e.target.value) })}
+        slotProps={selectProps('status')}
+      >
         {statuses.map((s) => (
           <MenuItem key={s} value={s}>
             {statusLabels[s]}
@@ -253,7 +292,14 @@ const Fields = ({
           </MenuItem>
         ))}
       </TextField>
-      <TextField select size="small" label="Priority" value={priority} onChange={(e) => onChange({ priority: Number(e.target.value) })}>
+      <TextField
+        select
+        size="small"
+        label="Priority"
+        value={priority}
+        onChange={(e) => onChange({ priority: Number(e.target.value) })}
+        slotProps={selectProps('priority')}
+      >
         {priorities.map((p) => (
           <MenuItem key={p} value={p}>
             {priorityLabels[p]}
@@ -268,7 +314,14 @@ const Fields = ({
           </MenuItem>
         ))}
       </TextField>
-      <TextField select size="small" label="Assignee" value={assigneeId} onChange={(e) => onChange({ assigneeId: Number(e.target.value) })}>
+      <TextField
+        select
+        size="small"
+        label="Assignee"
+        value={assigneeId}
+        onChange={(e) => onChange({ assigneeId: Number(e.target.value) })}
+        slotProps={selectProps('assignee')}
+      >
         <MenuItem value={0}>未割り当て</MenuItem>
         {operators.map((a) => (
           <MenuItem key={a.id} value={a.id}>
@@ -564,7 +617,7 @@ const CommentCard = ({ comment, mentions, reporter }: { comment: Comment; mentio
 }
 
 
-const CommentForm = ({ number }: { number: number }) => {
+const CommentForm = ({ number, inputRef }: { number: number; inputRef: Ref<HTMLTextAreaElement> }) => {
   const invalidate = useInvalidate()
   const [body, setBody] = useState('')
   const add = useMutation(Issue.method.addComment, {
@@ -583,7 +636,7 @@ const CommentForm = ({ number }: { number: number }) => {
       }}
     >
       {add.error && <Alert severity="error">{add.error.message}</Alert>}
-      <MarkdownEditor value={body} onChange={setBody} minRows={3} />
+      <MarkdownEditor value={body} onChange={setBody} minRows={3} inputRef={inputRef} />
       <Stack direction="row" sx={{ mt: 1 }}>
         <Button type="submit" variant="contained" disabled={add.isPending || body === ''}>
           コメント

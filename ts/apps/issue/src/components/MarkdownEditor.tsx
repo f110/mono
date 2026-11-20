@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { type Ref, useState } from 'react'
 import { Box, Tab, Tabs, TextField } from '@mui/material'
 import { Markdown } from './Markdown.tsx'
 
@@ -6,10 +6,14 @@ export const MarkdownEditor = ({
   value,
   onChange,
   minRows = 6,
+  autoFocus,
+  inputRef,
 }: {
   value: string
   onChange: (value: string) => void
   minRows?: number
+  autoFocus?: boolean
+  inputRef?: Ref<HTMLTextAreaElement>
 }) => {
   const [tab, setTab] = useState<'write' | 'preview'>('write')
 
@@ -38,6 +42,9 @@ export const MarkdownEditor = ({
               form.requestSubmit(submitter)
             }
           }}
+          placeholder="Cmd/Ctrl+Enter で送信"
+          autoFocus={autoFocus}
+          inputRef={inputRef}
           multiline
           minRows={minRows}
           fullWidth
