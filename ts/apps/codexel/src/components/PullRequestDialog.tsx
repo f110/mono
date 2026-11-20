@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type KeyboardEvent } from 'react'
 import { useMutation, useQuery } from '@connectrpc/connect-query'
 import { Alert, Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Link, MenuItem, Stack, TextField, Typography } from '@mui/material'
 import { PullRequestAction, PullRequestService, type Commit } from '../connect/codexel_pb.js'
@@ -15,7 +15,7 @@ const noTemplate = '\0'
 
 // PullRequestDialog creates the pull requests of the revisions like jj pr submit. One revision submits the stack from
 // trunk to it, and multiple revisions are submitted as one pull request. The template has to be picked if there are
-// multiple templates like jj pr. onSubmitted is called after the commits are pushed.
+// multiple templates like jj pr. Enter submits them. onSubmitted is called after the commits are pushed.
 export const PullRequestDialog = ({
   repoPath,
   commits,
@@ -38,6 +38,7 @@ export const PullRequestDialog = ({
   const hasPushedCommits = validation.data?.hasPushedCommits ?? false
   const needsTemplate = templates.length > 1 && template === undefined
   const ready = validation.isSuccess && reason === '' && templateData !== undefined && !needsTemplate
+  const submittable = ready && !submit.isPending && !submit.isSuccess
 
   const run = () => {
     submit.mutate(
@@ -51,8 +52,18 @@ export const PullRequestDialog = ({
     )
   }
 
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key !== 'Enter' || e.defaultPrevented || (e.target instanceof Element && e.target.closest('button, a') !== null)) {
+      return
+    }
+    e.preventDefault()
+    if (submittable) {
+      run()
+    }
+  }
+
   return (
-    <Dialog open onClose={submit.isPending ? undefined : onClose} fullWidth maxWidth="sm">
+    <Dialog open onClose={submit.isPending ? undefined : onClose} onKeyDown={onKeyDown} fullWidth maxWidth="sm">
       <DialogTitle>{commits.length > 1 ? 'Create one pull request of the revisions' : 'Create the pull requests of the stack'}</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>
@@ -127,7 +138,7 @@ export const PullRequestDialog = ({
           {submit.isSuccess ? 'Close' : 'Cancel'}
         </Button>
         {!submit.isSuccess && (
-          <Button variant="contained" onClick={run} disabled={!ready || submit.isPending}>
+          <Button variant="contained" onClick={run} disabled={!submittable}>
             {submit.isPending ? 'Submitting…' : 'Submit'}
           </Button>
         )}
