@@ -143,6 +143,8 @@ message Ticket {
   TicketType                type             = 12;
   // comment_count is the number of the comments which are not deleted.
   int32                     comment_count    = 13;
+  // url is the URL of the ticket in the Web UI. It is empty if the URL of the Web UI is not configured.
+  string                    url              = 14;
 }
 
 message Actor {

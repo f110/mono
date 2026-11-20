@@ -29,6 +29,7 @@ import { useAgents } from '../hooks/useAgents.ts'
 import { useApprovedCommits } from '../hooks/useApprovedCommits.ts'
 import { useDiffNavigation } from '../hooks/useDiffNavigation.ts'
 import { useOperation } from '../hooks/useOperation.ts'
+import { usePullRequests } from '../hooks/usePullRequests.ts'
 import { useReviews } from '../hooks/useReviews.ts'
 import { fileLocation, fileRevset, type FileRevision } from '../lib/fileTree.ts'
 import { ignoreKey, pressKey } from '../lib/keys.ts'
@@ -136,6 +137,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   const { agents } = useAgents()
   const approved = useApprovedCommits(path, operation)
   const reviews = useReviews(path)
+  const { pullRequests, refetch: refetchPullRequests } = usePullRequests(path)
   const { data, error, refetch } = useQuery(RepositoryService.method.log, { path, revset })
   const { data: bookmarkData, refetch: refetchBookmarks } = useQuery(RepositoryService.method.listBookmarks, { path })
   const bookmarks = bookmarkData?.bookmarks ?? []
@@ -609,6 +611,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
                 marks={marks}
                 approved={approved}
                 reviews={reviews}
+                pullRequests={pullRequests}
                 agents={agents ?? []}
                 onSelect={selectIndex}
                 onContextMenu={(i, x, y) => {
@@ -916,6 +919,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
             setChecked(new Set())
             refetch()
             refetchBookmarks()
+            refetchPullRequests()
           }}
           onClose={() => setSubmittingPR(undefined)}
         />

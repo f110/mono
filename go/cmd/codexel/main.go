@@ -18,6 +18,7 @@ import (
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/codexel/config"
+	"go.f110.dev/mono/go/codexel/pullrequest"
 	"go.f110.dev/mono/go/codexel/review"
 	"go.f110.dev/mono/go/codexel/server"
 	"go.f110.dev/mono/go/codexel/static"
@@ -61,6 +62,10 @@ func (c *command) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	pullRequestsPath, err := pullrequest.DefaultPath()
+	if err != nil {
+		return err
+	}
 	claudeProjectsDir, err := claudecode.DefaultProjectsDir()
 	if err != nil {
 		return err
@@ -81,7 +86,7 @@ func (c *command) Run(ctx context.Context) error {
 			logger.Log.Info("Failed to open the browser", logger.E(err))
 		}
 	}
-	return serve(ctx, l, server.New(herdr.NewClient(socket), config.NewFile(confPath), review.NewStore(reviewDir), static.FS(), claudeProjectsDir, missing))
+	return serve(ctx, l, server.New(herdr.NewClient(socket), config.NewFile(confPath), review.NewStore(reviewDir), pullrequest.NewFile(pullRequestsPath), static.FS(), claudeProjectsDir, missing))
 }
 
 // Setup registers the MCP of the server listening on --addr to Claude Code.

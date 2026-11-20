@@ -334,6 +334,7 @@ tool は Connect API の RPC と 1 対 1 に対応させ、`go/issue/server` の
 - 入力は tool ごとの struct で受け取って Connect のリクエストに詰め替える。proto の生成コードの struct は内部の
   フィールドを持ち、入力のスキーマにそのまま使えないため。ステータスと優先度は §8 のフィルタと同じ `OPEN` や `P1` の文字列で受け取る
 - 結果は Connect のレスポンスを protojson で返す。エラーは tool のエラーとして返し、エージェントが理由を読めるようにする
+- エージェントがチケットへのリンクを書けるように、`Ticket` は Web UI のチケット詳細の URL（`<--url>/<番号>`）を `url` に持つ。`--url` がなければ空
 - 添付のアップロード・ダウンロードは HTTP エンドポイントで行うので（§7）、tool は持たない
 
 ### 6.3 CLI
@@ -404,6 +405,7 @@ tool は Connect API の RPC と 1 対 1 に対応させ、`go/issue/server` の
 - `--build-api` がなければ webhook を受け付けない。リポジトリは Build が管理しているので、Build なしではリンクを作れない
 - `--git-data-service` がなければ change-id を取得しない（取得には `--build-api` も要る）
 - GitHub の認証情報がなければ認証なしで GitHub API を呼ぶので、公開リポジトリの pull request だけを扱える
+- `--url`（Web UI の URL）がなければチケットの URL を返さない
 
 ```
 bazel run //:env_issue
@@ -441,7 +443,7 @@ GitHub App の認証情報（Makefile の `GITHUB`）を渡す。change-id は B
 | `local` | heimdallr・Build・git-data-service・GitHub のないクラスタ（kind など）向け。それらのフラグを渡さずに動かす（§9.1） |
 
 - イメージは `containers/issue` で作り、マニフェストはビルド時にイメージの digest で参照する（`kustomization` の `images`）
-- ops の overlay では、namespace、heimdallr の公開鍵・Build の API・git-data-service のアドレス、GitHub App の認証情報を与える
+- ops の overlay では、namespace、Web UI の URL、heimdallr の公開鍵・Build の API・git-data-service のアドレス、GitHub App の認証情報を与える
 - heimdallr の `Backend` も ops に置く。パスで振り分け、`/mono.issue.Issue/`・`/mcp`・`/webhook` を issue-server に、それ以外を
   Web UI に向ける。GitHub の webhook の登録も `Backend` で行う
 - migrate の Job は、`kustomization` が名前の末尾にイメージの digest の先頭 6 文字を付け、イメージごとに別の Job にする（ops の

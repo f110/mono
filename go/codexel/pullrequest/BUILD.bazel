@@ -1,0 +1,16 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "pullrequest",
+    srcs = ["pullrequest.go"],
+    importpath = "go.f110.dev/mono/go/codexel/pullrequest",
+    visibility = ["//visibility:public"],
+    deps = ["@dev_f110_go_xerrors//:xerrors"],
+)
+
+go_test(
+    name = "pullrequest_test",
+    srcs = ["pullrequest_test.go"],
+    embed = [":pullrequest"],
+    deps = ["//go/testing/assertion"],
+)

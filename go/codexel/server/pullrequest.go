@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -15,19 +16,38 @@ import (
 
 	"go.f110.dev/mono/go/codexel/api"
 	"go.f110.dev/mono/go/codexel/config"
+	"go.f110.dev/mono/go/codexel/pullrequest"
 	githubutil "go.f110.dev/mono/go/github"
 	"go.f110.dev/mono/go/jujutsu"
+	"go.f110.dev/mono/go/logger"
 )
 
 type PullRequestHandler struct {
 	config          *config.File
+	pullRequests    *pullrequest.File
 	newGitHubClient func(context.Context) (*github.Client, error)
 }
 
 var _ api.PullRequestServiceHandler = (*PullRequestHandler)(nil)
 
-func NewPullRequestHandler(conf *config.File) *PullRequestHandler {
-	return &PullRequestHandler{config: conf, newGitHubClient: newGitHubClient}
+func NewPullRequestHandler(conf *config.File, pullRequests *pullrequest.File) *PullRequestHandler {
+	return &PullRequestHandler{config: conf, pullRequests: pullRequests, newGitHubClient: newGitHubClient}
+}
+
+func (h *PullRequestHandler) List(_ context.Context, req *connect.Request[api.RequestListPullRequests]) (*connect.Response[api.ResponseListPullRequests], error) {
+	repo, err := openedRepository(h.config, req.Msg.GetPath())
+	if err != nil {
+		return nil, err
+	}
+	prs, err := h.pullRequests.List(repo.Root())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	res := make([]*api.PullRequest, 0, len(prs))
+	for _, v := range prs {
+		res = append(res, api.PullRequest_builder{ChangeId: new(v.ChangeID), Url: new(v.URL)}.Build())
+	}
+	return connect.NewResponse(api.ResponseListPullRequests_builder{PullRequests: res}.Build()), nil
 }
 
 func (h *PullRequestHandler) ListTemplates(_ context.Context, req *connect.Request[api.RequestListPullRequestTemplates]) (*connect.Response[api.ResponseListPullRequestTemplates], error) {
@@ -96,9 +116,14 @@ func (h *PullRequestHandler) Submit(ctx context.Context, req *connect.Request[ap
 	if err != nil {
 		return nil, toJujutsuError(err)
 	}
+	saved := make([]*pullrequest.PullRequest, 0, len(res.PullRequests))
 	prs := make([]*api.SubmittedPullRequest, 0, len(res.PullRequests))
 	for _, v := range res.PullRequests {
+		saved = append(saved, &pullrequest.PullRequest{Repository: repo.Root(), ChangeID: v.ChangeID, URL: v.URL})
 		prs = append(prs, api.SubmittedPullRequest_builder{ChangeId: new(v.ChangeID), Url: new(v.URL), Action: new(pullRequestActions[v.Action])}.Build())
+	}
+	if err := h.pullRequests.Save(saved); err != nil {
+		logger.Log.Info("Failed to save the pull requests", slog.String("path", repo.Root()), logger.E(err))
 	}
 	return connect.NewResponse(api.ResponseSubmitPullRequest_builder{Pushed: res.Pushed, PullRequests: prs}.Build()), nil
 }

@@ -10,6 +10,7 @@ go_library(
         "//go/cli",
         "//go/cli/flag",
         "//go/codexel/config",
+        "//go/codexel/pullrequest",
         "//go/codexel/review",
         "//go/codexel/server",
         "//go/codexel/static",

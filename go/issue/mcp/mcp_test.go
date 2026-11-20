@@ -129,7 +129,7 @@ func TestNew(t *testing.T) {
 	tracker := issue.NewTracker(daos)
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	assertion.MustNoError(t, err)
-	s := httptest.NewServer(New(tracker, nil, func(h http.Handler) http.Handler { return authproxy.Authenticate(&key.PublicKey, h) }))
+	s := httptest.NewServer(New(tracker, nil, "https://issue.example.com", func(h http.Handler) http.Handler { return authproxy.Authenticate(&key.PublicKey, h) }))
 	t.Cleanup(s.Close)
 	claims := &authproxy.Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: "alice@example.com", ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute))}}
 	token, err := jwt.NewWithClaims(jwt.SigningMethodES256, claims).SignedString(key)
@@ -179,6 +179,7 @@ func TestNew(t *testing.T) {
 
 		ticket := &api.ResponseGetTicket{}
 		call(t, session, "get_ticket", map[string]any{"number": number}, ticket)
+		assertion.Equal(t, ticket.GetTicket().GetUrl(), fmt.Sprintf("https://issue.example.com/%d", number))
 		assertion.Equal(t, len(ticket.GetComments()), 1)
 		assertion.Equal(t, len(ticket.GetRelations()), 1)
 

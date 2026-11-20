@@ -34,8 +34,8 @@ Refs: #121, #122
 ```
 
 - フロントエンドとの通信は Connect API に統一する。lightjj の SSE (`/api/events`) に相当する変更通知は server streaming RPC にする
-- 状態は持たないことを基本にする。jj のリポジトリと herdr のセッションを正とし、Codexel が持つのは設定ファイル (§4.1) と
-  レビュー (§5.1) だけにする
+- 状態は持たないことを基本にする。jj のリポジトリと herdr のセッションを正とし、Codexel が持つのは設定ファイル (§4.1)、
+  レビュー (§5.1)、Codexel から作成した PR (§7.3) だけにする
 
 ### 2.1 パッケージ構成
 
@@ -47,6 +47,7 @@ Refs: #121, #122
 | `go/codexel/server` | Connect API と MCP のハンドラ、静的ファイル配信 |
 | `go/codexel/static` | embed したフロントエンド (`//go:embed`) |
 | `go/codexel/review` | レビューの保存と、リビジョン書き換え時のコメントの追従 |
+| `go/codexel/pullrequest` | Codexel から作成した PR の保存 |
 | `go/herdr` | herdr ソケット API のクライアント。Codexel 以外からも使える汎用クライアントにする |
 | `go/claudecode` | Claude Code のトランスクリプトのリーダー。形式に依存するコードはここだけに置く |
 | `go/jujutsu` | jj のコマンドビルダーと出力パーサー (log / diff / bookmark / op log ...) と、`go/cmd/jj-pr` から切り出した PR 作成ロジック (§7.1)。純粋関数と Runner に分ける |
@@ -103,7 +104,7 @@ lightjj の機能を次のとおり分類する。キーバインドは lightjj 
 
 | 分類 | 機能 | キー |
 |---|---|---|
-| リビジョングラフ | revset 入力、SVG の DAG、`@`/immutable/conflict/divergent の表示、各 workspace の working copy (`<name>@`)・bookmark・PR バッジ、`?change=` 等のリンク | `j`/`k`, `/`, `@`, `r` |
+| リビジョングラフ | revset 入力、SVG の DAG、`@`/immutable/conflict/divergent の表示、各 workspace の working copy (`<name>@`)・bookmark・PR バッジ (§7.3)、`?change=` 等のリンク | `j`/`k`, `/`, `@`, `r` |
 | 差分 | unified/split、シンタックスハイライト、単語単位の差分、コンテキスト展開、hunk 移動、Markdown プレビュー、画像差分、エディタで開く | `]`/`[`, `\|`, `m`, `f` |
 | ファイル | リビジョン時点の全ファイルツリー、パス検索、ファイル履歴と 2 点比較、インライン編集 (`@` のみ) | `F` |
 | 変更操作 | new / edit / abandon / describe / commit / restore / squash / split (ファイル・hunk) / slide / undo | `n`, `e`, `c`, `s`, `S`, `J`/`K`, `u` |
@@ -305,6 +306,19 @@ trunk から連続したスタック (`ancestors(latest(<default>@origin) & remo
 - テンプレートが複数あるときは jj-pr と同じく選択を必須にする (「使わない」も選べる)。1 つならそれを使う
 - 結果として push した change ID と、PR ごとの操作と URL をダイアログに表示する
 
+### 7.3 PR の保存 (#159)
+
+UI から作成した PR の URL を保存し、リビジョングラフの PR バッジから PR を開けるようにする。jj-pr の CLI で作成した PR は保存しない
+(今は Codexel だけが使う情報のため)。
+
+- 保存先は `~/.config/codexel/pullrequests.json` の 1 ファイルにする。PR は ID を持たずリポジトリと change ID で引くだけなので、
+  レビュー (1 レビュー 1 ファイル) ではなく設定ファイルと同じ扱いにする。書き込みはプロセス内で直列化し、一時ファイルに書いて rename する
+- 1 件はリポジトリ (`jj workspace root`。レビューと同じ)、change ID、URL。同じリポジトリと change ID の PR は上書きする
+- `Submit` の結果の PR を作成・更新・既存に関わらずすべて保存する。複数選択 (`--single-pr`) は結果に最上位の change だけが入るので、
+  最上位の change に紐付く
+- 保存に失敗しても PR は作成済みなので、`Submit` は失敗にせず結果を返す
+- フロントエンドは `PullRequestService.List` で取得し、change ID で引いてバッジを表示する。バッジは PR を新しいタブで開く
+
 ## 8. API
 
 `proto/codexel/codexel.proto` に定義する。サービスは機能ごとに分ける。
@@ -314,7 +328,7 @@ trunk から連続したスタック (`ancestors(latest(<default>@origin) & remo
 | `AgentService` | `List`, `Watch` (stream), `ReadOutput`, `SendPrompt`, `SendKeys`, `Focus`, `ListWorkspaces`, `Start`, `WatchTranscript` (stream) |
 | `RepositoryService` | `List`, `Open`, `Close`, `Watch` (stream, op ID の変化), `Log`, `GetRevision`, `Diff`, `DiffRange`, `Files`, `FileTree`, `FileHistory`, ... と §4.2 の各操作 (リビジョン、ブックマーク、Git、オペレーション、ファイル、コンフリクト、ワークスペース、エイリアス) |
 | `ReviewService` | `List`, `Get`, `Start`, `AddComment`, `EditComment`, `DeleteComment`, `Reply`, `ResolveComment`, `Finish`, `StartNextRound`, `RoundDiff`, `SetViewed` |
-| `PullRequestService` | `ListTemplates`, `Validate`, `Submit` |
+| `PullRequestService` | `List`, `ListTemplates`, `Validate`, `Submit` |
 | `SystemService` | `GetStatus` (起動時に PATH に見つからなかった `herdr` と `jj`) |
 
 lightjj の HTTP API を 1:1 で Connect の RPC に写す。git push/fetch や alias のようにストリーミング出力があるものは server streaming にする。

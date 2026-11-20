@@ -33,6 +33,7 @@ import (
 
 type serverCommand struct {
 	Addr           string
+	URL            string
 	DSN            string
 	PublicKeyURL   string
 	Subject        string
@@ -47,6 +48,7 @@ type serverCommand struct {
 func (c *serverCommand) Flags(fs *flag.FlagSet) {
 	fs.String("addr", "Listen address").Var(&c.Addr).Default(":8080")
 	fs.String("dsn", "Data source name of MySQL").Var(&c.DSN).Required()
+	fs.String("url", "URL of the Web UI to build the URLs of the tickets (e.g. https://issue.example.com). If not specified, the tickets have no URL").Var(&c.URL)
 	fs.String("public-key-url", "URL of the public key of heimdallr to verify the token. It is /internal/publickey of the internal API. If not specified, the server runs without heimdallr").Var(&c.PublicKeyURL)
 	fs.String("subject", "Subject of the user of every request when --public-key-url is not specified").Var(&c.Subject).Default("dev@example.com")
 	fs.String("build-api", "Address of the gRPC API of Build which manages the repositories. If not specified, the webhook is not handled and the commits and the pull requests have no URL").Var(&c.BuildAPI)
@@ -104,8 +106,8 @@ func (c *serverCommand) Run(ctx context.Context) error {
 			go webhook.NewChangeIDFiller(tracker, repositories, git.NewGitDataClient(gitDataConn)).Run(ctx)
 		}
 	}
-	mux.Handle("/", server.New(tracker, repositoryURLs, authenticate))
-	mux.Handle("/mcp", mcp.New(tracker, repositoryURLs, authenticate))
+	mux.Handle("/", server.New(tracker, repositoryURLs, c.URL, authenticate))
+	mux.Handle("/mcp", mcp.New(tracker, repositoryURLs, c.URL, authenticate))
 	mux.HandleFunc("/_livez", func(w http.ResponseWriter, _ *http.Request) {})
 	mux.HandleFunc("/_readyz", func(w http.ResponseWriter, req *http.Request) {
 		if !probe.NewProbe(conn).Ready(req.Context(), database.SchemaHash) {

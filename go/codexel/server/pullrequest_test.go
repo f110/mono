@@ -16,6 +16,7 @@ import (
 	"go.f110.dev/githubmock"
 
 	"go.f110.dev/mono/go/codexel/api"
+	"go.f110.dev/mono/go/codexel/pullrequest"
 	"go.f110.dev/mono/go/jujutsu"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/testing/assertion"
@@ -41,7 +42,7 @@ func TestListPullRequestTemplates(t *testing.T) {
 	assertion.MustNoError(t, os.MkdirAll(filepath.Join(root, ".github/PULL_REQUEST_TEMPLATE"), 0755))
 	assertion.MustNoError(t, os.WriteFile(filepath.Join(root, ".github/PULL_REQUEST_TEMPLATE/bug.md"), nil, 0644))
 	assertion.MustNoError(t, os.WriteFile(filepath.Join(root, ".github/PULL_REQUEST_TEMPLATE/feature.md"), nil, 0644))
-	h := NewPullRequestHandler(newConfig(t, root))
+	h := NewPullRequestHandler(newConfig(t, root), pullrequest.NewFile(filepath.Join(t.TempDir(), "pullrequests.json")))
 
 	res, err := h.ListTemplates(t.Context(), connect.NewRequest(api.RequestListPullRequestTemplates_builder{Path: new(root)}.Build()))
 	assertion.MustNoError(t, err)
@@ -63,7 +64,7 @@ func TestSubmitPullRequest(t *testing.T) {
 		_, _ = w.Write([]byte("[]"))
 	})
 	client := github.NewClient(&http.Client{Transport: handlerTransport{mux}})
-	h := NewPullRequestHandler(newConfig(t, repo))
+	h := NewPullRequestHandler(newConfig(t, repo), pullrequest.NewFile(filepath.Join(t.TempDir(), "pullrequests.json")))
 	h.newGitHubClient = func(context.Context) (*github.Client, error) { return client, nil }
 
 	validate := func(revisions ...string) string {
@@ -91,6 +92,12 @@ func TestSubmitPullRequest(t *testing.T) {
 	assertion.Equal(t, pr.GetTitle(), "c: Add")
 	assertion.Equal(t, pr.GetBase().GetRef(), "master")
 	assertion.Equal(t, pr.GetHead().GetRef(), "push-"+res.Msg.GetPushed()[0][:12])
+
+	list, err := h.List(t.Context(), connect.NewRequest(api.RequestListPullRequests_builder{Path: new(repo)}.Build()))
+	assertion.MustNoError(t, err)
+	assertion.MustLen(t, list.Msg.GetPullRequests(), 1)
+	assertion.Equal(t, list.Msg.GetPullRequests()[0].GetChangeId(), res.Msg.GetPushed()[0])
+	assertion.Equal(t, list.Msg.GetPullRequests()[0].GetUrl(), res.Msg.GetPullRequests()[0].GetUrl())
 }
 
 func TestSubmitPullRequestWithOnlyNoSend(t *testing.T) {
@@ -108,7 +115,7 @@ func TestSubmitPullRequestWithOnlyNoSend(t *testing.T) {
 		_, _ = w.Write([]byte("[]"))
 	})
 	client := github.NewClient(&http.Client{Transport: handlerTransport{mux}})
-	h := NewPullRequestHandler(newConfig(t, repo))
+	h := NewPullRequestHandler(newConfig(t, repo), pullrequest.NewFile(filepath.Join(t.TempDir(), "pullrequests.json")))
 	h.newGitHubClient = func(context.Context) (*github.Client, error) { return client, nil }
 
 	const reason = `There are no commits to submit between master@origin and the revision. The commits whose description starts with "no-send:" or "WIP:" are excluded`

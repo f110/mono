@@ -213,6 +213,8 @@ const (
 	ReviewServiceRoundDiffProcedure = "/mono.codexel.ReviewService/RoundDiff"
 	// ReviewServiceSetViewedProcedure is the fully-qualified name of the ReviewService's SetViewed RPC.
 	ReviewServiceSetViewedProcedure = "/mono.codexel.ReviewService/SetViewed"
+	// PullRequestServiceListProcedure is the fully-qualified name of the PullRequestService's List RPC.
+	PullRequestServiceListProcedure = "/mono.codexel.PullRequestService/List"
 	// PullRequestServiceListTemplatesProcedure is the fully-qualified name of the PullRequestService's
 	// ListTemplates RPC.
 	PullRequestServiceListTemplatesProcedure = "/mono.codexel.PullRequestService/ListTemplates"
@@ -2076,6 +2078,7 @@ func (UnimplementedReviewServiceHandler) SetViewed(context.Context, *connect.Req
 
 // PullRequestServiceClient is a client for the mono.codexel.PullRequestService service.
 type PullRequestServiceClient interface {
+	List(context.Context, *connect.Request[RequestListPullRequests]) (*connect.Response[ResponseListPullRequests], error)
 	ListTemplates(context.Context, *connect.Request[RequestListPullRequestTemplates]) (*connect.Response[ResponseListPullRequestTemplates], error)
 	Validate(context.Context, *connect.Request[RequestValidatePullRequest]) (*connect.Response[ResponseValidatePullRequest], error)
 	Submit(context.Context, *connect.Request[RequestSubmitPullRequest]) (*connect.Response[ResponseSubmitPullRequest], error)
@@ -2092,6 +2095,12 @@ func NewPullRequestServiceClient(httpClient connect.HTTPClient, baseURL string, 
 	baseURL = strings.TrimRight(baseURL, "/")
 	pullRequestServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("PullRequestService").Methods()
 	return &pullRequestServiceClient{
+		list: connect.NewClient[RequestListPullRequests, ResponseListPullRequests](
+			httpClient,
+			baseURL+PullRequestServiceListProcedure,
+			connect.WithSchema(pullRequestServiceMethods.ByName("List")),
+			connect.WithClientOptions(opts...),
+		),
 		listTemplates: connect.NewClient[RequestListPullRequestTemplates, ResponseListPullRequestTemplates](
 			httpClient,
 			baseURL+PullRequestServiceListTemplatesProcedure,
@@ -2115,9 +2124,15 @@ func NewPullRequestServiceClient(httpClient connect.HTTPClient, baseURL string, 
 
 // pullRequestServiceClient implements PullRequestServiceClient.
 type pullRequestServiceClient struct {
+	list          *connect.Client[RequestListPullRequests, ResponseListPullRequests]
 	listTemplates *connect.Client[RequestListPullRequestTemplates, ResponseListPullRequestTemplates]
 	validate      *connect.Client[RequestValidatePullRequest, ResponseValidatePullRequest]
 	submit        *connect.Client[RequestSubmitPullRequest, ResponseSubmitPullRequest]
+}
+
+// List calls mono.codexel.PullRequestService.List.
+func (c *pullRequestServiceClient) List(ctx context.Context, req *connect.Request[RequestListPullRequests]) (*connect.Response[ResponseListPullRequests], error) {
+	return c.list.CallUnary(ctx, req)
 }
 
 // ListTemplates calls mono.codexel.PullRequestService.ListTemplates.
@@ -2137,6 +2152,7 @@ func (c *pullRequestServiceClient) Submit(ctx context.Context, req *connect.Requ
 
 // PullRequestServiceHandler is an implementation of the mono.codexel.PullRequestService service.
 type PullRequestServiceHandler interface {
+	List(context.Context, *connect.Request[RequestListPullRequests]) (*connect.Response[ResponseListPullRequests], error)
 	ListTemplates(context.Context, *connect.Request[RequestListPullRequestTemplates]) (*connect.Response[ResponseListPullRequestTemplates], error)
 	Validate(context.Context, *connect.Request[RequestValidatePullRequest]) (*connect.Response[ResponseValidatePullRequest], error)
 	Submit(context.Context, *connect.Request[RequestSubmitPullRequest]) (*connect.Response[ResponseSubmitPullRequest], error)
@@ -2149,6 +2165,12 @@ type PullRequestServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewPullRequestServiceHandler(svc PullRequestServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	pullRequestServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("PullRequestService").Methods()
+	pullRequestServiceListHandler := connect.NewUnaryHandler(
+		PullRequestServiceListProcedure,
+		svc.List,
+		connect.WithSchema(pullRequestServiceMethods.ByName("List")),
+		connect.WithHandlerOptions(opts...),
+	)
 	pullRequestServiceListTemplatesHandler := connect.NewUnaryHandler(
 		PullRequestServiceListTemplatesProcedure,
 		svc.ListTemplates,
@@ -2169,6 +2191,8 @@ func NewPullRequestServiceHandler(svc PullRequestServiceHandler, opts ...connect
 	)
 	return "/mono.codexel.PullRequestService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case PullRequestServiceListProcedure:
+			pullRequestServiceListHandler.ServeHTTP(w, r)
 		case PullRequestServiceListTemplatesProcedure:
 			pullRequestServiceListTemplatesHandler.ServeHTTP(w, r)
 		case PullRequestServiceValidateProcedure:
@@ -2183,6 +2207,10 @@ func NewPullRequestServiceHandler(svc PullRequestServiceHandler, opts ...connect
 
 // UnimplementedPullRequestServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedPullRequestServiceHandler struct{}
+
+func (UnimplementedPullRequestServiceHandler) List(context.Context, *connect.Request[RequestListPullRequests]) (*connect.Response[ResponseListPullRequests], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.PullRequestService.List is not implemented"))
+}
 
 func (UnimplementedPullRequestServiceHandler) ListTemplates(context.Context, *connect.Request[RequestListPullRequestTemplates]) (*connect.Response[ResponseListPullRequestTemplates], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.PullRequestService.ListTemplates is not implemented"))

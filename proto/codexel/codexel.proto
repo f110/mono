@@ -155,6 +155,9 @@ service ReviewService {
 // PullRequestService creates the pull requests on GitHub from the commits of the opened repository like jj pr submit.
 // The token of GitHub is retrieved by gh.
 service PullRequestService {
+  // List returns the pull requests submitted by Codexel in the repository. They are saved in the file of Codexel, so the
+  // pull requests created by jj pr submit are not included.
+  rpc List(RequestListPullRequests) returns (ResponseListPullRequests);
   // ListTemplates returns the templates of the pull request. If there is one template, it is used without the
   // selection.
   rpc ListTemplates(RequestListPullRequestTemplates) returns (ResponseListPullRequestTemplates);
@@ -1189,4 +1192,20 @@ message ResponseSubmitPullRequest {
   repeated string pushed = 1;
   // pull_requests are in order of the operations.
   repeated SubmittedPullRequest pull_requests = 2;
+}
+
+message RequestListPullRequests {
+  string path = 1;
+}
+
+// PullRequest is the pull request submitted for the change. The pull request submitted with multiple revisions is
+// associated with the newest one.
+message PullRequest {
+  string change_id = 1;
+  string url       = 2;
+}
+
+message ResponseListPullRequests {
+  // pull_requests are in order of the submission.
+  repeated PullRequest pull_requests = 1;
 }

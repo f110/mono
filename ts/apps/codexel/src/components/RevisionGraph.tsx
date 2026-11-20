@@ -80,17 +80,42 @@ const ReviewBadge = ({ reviews, approved }: { reviews: Review[]; approved: boole
   )
 }
 
+// PullRequestBadge links to the pull request of the change submitted by Codexel.
+const PullRequestBadge = ({ url }: { url: string | undefined }) => {
+  if (!url) {
+    return null
+  }
+  return (
+    <Chip
+      label={`PR #${url.split('/').pop()}`}
+      title={url}
+      size="small"
+      color="secondary"
+      variant="outlined"
+      sx={{ height: 18 }}
+      component="a"
+      href={url}
+      target="_blank"
+      rel="noreferrer"
+      clickable
+      onClick={(e: MouseEvent) => e.stopPropagation()}
+    />
+  )
+}
+
 const CommitLine = ({
   commit,
   mark,
   approved,
   reviews,
+  pullRequest,
   agents,
 }: {
   commit: Commit
   mark: string | undefined
   approved: boolean
   reviews: Review[]
+  pullRequest: string | undefined
   agents: Agent[]
 }) => (
   <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0, flex: 1 }}>
@@ -98,6 +123,7 @@ const CommitLine = ({
     <ChangeId commit={commit} />
     <AgentBadge commit={commit} agents={agents} />
     <ReviewBadge reviews={reviews} approved={approved} />
+    <PullRequestBadge url={pullRequest} />
     {commit.workingCopies.map((w) => (
       <Chip key={`${w}@`} label={`${w}@`} size="small" color="success" variant="outlined" sx={{ height: 18 }} />
     ))}
@@ -130,6 +156,7 @@ export const RevisionGraph = ({
   marks,
   approved,
   reviews,
+  pullRequests,
   agents,
   onSelect,
   onContextMenu,
@@ -144,6 +171,8 @@ export const RevisionGraph = ({
   approved: Set<string>
   // reviews is the reviews by the change ID.
   reviews: Map<string, Review[]>
+  // pullRequests is the URLs of the pull requests by the change ID.
+  pullRequests: Map<string, string>
   // agents is the agents running in herdr. They are linked from the commits created by them.
   agents: Agent[]
   onSelect: (index: number) => void
@@ -199,6 +228,7 @@ export const RevisionGraph = ({
                       mark={marks.get(commit.commitId)}
                       approved={approved.has(commit.commitId)}
                       reviews={reviews.get(commit.changeId) ?? []}
+                      pullRequest={pullRequests.get(commit.changeId)}
                       agents={agents}
                     />
                   ) : (

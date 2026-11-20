@@ -96,9 +96,9 @@ type emptyInput struct{}
 
 // New returns the HTTP handler which serves MCP. The requests are authenticated by authenticate which puts the claims of
 // heimdallr to the context (e.g. authproxy.Authenticate), and the agent which the human of the subject owns is the actor
-// of the operations.
-func New(tracker *issue.Tracker, repositories server.Repositories, authenticate func(http.Handler) http.Handler) http.Handler {
-	s := newServer(server.NewIssueHandler(tracker, repositories))
+// of the operations. url is the URL of the Web UI to build the URLs of the tickets.
+func New(tracker *issue.Tracker, repositories server.Repositories, url string, authenticate func(http.Handler) http.Handler) http.Handler {
+	s := newServer(server.NewIssueHandler(tracker, repositories, url))
 	// The handler is stateless so that every request is operated by the actor of the request.
 	handler := mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return s }, &mcp.StreamableHTTPOptions{Stateless: true})
 	return authenticate(withAgent(handler))

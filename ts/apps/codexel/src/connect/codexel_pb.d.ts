@@ -3844,6 +3844,64 @@ export declare type ResponseSubmitPullRequest = Message<"mono.codexel.ResponseSu
 export declare const ResponseSubmitPullRequestSchema: GenMessage<ResponseSubmitPullRequest>;
 
 /**
+ * @generated from message mono.codexel.RequestListPullRequests
+ */
+export declare type RequestListPullRequests = Message<"mono.codexel.RequestListPullRequests"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestListPullRequests.
+ * Use `create(RequestListPullRequestsSchema)` to create a new message.
+ */
+export declare const RequestListPullRequestsSchema: GenMessage<RequestListPullRequests>;
+
+/**
+ * PullRequest is the pull request submitted for the change. The pull request submitted with multiple revisions is
+ * associated with the newest one.
+ *
+ * @generated from message mono.codexel.PullRequest
+ */
+export declare type PullRequest = Message<"mono.codexel.PullRequest"> & {
+  /**
+   * @generated from field: string change_id = 1;
+   */
+  changeId: string;
+
+  /**
+   * @generated from field: string url = 2;
+   */
+  url: string;
+};
+
+/**
+ * Describes the message mono.codexel.PullRequest.
+ * Use `create(PullRequestSchema)` to create a new message.
+ */
+export declare const PullRequestSchema: GenMessage<PullRequest>;
+
+/**
+ * @generated from message mono.codexel.ResponseListPullRequests
+ */
+export declare type ResponseListPullRequests = Message<"mono.codexel.ResponseListPullRequests"> & {
+  /**
+   * pull_requests are in order of the submission.
+   *
+   * @generated from field: repeated mono.codexel.PullRequest pull_requests = 1;
+   */
+  pullRequests: PullRequest[];
+};
+
+/**
+ * Describes the message mono.codexel.ResponseListPullRequests.
+ * Use `create(ResponseListPullRequestsSchema)` to create a new message.
+ */
+export declare const ResponseListPullRequestsSchema: GenMessage<ResponseListPullRequests>;
+
+/**
  * @generated from enum mono.codexel.AgentStatus
  */
 export enum AgentStatus {
@@ -4836,6 +4894,17 @@ export declare const ReviewService: GenService<{
  * @generated from service mono.codexel.PullRequestService
  */
 export declare const PullRequestService: GenService<{
+  /**
+   * List returns the pull requests submitted by Codexel in the repository. They are saved in the file of Codexel, so the
+   * pull requests created by jj pr submit are not included.
+   *
+   * @generated from rpc mono.codexel.PullRequestService.List
+   */
+  list: {
+    methodKind: "unary";
+    input: typeof RequestListPullRequestsSchema;
+    output: typeof ResponseListPullRequestsSchema;
+  },
   /**
    * ListTemplates returns the templates of the pull request. If there is one template, it is used without the
    * selection.

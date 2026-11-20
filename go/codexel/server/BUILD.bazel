@@ -15,6 +15,7 @@ go_library(
         "//go/claudecode",
         "//go/codexel/api",
         "//go/codexel/config",
+        "//go/codexel/pullrequest",
         "//go/codexel/review",
         "//go/gitattributes",
         "//go/github",
@@ -50,6 +51,7 @@ go_test(
     deps = [
         "//go/codexel/api",
         "//go/codexel/config",
+        "//go/codexel/pullrequest",
         "//go/codexel/review",
         "//go/herdr",
         "//go/jujutsu",

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"connectrpc.com/connect"
 	"go.f110.dev/xerrors"
@@ -31,13 +32,15 @@ type Repositories interface {
 type IssueHandler struct {
 	tracker      *issue.Tracker
 	repositories Repositories
+	url          string
 }
 
 var _ api.IssueHandler = (*IssueHandler)(nil)
 
-// NewIssueHandler returns the handler. If repositories is nil, the commits and the pull requests have no URL.
-func NewIssueHandler(t *issue.Tracker, repositories Repositories) *IssueHandler {
-	return &IssueHandler{tracker: t, repositories: repositories}
+// NewIssueHandler returns the handler. If repositories is nil, the commits and the pull requests have no URL. url is the URL
+// of the Web UI to build the URLs of the tickets, and the tickets have no URL if it is empty.
+func NewIssueHandler(t *issue.Tracker, repositories Repositories, url string) *IssueHandler {
+	return &IssueHandler{tracker: t, repositories: repositories, url: strings.TrimSuffix(url, "/")}
 }
 
 const (
@@ -98,7 +101,8 @@ func (h *IssueHandler) ListTickets(ctx context.Context, req *connect.Request[api
 		tickets = tickets[:size]
 		next = pageToken{Filter: page.Filter, OrderBy: page.OrderBy, Offset: page.Offset + size}.encode()
 	}
-	return connect.NewResponse(api.ResponseListTickets_builder{Tickets: enumerable.Map(tickets, toTicket), NextPageToken: &next}.Build()), nil
+	converted := enumerable.Map(tickets, func(t *issue.Ticket) *api.Ticket { return toTicket(t, h.url) })
+	return connect.NewResponse(api.ResponseListTickets_builder{Tickets: converted, NextPageToken: &next}.Build()), nil
 }
 
 func (h *IssueHandler) GetTicket(ctx context.Context, req *connect.Request[api.RequestGetTicket]) (*connect.Response[api.ResponseGetTicket], error) {
@@ -143,7 +147,7 @@ func (h *IssueHandler) GetTicket(ctx context.Context, req *connect.Request[api.R
 	}
 	urls := h.repositoryURLs(ctx, repositoryIDs)
 	return connect.NewResponse(api.ResponseGetTicket_builder{
-		Ticket: toTicket(ticket),
+		Ticket: toTicket(ticket, h.url),
 		Relations: enumerable.Map(relations, func(r *database.Relation) *api.RelatedTicket {
 			return toRelatedTicket(r, ticket.Id)
 		}),
@@ -185,7 +189,7 @@ func (h *IssueHandler) CreateTicket(ctx context.Context, req *connect.Request[ap
 	if err != nil {
 		return nil, toConnectError(err)
 	}
-	return connect.NewResponse(api.ResponseCreateTicket_builder{Ticket: toTicket(ticket)}.Build()), nil
+	return connect.NewResponse(api.ResponseCreateTicket_builder{Ticket: toTicket(ticket, h.url)}.Build()), nil
 }
 
 func (h *IssueHandler) UpdateTicket(ctx context.Context, req *connect.Request[api.RequestUpdateTicket]) (*connect.Response[api.ResponseUpdateTicket], error) {
@@ -226,7 +230,7 @@ func (h *IssueHandler) UpdateTicket(ctx context.Context, req *connect.Request[ap
 	if err := ticket.Update(ctx, title, body, status, ticketType, priority, componentID, assigneeID); err != nil {
 		return nil, toConnectError(err)
 	}
-	return connect.NewResponse(api.ResponseUpdateTicket_builder{Ticket: toTicket(ticket)}.Build()), nil
+	return connect.NewResponse(api.ResponseUpdateTicket_builder{Ticket: toTicket(ticket, h.url)}.Build()), nil
 }
 
 func (h *IssueHandler) AddRelation(ctx context.Context, req *connect.Request[api.RequestAddRelation]) (*connect.Response[api.ResponseAddRelation], error) {
@@ -446,7 +450,8 @@ func toDBCodingAgent(a api.CodingAgent) (database.CodingAgent, error) {
 	return database.CodingAgent(a - 1), nil
 }
 
-func toTicket(t *issue.Ticket) *api.Ticket {
+// toTicket converts the ticket. url is the URL of the Web UI, and the ticket has no URL if it is empty.
+func toTicket(t *issue.Ticket, url string) *api.Ticket {
 	b := api.Ticket_builder{
 		Number:         new(t.Id),
 		Title:          new(t.Title),
@@ -463,6 +468,9 @@ func toTicket(t *issue.Ticket) *api.Ticket {
 	}
 	if t.UpdatedAt != nil {
 		b.UpdatedAt = timestamppb.New(*t.UpdatedAt)
+	}
+	if url != "" {
+		b.Url = new(fmt.Sprintf("%s/%d", url, t.Id))
 	}
 	return b.Build()
 }
@@ -603,9 +611,9 @@ func toActivity(a *database.Activity) *api.Activity {
 
 // New returns the HTTP handler which serves the Connect API. The requests are authenticated by authenticate which puts
 // the claims of heimdallr to the context (e.g. authproxy.Authenticate), and the human of the subject is the actor of the
-// operations.
-func New(tracker *issue.Tracker, repositories Repositories, authenticate func(http.Handler) http.Handler) http.Handler {
-	path, handler := api.NewIssueHandler(NewIssueHandler(tracker, repositories))
+// operations. url is the URL of the Web UI to build the URLs of the tickets.
+func New(tracker *issue.Tracker, repositories Repositories, url string, authenticate func(http.Handler) http.Handler) http.Handler {
+	path, handler := api.NewIssueHandler(NewIssueHandler(tracker, repositories, url))
 	mux := http.NewServeMux()
 	mux.Handle(path, authenticate(withHuman(handler)))
 	return mux

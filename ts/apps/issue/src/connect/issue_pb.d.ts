@@ -89,6 +89,13 @@ export declare type Ticket = Message<"mono.issue.Ticket"> & {
    * @generated from field: int32 comment_count = 13;
    */
   commentCount: number;
+
+  /**
+   * url is the URL of the ticket in the Web UI. It is empty if the URL of the Web UI is not configured.
+   *
+   * @generated from field: string url = 14;
+   */
+  url: string;
 };
 
 /**

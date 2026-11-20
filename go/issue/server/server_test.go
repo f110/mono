@@ -90,7 +90,7 @@ func TestEnumConversion(t *testing.T) {
 		database.TicketStatusInReview:          api.TicketStatus_TICKET_STATUS_IN_REVIEW,
 	}
 	for db, a := range statuses {
-		assertion.Equal(t, toTicket(&issue.Ticket{Ticket: &database.Ticket{Status: db}}).GetStatus(), a)
+		assertion.Equal(t, toTicket(&issue.Ticket{Ticket: &database.Ticket{Status: db}}, "").GetStatus(), a)
 		got, err := toDBStatus(a)
 		assertion.MustNoError(t, err)
 		assertion.Equal(t, got, db)
@@ -102,7 +102,7 @@ func TestEnumConversion(t *testing.T) {
 		database.PriorityP4:   api.Priority_PRIORITY_P4,
 	}
 	for db, a := range priorities {
-		assertion.Equal(t, toTicket(&issue.Ticket{Ticket: &database.Ticket{Priority: db}}).GetPriority(), a)
+		assertion.Equal(t, toTicket(&issue.Ticket{Ticket: &database.Ticket{Priority: db}}, "").GetPriority(), a)
 	}
 
 	types := map[database.TicketType]api.TicketType{
@@ -111,7 +111,7 @@ func TestEnumConversion(t *testing.T) {
 		database.TicketTypeOperation: api.TicketType_TICKET_TYPE_OPERATION,
 	}
 	for db, a := range types {
-		assertion.Equal(t, toTicket(&issue.Ticket{Ticket: &database.Ticket{Type: db}}).GetType(), a)
+		assertion.Equal(t, toTicket(&issue.Ticket{Ticket: &database.Ticket{Type: db}}, "").GetType(), a)
 	}
 
 	relations := map[database.RelationType]api.RelationType{
@@ -204,7 +204,7 @@ func newClient(t *testing.T) (api.IssueClient, *database.Actor) {
 	actor, err := daos.Actor.Create(context.Background(), &database.Actor{Kind: database.ActorKindHuman, Name: "human", Subject: new("human@example.com")})
 	assertion.MustNoError(t, err)
 
-	path, handler := api.NewIssueHandler(NewIssueHandler(issue.NewTracker(daos), nil))
+	path, handler := api.NewIssueHandler(NewIssueHandler(issue.NewTracker(daos), nil, ""))
 	mux := http.NewServeMux()
 	mux.Handle(path, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		handler.ServeHTTP(w, req.WithContext(issue.WithActor(req.Context(), actor)))
@@ -510,7 +510,7 @@ func TestGetTicketLinks(t *testing.T) {
 	req := connect.NewRequest(api.RequestGetTicket_builder{Number: new(ticket.Id)}.Build())
 
 	t.Run("the links have the urls of the repositories of Build", func(t *testing.T) {
-		res, err := NewIssueHandler(tracker, &fakeRepositories{urls: map[int32]string{1: "https://github.com/f110/mono"}}).GetTicket(ctx, req)
+		res, err := NewIssueHandler(tracker, &fakeRepositories{urls: map[int32]string{1: "https://github.com/f110/mono"}}, "").GetTicket(ctx, req)
 		assertion.MustNoError(t, err)
 		commits := res.Msg.GetCommits()
 		assertion.MustLen(t, commits, 2)
@@ -530,7 +530,7 @@ func TestGetTicketLinks(t *testing.T) {
 	})
 
 	t.Run("the links have no url without Build", func(t *testing.T) {
-		res, err := NewIssueHandler(tracker, nil).GetTicket(ctx, req)
+		res, err := NewIssueHandler(tracker, nil, "").GetTicket(ctx, req)
 		assertion.MustNoError(t, err)
 		assertion.MustLen(t, res.Msg.GetCommits(), 2)
 		assertion.Equal(t, res.Msg.GetCommits()[0].GetUrl(), "")
@@ -539,10 +539,47 @@ func TestGetTicketLinks(t *testing.T) {
 	})
 
 	t.Run("the ticket is returned even if Build is unavailable", func(t *testing.T) {
-		res, err := NewIssueHandler(tracker, &fakeRepositories{err: errors.New("unavailable")}).GetTicket(ctx, req)
+		res, err := NewIssueHandler(tracker, &fakeRepositories{err: errors.New("unavailable")}, "").GetTicket(ctx, req)
 		assertion.MustNoError(t, err)
 		assertion.MustLen(t, res.Msg.GetCommits(), 2)
 		assertion.Equal(t, res.Msg.GetCommits()[0].GetUrl(), "")
+	})
+}
+
+func TestTicketURL(t *testing.T) {
+	daos := dao.NewOptions(newConn(t))
+	actor, err := daos.Actor.Create(context.Background(), &database.Actor{Kind: database.ActorKindHuman, Name: "human", Subject: new("human@example.com")})
+	assertion.MustNoError(t, err)
+	tracker := issue.NewTracker(daos)
+	ctx := issue.WithActor(context.Background(), actor)
+
+	t.Run("the tickets have the url of the Web UI", func(t *testing.T) {
+		h := NewIssueHandler(tracker, nil, "https://issue.example.com/")
+		created, err := h.CreateTicket(ctx, connect.NewRequest(api.RequestCreateTicket_builder{Title: new("title")}.Build()))
+		assertion.MustNoError(t, err)
+		number := created.Msg.GetTicket().GetNumber()
+		want := fmt.Sprintf("https://issue.example.com/%d", number)
+		assertion.Equal(t, created.Msg.GetTicket().GetUrl(), want)
+
+		updated, err := h.UpdateTicket(ctx, connect.NewRequest(api.RequestUpdateTicket_builder{Number: new(number), Title: new("updated")}.Build()))
+		assertion.MustNoError(t, err)
+		assertion.Equal(t, updated.Msg.GetTicket().GetUrl(), want)
+
+		got, err := h.GetTicket(ctx, connect.NewRequest(api.RequestGetTicket_builder{Number: new(number)}.Build()))
+		assertion.MustNoError(t, err)
+		assertion.Equal(t, got.Msg.GetTicket().GetUrl(), want)
+
+		list, err := h.ListTickets(ctx, connect.NewRequest(&api.RequestListTickets{}))
+		assertion.MustNoError(t, err)
+		assertion.MustLen(t, list.Msg.GetTickets(), 1)
+		assertion.Equal(t, list.Msg.GetTickets()[0].GetUrl(), want)
+	})
+
+	t.Run("the tickets have no url without the url of the Web UI", func(t *testing.T) {
+		list, err := NewIssueHandler(tracker, nil, "").ListTickets(ctx, connect.NewRequest(&api.RequestListTickets{}))
+		assertion.MustNoError(t, err)
+		assertion.MustLen(t, list.Msg.GetTickets(), 1)
+		assertion.Equal(t, list.Msg.GetTickets()[0].GetUrl(), "")
 	})
 }
 
@@ -550,7 +587,7 @@ func TestNew(t *testing.T) {
 	daos := dao.NewOptions(newConn(t))
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	assertion.MustNoError(t, err)
-	s := httptest.NewServer(New(issue.NewTracker(daos), nil, func(h http.Handler) http.Handler { return authproxy.Authenticate(&key.PublicKey, h) }))
+	s := httptest.NewServer(New(issue.NewTracker(daos), nil, "", func(h http.Handler) http.Handler { return authproxy.Authenticate(&key.PublicKey, h) }))
 	t.Cleanup(s.Close)
 	client := api.NewIssueClient(http.DefaultClient, s.URL)
 

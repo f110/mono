@@ -18,6 +18,7 @@ import (
 	"go.f110.dev/mono/go/claudecode"
 	"go.f110.dev/mono/go/codexel/api"
 	"go.f110.dev/mono/go/codexel/config"
+	"go.f110.dev/mono/go/codexel/pullrequest"
 	"go.f110.dev/mono/go/codexel/review"
 	"go.f110.dev/mono/go/herdr"
 	"go.f110.dev/mono/go/jujutsu"
@@ -26,14 +27,14 @@ import (
 
 // New returns the handler of the API and the frontend. claudeProjectsDir is the directory of the transcripts of Claude
 // Code. MCP for the coding agents is served at /mcp. missingBinaries are the binaries not found at startup.
-func New(herdrClient *herdr.Client, conf *config.File, reviews *review.Store, frontend fs.FS, claudeProjectsDir string, missingBinaries []string) http.Handler {
+func New(herdrClient *herdr.Client, conf *config.File, reviews *review.Store, pullRequests *pullrequest.File, frontend fs.FS, claudeProjectsDir string, missingBinaries []string) http.Handler {
 	mux := http.NewServeMux()
 	reviewHandler := NewReviewHandler(conf, reviews, herdrClient)
 	mux.Handle(api.NewReviewServiceHandler(reviewHandler))
 	mux.Handle("/mcp", NewMCPHandler(reviewHandler))
 	mux.Handle(api.NewAgentServiceHandler(NewAgentHandler(herdrClient, conf, claudeProjectsDir)))
 	mux.Handle(api.NewRepositoryServiceHandler(NewRepositoryHandler(conf)))
-	mux.Handle(api.NewPullRequestServiceHandler(NewPullRequestHandler(conf)))
+	mux.Handle(api.NewPullRequestServiceHandler(NewPullRequestHandler(conf, pullRequests)))
 	mux.Handle(api.NewSystemServiceHandler(NewSystemHandler(missingBinaries)))
 	mux.Handle("/", newFrontendHandler(frontend))
 	return mux

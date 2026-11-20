@@ -523,6 +523,7 @@ type Ticket struct {
 	xxx_hidden_LastActivityAt *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=last_activity_at,json=lastActivityAt"`
 	xxx_hidden_Type           TicketType             `protobuf:"varint,12,opt,name=type,enum=mono.issue.TicketType"`
 	xxx_hidden_CommentCount   int32                  `protobuf:"varint,13,opt,name=comment_count,json=commentCount"`
+	xxx_hidden_Url            *string                `protobuf:"bytes,14,opt,name=url"`
 	XXX_raceDetectHookData    protoimpl.RaceDetectHookData
 	XXX_presence              [1]uint32
 	unknownFields             protoimpl.UnknownFields
@@ -657,44 +658,54 @@ func (x *Ticket) GetCommentCount() int32 {
 	return 0
 }
 
+func (x *Ticket) GetUrl() string {
+	if x != nil {
+		if x.xxx_hidden_Url != nil {
+			return *x.xxx_hidden_Url
+		}
+		return ""
+	}
+	return ""
+}
+
 func (x *Ticket) SetNumber(v int32) {
 	x.xxx_hidden_Number = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 13)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 14)
 }
 
 func (x *Ticket) SetTitle(v string) {
 	x.xxx_hidden_Title = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 13)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 14)
 }
 
 func (x *Ticket) SetBody(v string) {
 	x.xxx_hidden_Body = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 13)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 14)
 }
 
 func (x *Ticket) SetStatus(v TicketStatus) {
 	x.xxx_hidden_Status = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 13)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 14)
 }
 
 func (x *Ticket) SetPriority(v Priority) {
 	x.xxx_hidden_Priority = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 13)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 14)
 }
 
 func (x *Ticket) SetComponentId(v int32) {
 	x.xxx_hidden_ComponentId = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 13)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 14)
 }
 
 func (x *Ticket) SetAssigneeId(v int32) {
 	x.xxx_hidden_AssigneeId = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 13)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 14)
 }
 
 func (x *Ticket) SetReporterId(v int32) {
 	x.xxx_hidden_ReporterId = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 13)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 14)
 }
 
 func (x *Ticket) SetCreatedAt(v *timestamppb.Timestamp) {
@@ -711,12 +722,17 @@ func (x *Ticket) SetLastActivityAt(v *timestamppb.Timestamp) {
 
 func (x *Ticket) SetType(v TicketType) {
 	x.xxx_hidden_Type = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 13)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 14)
 }
 
 func (x *Ticket) SetCommentCount(v int32) {
 	x.xxx_hidden_CommentCount = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 12, 13)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 12, 14)
+}
+
+func (x *Ticket) SetUrl(v string) {
+	x.xxx_hidden_Url = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 13, 14)
 }
 
 func (x *Ticket) HasNumber() bool {
@@ -810,6 +826,13 @@ func (x *Ticket) HasCommentCount() bool {
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 12)
 }
 
+func (x *Ticket) HasUrl() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 13)
+}
+
 func (x *Ticket) ClearNumber() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
 	x.xxx_hidden_Number = 0
@@ -872,6 +895,11 @@ func (x *Ticket) ClearCommentCount() {
 	x.xxx_hidden_CommentCount = 0
 }
 
+func (x *Ticket) ClearUrl() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 13)
+	x.xxx_hidden_Url = nil
+}
+
 type Ticket_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
@@ -888,6 +916,7 @@ type Ticket_builder struct {
 	LastActivityAt *timestamppb.Timestamp
 	Type           *TicketType
 	CommentCount   *int32
+	Url            *string
 }
 
 func (b0 Ticket_builder) Build() *Ticket {
@@ -895,47 +924,51 @@ func (b0 Ticket_builder) Build() *Ticket {
 	b, x := &b0, m0
 	_, _ = b, x
 	if b.Number != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 13)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 14)
 		x.xxx_hidden_Number = *b.Number
 	}
 	if b.Title != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 13)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 14)
 		x.xxx_hidden_Title = b.Title
 	}
 	if b.Body != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 13)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 14)
 		x.xxx_hidden_Body = b.Body
 	}
 	if b.Status != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 13)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 14)
 		x.xxx_hidden_Status = *b.Status
 	}
 	if b.Priority != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 13)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 14)
 		x.xxx_hidden_Priority = *b.Priority
 	}
 	if b.ComponentId != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 13)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 14)
 		x.xxx_hidden_ComponentId = *b.ComponentId
 	}
 	if b.AssigneeId != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 13)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 14)
 		x.xxx_hidden_AssigneeId = *b.AssigneeId
 	}
 	if b.ReporterId != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 13)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 14)
 		x.xxx_hidden_ReporterId = *b.ReporterId
 	}
 	x.xxx_hidden_CreatedAt = b.CreatedAt
 	x.xxx_hidden_UpdatedAt = b.UpdatedAt
 	x.xxx_hidden_LastActivityAt = b.LastActivityAt
 	if b.Type != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 13)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 14)
 		x.xxx_hidden_Type = *b.Type
 	}
 	if b.CommentCount != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 12, 13)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 12, 14)
 		x.xxx_hidden_CommentCount = *b.CommentCount
+	}
+	if b.Url != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 13, 14)
+		x.xxx_hidden_Url = b.Url
 	}
 	return m0
 }
@@ -6790,7 +6823,7 @@ var File_proto_issue_issue_proto protoreflect.FileDescriptor
 const file_proto_issue_issue_proto_rawDesc = "" +
 	"\n" +
 	"\x17proto/issue/issue.proto\x12\n" +
-	"mono.issue\x1a!google/protobuf/go_features.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa0\x04\n" +
+	"mono.issue\x1a!google/protobuf/go_features.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb2\x04\n" +
 	"\x06Ticket\x12\x16\n" +
 	"\x06number\x18\x01 \x01(\x05R\x06number\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x12\n" +
@@ -6809,7 +6842,8 @@ const file_proto_issue_issue_proto_rawDesc = "" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12D\n" +
 	"\x10last_activity_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\x0elastActivityAt\x12*\n" +
 	"\x04type\x18\f \x01(\x0e2\x16.mono.issue.TicketTypeR\x04type\x12#\n" +
-	"\rcomment_count\x18\r \x01(\x05R\fcommentCount\"q\n" +
+	"\rcomment_count\x18\r \x01(\x05R\fcommentCount\x12\x10\n" +
+	"\x03url\x18\x0e \x01(\tR\x03url\"q\n" +
 	"\x05Actor\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12)\n" +
 	"\x04kind\x18\x02 \x01(\x0e2\x15.mono.issue.ActorKindR\x04kind\x12\x12\n" +

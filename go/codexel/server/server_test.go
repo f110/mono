@@ -21,6 +21,7 @@ import (
 
 	"go.f110.dev/mono/go/codexel/api"
 	"go.f110.dev/mono/go/codexel/config"
+	"go.f110.dev/mono/go/codexel/pullrequest"
 	"go.f110.dev/mono/go/codexel/review"
 	"go.f110.dev/mono/go/herdr"
 	"go.f110.dev/mono/go/testing/assertion"
@@ -139,7 +140,7 @@ func TestListAgents(t *testing.T) {
 		"agent.list":     `"result":{"type":"agent_list","agents":[{"agent":"claude","agent_session":{"agent":"claude","kind":"id","source":"herdr:claude","value":"sess"},"agent_status":"working","cwd":"/repo","pane_id":"w1:p1","tab_id":"w1:t1","workspace_id":"w1","terminal_title_stripped":"Claude Code"}]}`,
 		"workspace.list": `"result":{"type":"workspace_list","workspaces":[{"workspace_id":"w1","label":"mono"}]}`,
 	})
-	srv := httptest.NewServer(New(c, config.NewFile(filepath.Join(t.TempDir(), "config.json")), review.NewStore(t.TempDir()), fstest.MapFS{}, "", nil))
+	srv := httptest.NewServer(New(c, config.NewFile(filepath.Join(t.TempDir(), "config.json")), review.NewStore(t.TempDir()), pullrequest.NewFile(filepath.Join(t.TempDir(), "pullrequests.json")), fstest.MapFS{}, "", nil))
 	t.Cleanup(srv.Close)
 
 	client := api.NewAgentServiceClient(srv.Client(), srv.URL)
@@ -284,7 +285,7 @@ func TestWatchTranscript(t *testing.T) {
 	assertion.MustNoError(t, os.MkdirAll(filepath.Join(dir, "-repo"), 0755))
 	p := filepath.Join(dir, "-repo", "sess.jsonl")
 	assertion.MustNoError(t, os.WriteFile(p, []byte(`{"type":"user","origin":{"kind":"human"},"message":{"content":"Fix it"},"timestamp":"2026-11-18T10:00:00Z"}`+"\n"), 0644))
-	srv := httptest.NewServer(New(nil, config.NewFile(filepath.Join(t.TempDir(), "config.json")), review.NewStore(t.TempDir()), fstest.MapFS{}, dir, nil))
+	srv := httptest.NewServer(New(nil, config.NewFile(filepath.Join(t.TempDir(), "config.json")), review.NewStore(t.TempDir()), pullrequest.NewFile(filepath.Join(t.TempDir(), "pullrequests.json")), fstest.MapFS{}, dir, nil))
 	t.Cleanup(srv.Close)
 
 	client := api.NewAgentServiceClient(srv.Client(), srv.URL)
@@ -310,7 +311,7 @@ func TestWatchTranscript(t *testing.T) {
 }
 
 func TestGetStatus(t *testing.T) {
-	srv := httptest.NewServer(New(nil, config.NewFile(filepath.Join(t.TempDir(), "config.json")), review.NewStore(t.TempDir()), fstest.MapFS{}, "", []string{"jj"}))
+	srv := httptest.NewServer(New(nil, config.NewFile(filepath.Join(t.TempDir(), "config.json")), review.NewStore(t.TempDir()), pullrequest.NewFile(filepath.Join(t.TempDir(), "pullrequests.json")), fstest.MapFS{}, "", []string{"jj"}))
 	t.Cleanup(srv.Close)
 
 	client := api.NewSystemServiceClient(srv.Client(), srv.URL)
