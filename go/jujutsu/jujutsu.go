@@ -125,11 +125,6 @@ const (
 	DiffLineRemoved
 )
 
-const (
-	ResolveOurs   ResolveSide = ":ours"
-	ResolveTheirs ResolveSide = ":theirs"
-)
-
 // Repository is the workspace of the repository. All commands run in the root of the workspace.
 type Repository struct {
 	root string
@@ -389,53 +384,6 @@ func (r *Repository) Files(ctx context.Context, rev string) ([]string, error) {
 	return paths, nil
 }
 
-// WriteFile writes the file of the working copy and snapshots it. The path must be in the workspace and must not be in
-// the directories of jj and git.
-func (r *Repository) WriteFile(ctx context.Context, path string, content []byte) error {
-	target, err := r.workingCopyPath(path)
-	if err != nil {
-		return err
-	}
-	// The symbolic link in the workspace may point to the outside.
-	resolved, err := filepath.EvalSymlinks(target)
-	if err != nil {
-		return xerrors.WithStack(err)
-	}
-	root, err := filepath.EvalSymlinks(r.root)
-	if err != nil {
-		return xerrors.WithStack(err)
-	}
-	if !strings.HasPrefix(resolved, root+string(filepath.Separator)) {
-		return xerrors.Newf("the path is outside of the workspace: %s", path)
-	}
-	fi, err := os.Stat(resolved)
-	if err != nil {
-		return xerrors.WithStack(err)
-	}
-	target = resolved
-	if err := os.WriteFile(target, content, fi.Mode().Perm()); err != nil {
-		return xerrors.WithStack(err)
-	}
-	return r.Snapshot(ctx)
-}
-
-// workingCopyPath returns the absolute path of the file in the working copy. It rejects the path outside of the
-// workspace and the path in .jj and .git.
-func (r *Repository) workingCopyPath(path string) (string, error) {
-	if path == "" || filepath.IsAbs(path) {
-		return "", xerrors.Newf("invalid path: %s", path)
-	}
-	clean := filepath.Clean(path)
-	if clean == ".." || strings.HasPrefix(clean, "../") {
-		return "", xerrors.Newf("the path is outside of the workspace: %s", path)
-	}
-	first := strings.Split(clean, string(filepath.Separator))[0]
-	if first == ".jj" || first == ".git" {
-		return "", xerrors.Newf("the path is in the directory of the repository: %s", path)
-	}
-	return filepath.Join(r.root, clean), nil
-}
-
 func (r *Repository) Diff(ctx context.Context, rev string) ([]*FileDiff, error) {
 	out, err := run(ctx, r.root, diffArgs(rev)...)
 	if err != nil {
@@ -461,11 +409,6 @@ func (r *Repository) Interdiff(ctx context.Context, from, to string) ([]*FileDif
 		return nil, err
 	}
 	return parseGitDiff(string(out))
-}
-
-// Conflicts returns the mutable commits which have the conflicts.
-func (r *Repository) Conflicts(ctx context.Context) ([]*ConflictedCommit, error) {
-	return r.conflicts(ctx, "conflicts() & mutable()")
 }
 
 // ConflictedFiles returns the conflicted files of the revision. It includes the files which aren't changed by the
@@ -495,16 +438,6 @@ func (r *Repository) conflicts(ctx context.Context, revset string) ([]*Conflicte
 		commits = append(commits, c)
 	}
 	return commits, nil
-}
-
-// ConflictFile returns the content of the conflicted file with the markers of the snapshot style.
-func (r *Repository) ConflictFile(ctx context.Context, rev, path string) ([]byte, error) {
-	return run(ctx, r.root, conflictFileArgs(rev, path)...)
-}
-
-// Resolve resolves the conflict of two sides by taking one side.
-func (r *Repository) Resolve(ctx context.Context, rev, path string, side ResolveSide) (string, error) {
-	return r.mutate(ctx, resolveArgs(rev, path, side)...)
 }
 
 // Operations returns the operations from the newest.
@@ -740,9 +673,6 @@ type ConflictedCommit struct {
 	// WorkingCopy is true if the commit is the working copy. Only the working copy can be resolved by writing the file.
 	WorkingCopy bool `json:"working_copy"`
 }
-
-// ResolveSide is the side to take for the conflict of two sides.
-type ResolveSide string
 
 type Operation struct {
 	ID          string `json:"id"`
@@ -1151,16 +1081,6 @@ func interdiffArgs(from, to string) []string {
 
 func conflictsArgs(revset string) []string {
 	return []string{"log", "--no-graph", "--ignore-working-copy", "--revisions=" + revset, "-T", conflictTemplate}
-}
-
-// conflictFileArgs returns the arguments to read the conflicted file. The markers are the snapshot style which has the
-// whole content of each side, so the sides can be extracted from it.
-func conflictFileArgs(rev, path string) []string {
-	return []string{"file", "show", "--ignore-working-copy", "--config", "ui.conflict-marker-style=snapshot", "--revision=" + rev, "--", rootFile(path)}
-}
-
-func resolveArgs(rev, path string, side ResolveSide) []string {
-	return []string{"resolve", "--revision=" + rev, "--tool=" + string(side), "--", rootFile(path)}
 }
 
 func operationsArgs(limit int) []string {

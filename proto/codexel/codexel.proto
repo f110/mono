@@ -96,16 +96,6 @@ service RepositoryService {
   rpc GetFile(RequestGetFile) returns (ResponseGetFile);
   // ListFiles returns the paths of all files at the revision.
   rpc ListFiles(RequestListFiles) returns (ResponseListFiles);
-  // WriteFile writes the file of the working copy. The path must be in the workspace.
-  rpc WriteFile(RequestWriteFile) returns (ResponseWriteFile);
-
-  // ListConflicts returns the conflicts of the mutable revisions.
-  rpc ListConflicts(RequestListConflicts) returns (ResponseListConflicts);
-  // GetConflict returns the conflicted file with the markers of the snapshot style which has the whole content of
-  // each side.
-  rpc GetConflict(RequestGetConflict) returns (ResponseGetConflict);
-  // Resolve resolves the conflict of two sides by taking one side.
-  rpc Resolve(RequestResolve) returns (ResponseResolve);
 
   // ListWorkspaces returns the workspaces of jj.
   rpc ListWorkspaces(RequestListRepositoryWorkspaces) returns (ResponseListRepositoryWorkspaces);
@@ -714,65 +704,10 @@ message ResponseListFiles {
   repeated string files = 1;
 }
 
-message RequestWriteFile {
-  string path = 1;
-  // file is the path of the file relative to the root of the workspace.
-  string file    = 2;
-  bytes  content = 3;
-}
-
-message ResponseWriteFile {}
-
 message ConflictedFile {
   string path = 1;
   // sides is the number of the sides of the conflict. 2 is the conflict between two changes.
   int32 sides = 2;
-}
-
-message ConflictedCommit {
-  string                  change_id   = 1;
-  string                  commit_id   = 2;
-  string                  description = 3;
-  repeated ConflictedFile files       = 4;
-  // working_copy is true if the commit is the working copy. Only the working copy can be resolved by WriteFile.
-  bool working_copy = 5;
-}
-
-message RequestListConflicts {
-  string path = 1;
-}
-
-message ResponseListConflicts {
-  repeated ConflictedCommit commits = 1;
-}
-
-message RequestGetConflict {
-  string path     = 1;
-  string revision = 2;
-  string file     = 3;
-}
-
-message ResponseGetConflict {
-  string content = 1;
-}
-
-enum ResolveSide {
-  RESOLVE_SIDE_UNSPECIFIED = 0;
-  // RESOLVE_SIDE_OURS takes the first side.
-  RESOLVE_SIDE_OURS = 1;
-  // RESOLVE_SIDE_THEIRS takes the second side.
-  RESOLVE_SIDE_THEIRS = 2;
-}
-
-message RequestResolve {
-  string      path     = 1;
-  string      revision = 2;
-  string      file     = 3;
-  ResolveSide side     = 4;
-}
-
-message ResponseResolve {
-  string output = 1;
 }
 
 message RequestSplit {

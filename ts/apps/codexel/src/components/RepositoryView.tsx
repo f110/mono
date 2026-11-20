@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { createClient } from '@connectrpc/connect'
 import { useQuery } from '@connectrpc/connect-query'
 import { useNavigate, useRouter } from '@tanstack/react-router'
@@ -51,9 +51,7 @@ import { DiffControls } from './DiffControls.tsx'
 import { DivergenceDialog } from './DivergenceDialog.tsx'
 import { FileDiffView } from './FileDiffView.tsx'
 import { FileBrowser } from './FileTree.tsx'
-import { ConflictsPanel, conflictEntries } from './ConflictsPanel.tsx'
 import { EvologPanel, OperationsPanel } from './HistoryPanels.tsx'
-import { MergeEditor } from './MergeEditor.tsx'
 import { PullRequestDialog } from './PullRequestDialog.tsx'
 import { RevisionDetail } from './RevisionDetail.tsx'
 import { RevisionGraph } from './RevisionGraph.tsx'
@@ -70,7 +68,7 @@ const reviewClient = createClient(ReviewService, transport)
 // operationLimit is the number of the operations shown in the operation log.
 const operationLimit = 200
 
-type View = 'log' | 'bookmarks' | 'oplog' | 'evolog' | 'files' | 'conflicts' | 'workspaces'
+type View = 'log' | 'bookmarks' | 'oplog' | 'evolog' | 'files' | 'workspaces'
 
 type Editing ={ kind: 'describe'; commit: Commit; initial: string } | { kind: 'commit'; initial: string }
 
@@ -137,7 +135,6 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   const { history } = useRouter()
   const [treeTarget, setTreeTarget] = useState<FileRevision | undefined>(() => fileLocation(history.location.state, path)?.revision)
   const [view, setView] = useState<View>(() => (treeTarget ? 'files' : 'log'))
-  const [conflictSelected, setConflictSelected] = useState(0)
   const [splitting, setSplitting] = useState<Commit>()
   const [workspaceSelected, setWorkspaceSelected] = useState(0)
   const [addingWorkspace, setAddingWorkspace] = useState<Commit>()
@@ -182,8 +179,6 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
     { enabled: view === 'evolog' && evologTarget !== undefined },
   )
   const evolog = evologData?.entries ?? []
-  const { data: conflictData, refetch: refetchConflicts } = useQuery(RepositoryService.method.listConflicts, { path }, { enabled: view === 'conflicts' })
-  const conflicts = useMemo(() => conflictEntries(conflictData?.commits ?? []), [conflictData])
   const { data: workspaceData, refetch: refetchWorkspaces } = useQuery(
     RepositoryService.method.listWorkspaces,
     { path },
@@ -227,14 +222,11 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
       if (view === 'oplog') {
         refetchOperations()
       }
-      if (view === 'conflicts') {
-        refetchConflicts()
-      }
       if (view === 'workspaces') {
         refetchWorkspaces()
       }
     }
-  }, [operation, view, refetch, refetchBookmarks, refetchOperations, refetchConflicts, refetchWorkspaces])
+  }, [operation, view, refetch, refetchBookmarks, refetchOperations, refetchWorkspaces])
 
   const selectIndex = useCallback((i: number) => {
     const c = commits[Math.max(0, Math.min(i, commits.length - 1))]
@@ -317,9 +309,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
     setView('log')
   }, [commits, selectIndex])
   const showView = useCallback((v: View) => {
-    if (v === 'conflicts') {
-      setConflictSelected(0)
-    } else if (v === 'oplog') {
+    if (v === 'oplog') {
       setOpSelected(0)
     } else if (v === 'workspaces') {
       setWorkspaceSelected(0)
@@ -422,9 +412,9 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
       if (view === 'files') {
         return
       }
-      if (view === 'oplog' || view === 'evolog' || view === 'conflicts') {
-        const length = { oplog: operations.length, evolog: evolog.length, conflicts: conflicts.length }[view]
-        const setIndex = { oplog: setOpSelected, evolog: setEvologSelected, conflicts: setConflictSelected }[view]
+      if (view === 'oplog' || view === 'evolog') {
+        const length = { oplog: operations.length, evolog: evolog.length }[view]
+        const setIndex = { oplog: setOpSelected, evolog: setEvologSelected }[view]
         switch (e.key) {
           case 'j':
             setIndex((i) => Math.min(i + 1, length - 1))
@@ -551,9 +541,6 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
             browseFiles(selectedCommit)
           }
           break
-        case '3':
-          showView('conflicts')
-          break
         case '4':
         case 'O':
           showView('oplog')
@@ -649,7 +636,6 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [
     view,
-    conflicts,
     operations,
     evolog,
     restoring,
@@ -817,14 +803,13 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
         <Stack sx={{ width: '45%', flexShrink: 0, borderRight: 1, borderColor: 'divider' }}>
           <Stack direction="row" sx={{ alignItems: 'center', borderBottom: 1, borderColor: 'divider' }}>
             <Tabs
-              value={view === 'log' || view === 'bookmarks' || view === 'conflicts' || view === 'oplog' || view === 'workspaces' ? view : false}
+              value={view === 'log' || view === 'bookmarks' || view === 'oplog' || view === 'workspaces' ? view : false}
               onChange={(_, v) => showView(v)}
               variant="scrollable"
               sx={{ flex: 1, minWidth: 0, minHeight: 36 }}
             >
               <Tab value="log" label="Revisions" sx={{ minHeight: 36 }} />
               <Tab value="bookmarks" label="Bookmarks" sx={{ minHeight: 36 }} />
-              <Tab value="conflicts" label="Conflicts" sx={{ minHeight: 36 }} />
               <Tab value="oplog" label="Operations" sx={{ minHeight: 36 }} />
               <Tab value="workspaces" label="Workspaces" sx={{ minHeight: 36 }} />
             </Tabs>
@@ -881,7 +866,6 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
               />
             )}
             {view === 'evolog' && <EvologPanel entries={evolog} selected={evologSelected} onSelect={setEvologSelected} />}
-            {view === 'conflicts' && <ConflictsPanel entries={conflicts} selected={conflictSelected} onSelect={setConflictSelected} />}
             {view === 'log' && (
               <RevisionGraph
                 rows={rows}
@@ -905,29 +889,9 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
         </Stack>
         <Stack sx={{ flex: 1, minWidth: 0 }}>
           <Stack direction="row" sx={{ minHeight: 36, px: 1, justifyContent: 'flex-end', alignItems: 'center', borderBottom: 1, borderColor: 'divider' }}>
-            {view !== 'conflicts' && <DiffControls navigation={diffNavigation} />}
+            <DiffControls navigation={diffNavigation} />
           </Stack>
           <Box ref={detailRef} sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
-            {view === 'conflicts' && conflicts[conflictSelected] && (
-              <MergeEditor
-                key={`${conflicts[conflictSelected].commit.commitId}:${conflicts[conflictSelected].file.path}`}
-                repoPath={path}
-                commit={conflicts[conflictSelected].commit}
-                file={conflicts[conflictSelected].file}
-                onResolve={(side) => {
-                  const e = conflicts[conflictSelected]
-                  run(() => repositoryClient.resolve({ path, revision: e.commit.commitId, file: e.file.path, side }), false)
-                }}
-                onSave={(content) => {
-                  const e = conflicts[conflictSelected]
-                  run(async () => {
-                    await repositoryClient.writeFile({ path, file: e.file.path, content: new TextEncoder().encode(content) })
-                    return { output: `Saved ${e.file.path}` }
-                  }, false)
-                }}
-                onEdit={() => run(() => repositoryClient.edit({ path, revision: conflicts[conflictSelected].commit.commitId }), true)}
-              />
-            )}
             {view === 'evolog' && (
               <Box sx={{ p: 2 }}>
                 {evolog[evologSelected]?.files.map((f) => (
@@ -1162,7 +1126,6 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
             { label: 'Git push', shortcut: 'p', run: () => setPushing(true) },
             { label: 'Show the log', shortcut: '1', run: () => setView('log') },
             { label: 'Show the bookmarks', shortcut: '2', run: () => setView('bookmarks') },
-            { label: 'Show the conflicts', shortcut: '3', run: () => setView('conflicts') },
             { label: 'Show the operation log', shortcut: '4', run: () => setView('oplog') },
             { label: 'Show the workspaces', shortcut: 'w', run: () => showView('workspaces') },
             { label: 'Jump to the working copy', shortcut: '@', run: jumpToWorkingCopy },

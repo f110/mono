@@ -268,50 +268,6 @@ func (x RebaseTarget) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-type ResolveSide int32
-
-const (
-	ResolveSide_RESOLVE_SIDE_UNSPECIFIED ResolveSide = 0
-	ResolveSide_RESOLVE_SIDE_OURS        ResolveSide = 1
-	ResolveSide_RESOLVE_SIDE_THEIRS      ResolveSide = 2
-)
-
-// Enum value maps for ResolveSide.
-var (
-	ResolveSide_name = map[int32]string{
-		0: "RESOLVE_SIDE_UNSPECIFIED",
-		1: "RESOLVE_SIDE_OURS",
-		2: "RESOLVE_SIDE_THEIRS",
-	}
-	ResolveSide_value = map[string]int32{
-		"RESOLVE_SIDE_UNSPECIFIED": 0,
-		"RESOLVE_SIDE_OURS":        1,
-		"RESOLVE_SIDE_THEIRS":      2,
-	}
-)
-
-func (x ResolveSide) Enum() *ResolveSide {
-	p := new(ResolveSide)
-	*p = x
-	return p
-}
-
-func (x ResolveSide) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (ResolveSide) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_codexel_codexel_proto_enumTypes[5].Descriptor()
-}
-
-func (ResolveSide) Type() protoreflect.EnumType {
-	return &file_proto_codexel_codexel_proto_enumTypes[5]
-}
-
-func (x ResolveSide) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
 type TranscriptEntryKind int32
 
 const (
@@ -351,11 +307,11 @@ func (x TranscriptEntryKind) String() string {
 }
 
 func (TranscriptEntryKind) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_codexel_codexel_proto_enumTypes[6].Descriptor()
+	return file_proto_codexel_codexel_proto_enumTypes[5].Descriptor()
 }
 
 func (TranscriptEntryKind) Type() protoreflect.EnumType {
-	return &file_proto_codexel_codexel_proto_enumTypes[6]
+	return &file_proto_codexel_codexel_proto_enumTypes[5]
 }
 
 func (x TranscriptEntryKind) Number() protoreflect.EnumNumber {
@@ -401,11 +357,11 @@ func (x ReviewState) String() string {
 }
 
 func (ReviewState) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_codexel_codexel_proto_enumTypes[7].Descriptor()
+	return file_proto_codexel_codexel_proto_enumTypes[6].Descriptor()
 }
 
 func (ReviewState) Type() protoreflect.EnumType {
-	return &file_proto_codexel_codexel_proto_enumTypes[7]
+	return &file_proto_codexel_codexel_proto_enumTypes[6]
 }
 
 func (x ReviewState) Number() protoreflect.EnumNumber {
@@ -445,11 +401,11 @@ func (x DiffSide) String() string {
 }
 
 func (DiffSide) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_codexel_codexel_proto_enumTypes[8].Descriptor()
+	return file_proto_codexel_codexel_proto_enumTypes[7].Descriptor()
 }
 
 func (DiffSide) Type() protoreflect.EnumType {
-	return &file_proto_codexel_codexel_proto_enumTypes[8]
+	return &file_proto_codexel_codexel_proto_enumTypes[7]
 }
 
 func (x DiffSide) Number() protoreflect.EnumNumber {
@@ -492,11 +448,11 @@ func (x PullRequestAction) String() string {
 }
 
 func (PullRequestAction) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_codexel_codexel_proto_enumTypes[9].Descriptor()
+	return file_proto_codexel_codexel_proto_enumTypes[8].Descriptor()
 }
 
 func (PullRequestAction) Type() protoreflect.EnumType {
-	return &file_proto_codexel_codexel_proto_enumTypes[9]
+	return &file_proto_codexel_codexel_proto_enumTypes[8]
 }
 
 func (x PullRequestAction) Number() protoreflect.EnumNumber {
@@ -10154,193 +10110,6 @@ func (b0 ResponseListFiles_builder) Build() *ResponseListFiles {
 	return m0
 }
 
-type RequestWriteFile struct {
-	state                  protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
-	xxx_hidden_File        *string                `protobuf:"bytes,2,opt,name=file"`
-	xxx_hidden_Content     []byte                 `protobuf:"bytes,3,opt,name=content"`
-	XXX_raceDetectHookData protoimpl.RaceDetectHookData
-	XXX_presence           [1]uint32
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
-}
-
-func (x *RequestWriteFile) Reset() {
-	*x = RequestWriteFile{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[90]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RequestWriteFile) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RequestWriteFile) ProtoMessage() {}
-
-func (x *RequestWriteFile) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[90]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *RequestWriteFile) GetPath() string {
-	if x != nil {
-		if x.xxx_hidden_Path != nil {
-			return *x.xxx_hidden_Path
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *RequestWriteFile) GetFile() string {
-	if x != nil {
-		if x.xxx_hidden_File != nil {
-			return *x.xxx_hidden_File
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *RequestWriteFile) GetContent() []byte {
-	if x != nil {
-		return x.xxx_hidden_Content
-	}
-	return nil
-}
-
-func (x *RequestWriteFile) SetPath(v string) {
-	x.xxx_hidden_Path = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 3)
-}
-
-func (x *RequestWriteFile) SetFile(v string) {
-	x.xxx_hidden_File = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 3)
-}
-
-func (x *RequestWriteFile) SetContent(v []byte) {
-	if v == nil {
-		v = []byte{}
-	}
-	x.xxx_hidden_Content = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 3)
-}
-
-func (x *RequestWriteFile) HasPath() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
-}
-
-func (x *RequestWriteFile) HasFile() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
-}
-
-func (x *RequestWriteFile) HasContent() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
-}
-
-func (x *RequestWriteFile) ClearPath() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
-	x.xxx_hidden_Path = nil
-}
-
-func (x *RequestWriteFile) ClearFile() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
-	x.xxx_hidden_File = nil
-}
-
-func (x *RequestWriteFile) ClearContent() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
-	x.xxx_hidden_Content = nil
-}
-
-type RequestWriteFile_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	Path    *string
-	File    *string
-	Content []byte
-}
-
-func (b0 RequestWriteFile_builder) Build() *RequestWriteFile {
-	m0 := &RequestWriteFile{}
-	b, x := &b0, m0
-	_, _ = b, x
-	if b.Path != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 3)
-		x.xxx_hidden_Path = b.Path
-	}
-	if b.File != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 3)
-		x.xxx_hidden_File = b.File
-	}
-	if b.Content != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 3)
-		x.xxx_hidden_Content = b.Content
-	}
-	return m0
-}
-
-type ResponseWriteFile struct {
-	state         protoimpl.MessageState `protogen:"opaque.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ResponseWriteFile) Reset() {
-	*x = ResponseWriteFile{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[91]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ResponseWriteFile) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ResponseWriteFile) ProtoMessage() {}
-
-func (x *ResponseWriteFile) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[91]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-type ResponseWriteFile_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-}
-
-func (b0 ResponseWriteFile_builder) Build() *ResponseWriteFile {
-	m0 := &ResponseWriteFile{}
-	b, x := &b0, m0
-	_, _ = b, x
-	return m0
-}
-
 type ConflictedFile struct {
 	state                  protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
@@ -10353,7 +10122,7 @@ type ConflictedFile struct {
 
 func (x *ConflictedFile) Reset() {
 	*x = ConflictedFile{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[92]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[90]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10365,7 +10134,7 @@ func (x *ConflictedFile) String() string {
 func (*ConflictedFile) ProtoMessage() {}
 
 func (x *ConflictedFile) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[92]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[90]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10449,809 +10218,6 @@ func (b0 ConflictedFile_builder) Build() *ConflictedFile {
 	return m0
 }
 
-type ConflictedCommit struct {
-	state                  protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_ChangeId    *string                `protobuf:"bytes,1,opt,name=change_id,json=changeId"`
-	xxx_hidden_CommitId    *string                `protobuf:"bytes,2,opt,name=commit_id,json=commitId"`
-	xxx_hidden_Description *string                `protobuf:"bytes,3,opt,name=description"`
-	xxx_hidden_Files       *[]*ConflictedFile     `protobuf:"bytes,4,rep,name=files"`
-	xxx_hidden_WorkingCopy bool                   `protobuf:"varint,5,opt,name=working_copy,json=workingCopy"`
-	XXX_raceDetectHookData protoimpl.RaceDetectHookData
-	XXX_presence           [1]uint32
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
-}
-
-func (x *ConflictedCommit) Reset() {
-	*x = ConflictedCommit{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[93]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ConflictedCommit) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ConflictedCommit) ProtoMessage() {}
-
-func (x *ConflictedCommit) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[93]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *ConflictedCommit) GetChangeId() string {
-	if x != nil {
-		if x.xxx_hidden_ChangeId != nil {
-			return *x.xxx_hidden_ChangeId
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *ConflictedCommit) GetCommitId() string {
-	if x != nil {
-		if x.xxx_hidden_CommitId != nil {
-			return *x.xxx_hidden_CommitId
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *ConflictedCommit) GetDescription() string {
-	if x != nil {
-		if x.xxx_hidden_Description != nil {
-			return *x.xxx_hidden_Description
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *ConflictedCommit) GetFiles() []*ConflictedFile {
-	if x != nil {
-		if x.xxx_hidden_Files != nil {
-			return *x.xxx_hidden_Files
-		}
-	}
-	return nil
-}
-
-func (x *ConflictedCommit) GetWorkingCopy() bool {
-	if x != nil {
-		return x.xxx_hidden_WorkingCopy
-	}
-	return false
-}
-
-func (x *ConflictedCommit) SetChangeId(v string) {
-	x.xxx_hidden_ChangeId = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 5)
-}
-
-func (x *ConflictedCommit) SetCommitId(v string) {
-	x.xxx_hidden_CommitId = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 5)
-}
-
-func (x *ConflictedCommit) SetDescription(v string) {
-	x.xxx_hidden_Description = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 5)
-}
-
-func (x *ConflictedCommit) SetFiles(v []*ConflictedFile) {
-	x.xxx_hidden_Files = &v
-}
-
-func (x *ConflictedCommit) SetWorkingCopy(v bool) {
-	x.xxx_hidden_WorkingCopy = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 5)
-}
-
-func (x *ConflictedCommit) HasChangeId() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
-}
-
-func (x *ConflictedCommit) HasCommitId() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
-}
-
-func (x *ConflictedCommit) HasDescription() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
-}
-
-func (x *ConflictedCommit) HasWorkingCopy() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 4)
-}
-
-func (x *ConflictedCommit) ClearChangeId() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
-	x.xxx_hidden_ChangeId = nil
-}
-
-func (x *ConflictedCommit) ClearCommitId() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
-	x.xxx_hidden_CommitId = nil
-}
-
-func (x *ConflictedCommit) ClearDescription() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
-	x.xxx_hidden_Description = nil
-}
-
-func (x *ConflictedCommit) ClearWorkingCopy() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 4)
-	x.xxx_hidden_WorkingCopy = false
-}
-
-type ConflictedCommit_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	ChangeId    *string
-	CommitId    *string
-	Description *string
-	Files       []*ConflictedFile
-	WorkingCopy *bool
-}
-
-func (b0 ConflictedCommit_builder) Build() *ConflictedCommit {
-	m0 := &ConflictedCommit{}
-	b, x := &b0, m0
-	_, _ = b, x
-	if b.ChangeId != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 5)
-		x.xxx_hidden_ChangeId = b.ChangeId
-	}
-	if b.CommitId != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 5)
-		x.xxx_hidden_CommitId = b.CommitId
-	}
-	if b.Description != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 5)
-		x.xxx_hidden_Description = b.Description
-	}
-	x.xxx_hidden_Files = &b.Files
-	if b.WorkingCopy != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 5)
-		x.xxx_hidden_WorkingCopy = *b.WorkingCopy
-	}
-	return m0
-}
-
-type RequestListConflicts struct {
-	state                  protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
-	XXX_raceDetectHookData protoimpl.RaceDetectHookData
-	XXX_presence           [1]uint32
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
-}
-
-func (x *RequestListConflicts) Reset() {
-	*x = RequestListConflicts{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[94]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RequestListConflicts) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RequestListConflicts) ProtoMessage() {}
-
-func (x *RequestListConflicts) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[94]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *RequestListConflicts) GetPath() string {
-	if x != nil {
-		if x.xxx_hidden_Path != nil {
-			return *x.xxx_hidden_Path
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *RequestListConflicts) SetPath(v string) {
-	x.xxx_hidden_Path = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
-}
-
-func (x *RequestListConflicts) HasPath() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
-}
-
-func (x *RequestListConflicts) ClearPath() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
-	x.xxx_hidden_Path = nil
-}
-
-type RequestListConflicts_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	Path *string
-}
-
-func (b0 RequestListConflicts_builder) Build() *RequestListConflicts {
-	m0 := &RequestListConflicts{}
-	b, x := &b0, m0
-	_, _ = b, x
-	if b.Path != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
-		x.xxx_hidden_Path = b.Path
-	}
-	return m0
-}
-
-type ResponseListConflicts struct {
-	state              protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Commits *[]*ConflictedCommit   `protobuf:"bytes,1,rep,name=commits"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
-}
-
-func (x *ResponseListConflicts) Reset() {
-	*x = ResponseListConflicts{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[95]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ResponseListConflicts) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ResponseListConflicts) ProtoMessage() {}
-
-func (x *ResponseListConflicts) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[95]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *ResponseListConflicts) GetCommits() []*ConflictedCommit {
-	if x != nil {
-		if x.xxx_hidden_Commits != nil {
-			return *x.xxx_hidden_Commits
-		}
-	}
-	return nil
-}
-
-func (x *ResponseListConflicts) SetCommits(v []*ConflictedCommit) {
-	x.xxx_hidden_Commits = &v
-}
-
-type ResponseListConflicts_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	Commits []*ConflictedCommit
-}
-
-func (b0 ResponseListConflicts_builder) Build() *ResponseListConflicts {
-	m0 := &ResponseListConflicts{}
-	b, x := &b0, m0
-	_, _ = b, x
-	x.xxx_hidden_Commits = &b.Commits
-	return m0
-}
-
-type RequestGetConflict struct {
-	state                  protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
-	xxx_hidden_Revision    *string                `protobuf:"bytes,2,opt,name=revision"`
-	xxx_hidden_File        *string                `protobuf:"bytes,3,opt,name=file"`
-	XXX_raceDetectHookData protoimpl.RaceDetectHookData
-	XXX_presence           [1]uint32
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
-}
-
-func (x *RequestGetConflict) Reset() {
-	*x = RequestGetConflict{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[96]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RequestGetConflict) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RequestGetConflict) ProtoMessage() {}
-
-func (x *RequestGetConflict) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[96]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *RequestGetConflict) GetPath() string {
-	if x != nil {
-		if x.xxx_hidden_Path != nil {
-			return *x.xxx_hidden_Path
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *RequestGetConflict) GetRevision() string {
-	if x != nil {
-		if x.xxx_hidden_Revision != nil {
-			return *x.xxx_hidden_Revision
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *RequestGetConflict) GetFile() string {
-	if x != nil {
-		if x.xxx_hidden_File != nil {
-			return *x.xxx_hidden_File
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *RequestGetConflict) SetPath(v string) {
-	x.xxx_hidden_Path = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 3)
-}
-
-func (x *RequestGetConflict) SetRevision(v string) {
-	x.xxx_hidden_Revision = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 3)
-}
-
-func (x *RequestGetConflict) SetFile(v string) {
-	x.xxx_hidden_File = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 3)
-}
-
-func (x *RequestGetConflict) HasPath() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
-}
-
-func (x *RequestGetConflict) HasRevision() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
-}
-
-func (x *RequestGetConflict) HasFile() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
-}
-
-func (x *RequestGetConflict) ClearPath() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
-	x.xxx_hidden_Path = nil
-}
-
-func (x *RequestGetConflict) ClearRevision() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
-	x.xxx_hidden_Revision = nil
-}
-
-func (x *RequestGetConflict) ClearFile() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
-	x.xxx_hidden_File = nil
-}
-
-type RequestGetConflict_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	Path     *string
-	Revision *string
-	File     *string
-}
-
-func (b0 RequestGetConflict_builder) Build() *RequestGetConflict {
-	m0 := &RequestGetConflict{}
-	b, x := &b0, m0
-	_, _ = b, x
-	if b.Path != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 3)
-		x.xxx_hidden_Path = b.Path
-	}
-	if b.Revision != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 3)
-		x.xxx_hidden_Revision = b.Revision
-	}
-	if b.File != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 3)
-		x.xxx_hidden_File = b.File
-	}
-	return m0
-}
-
-type ResponseGetConflict struct {
-	state                  protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Content     *string                `protobuf:"bytes,1,opt,name=content"`
-	XXX_raceDetectHookData protoimpl.RaceDetectHookData
-	XXX_presence           [1]uint32
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
-}
-
-func (x *ResponseGetConflict) Reset() {
-	*x = ResponseGetConflict{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[97]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ResponseGetConflict) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ResponseGetConflict) ProtoMessage() {}
-
-func (x *ResponseGetConflict) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[97]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *ResponseGetConflict) GetContent() string {
-	if x != nil {
-		if x.xxx_hidden_Content != nil {
-			return *x.xxx_hidden_Content
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *ResponseGetConflict) SetContent(v string) {
-	x.xxx_hidden_Content = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
-}
-
-func (x *ResponseGetConflict) HasContent() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
-}
-
-func (x *ResponseGetConflict) ClearContent() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
-	x.xxx_hidden_Content = nil
-}
-
-type ResponseGetConflict_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	Content *string
-}
-
-func (b0 ResponseGetConflict_builder) Build() *ResponseGetConflict {
-	m0 := &ResponseGetConflict{}
-	b, x := &b0, m0
-	_, _ = b, x
-	if b.Content != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
-		x.xxx_hidden_Content = b.Content
-	}
-	return m0
-}
-
-type RequestResolve struct {
-	state                  protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
-	xxx_hidden_Revision    *string                `protobuf:"bytes,2,opt,name=revision"`
-	xxx_hidden_File        *string                `protobuf:"bytes,3,opt,name=file"`
-	xxx_hidden_Side        ResolveSide            `protobuf:"varint,4,opt,name=side,enum=mono.codexel.ResolveSide"`
-	XXX_raceDetectHookData protoimpl.RaceDetectHookData
-	XXX_presence           [1]uint32
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
-}
-
-func (x *RequestResolve) Reset() {
-	*x = RequestResolve{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[98]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RequestResolve) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RequestResolve) ProtoMessage() {}
-
-func (x *RequestResolve) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[98]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *RequestResolve) GetPath() string {
-	if x != nil {
-		if x.xxx_hidden_Path != nil {
-			return *x.xxx_hidden_Path
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *RequestResolve) GetRevision() string {
-	if x != nil {
-		if x.xxx_hidden_Revision != nil {
-			return *x.xxx_hidden_Revision
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *RequestResolve) GetFile() string {
-	if x != nil {
-		if x.xxx_hidden_File != nil {
-			return *x.xxx_hidden_File
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *RequestResolve) GetSide() ResolveSide {
-	if x != nil {
-		if protoimpl.X.Present(&(x.XXX_presence[0]), 3) {
-			return x.xxx_hidden_Side
-		}
-	}
-	return ResolveSide_RESOLVE_SIDE_UNSPECIFIED
-}
-
-func (x *RequestResolve) SetPath(v string) {
-	x.xxx_hidden_Path = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 4)
-}
-
-func (x *RequestResolve) SetRevision(v string) {
-	x.xxx_hidden_Revision = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 4)
-}
-
-func (x *RequestResolve) SetFile(v string) {
-	x.xxx_hidden_File = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 4)
-}
-
-func (x *RequestResolve) SetSide(v ResolveSide) {
-	x.xxx_hidden_Side = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 4)
-}
-
-func (x *RequestResolve) HasPath() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
-}
-
-func (x *RequestResolve) HasRevision() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
-}
-
-func (x *RequestResolve) HasFile() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
-}
-
-func (x *RequestResolve) HasSide() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
-}
-
-func (x *RequestResolve) ClearPath() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
-	x.xxx_hidden_Path = nil
-}
-
-func (x *RequestResolve) ClearRevision() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
-	x.xxx_hidden_Revision = nil
-}
-
-func (x *RequestResolve) ClearFile() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
-	x.xxx_hidden_File = nil
-}
-
-func (x *RequestResolve) ClearSide() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
-	x.xxx_hidden_Side = ResolveSide_RESOLVE_SIDE_UNSPECIFIED
-}
-
-type RequestResolve_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	Path     *string
-	Revision *string
-	File     *string
-	Side     *ResolveSide
-}
-
-func (b0 RequestResolve_builder) Build() *RequestResolve {
-	m0 := &RequestResolve{}
-	b, x := &b0, m0
-	_, _ = b, x
-	if b.Path != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 4)
-		x.xxx_hidden_Path = b.Path
-	}
-	if b.Revision != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 4)
-		x.xxx_hidden_Revision = b.Revision
-	}
-	if b.File != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 4)
-		x.xxx_hidden_File = b.File
-	}
-	if b.Side != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 4)
-		x.xxx_hidden_Side = *b.Side
-	}
-	return m0
-}
-
-type ResponseResolve struct {
-	state                  protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Output      *string                `protobuf:"bytes,1,opt,name=output"`
-	XXX_raceDetectHookData protoimpl.RaceDetectHookData
-	XXX_presence           [1]uint32
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
-}
-
-func (x *ResponseResolve) Reset() {
-	*x = ResponseResolve{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[99]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ResponseResolve) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ResponseResolve) ProtoMessage() {}
-
-func (x *ResponseResolve) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[99]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *ResponseResolve) GetOutput() string {
-	if x != nil {
-		if x.xxx_hidden_Output != nil {
-			return *x.xxx_hidden_Output
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *ResponseResolve) SetOutput(v string) {
-	x.xxx_hidden_Output = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
-}
-
-func (x *ResponseResolve) HasOutput() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
-}
-
-func (x *ResponseResolve) ClearOutput() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
-	x.xxx_hidden_Output = nil
-}
-
-type ResponseResolve_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	Output *string
-}
-
-func (b0 ResponseResolve_builder) Build() *ResponseResolve {
-	m0 := &ResponseResolve{}
-	b, x := &b0, m0
-	_, _ = b, x
-	if b.Output != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
-		x.xxx_hidden_Output = b.Output
-	}
-	return m0
-}
-
 type RequestSplit struct {
 	state                  protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
@@ -11266,7 +10232,7 @@ type RequestSplit struct {
 
 func (x *RequestSplit) Reset() {
 	*x = RequestSplit{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[100]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[91]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11278,7 +10244,7 @@ func (x *RequestSplit) String() string {
 func (*RequestSplit) ProtoMessage() {}
 
 func (x *RequestSplit) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[100]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[91]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11421,7 +10387,7 @@ type ResponseSplit struct {
 
 func (x *ResponseSplit) Reset() {
 	*x = ResponseSplit{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[101]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[92]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11433,7 +10399,7 @@ func (x *ResponseSplit) String() string {
 func (*ResponseSplit) ProtoMessage() {}
 
 func (x *ResponseSplit) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[101]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[92]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11501,7 +10467,7 @@ type RequestRestore struct {
 
 func (x *RequestRestore) Reset() {
 	*x = RequestRestore{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[102]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[93]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11513,7 +10479,7 @@ func (x *RequestRestore) String() string {
 func (*RequestRestore) ProtoMessage() {}
 
 func (x *RequestRestore) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[102]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[93]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11624,7 +10590,7 @@ type ResponseRestore struct {
 
 func (x *ResponseRestore) Reset() {
 	*x = ResponseRestore{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[103]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[94]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11636,7 +10602,7 @@ func (x *ResponseRestore) String() string {
 func (*ResponseRestore) ProtoMessage() {}
 
 func (x *ResponseRestore) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[103]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[94]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11704,7 +10670,7 @@ type RepositoryWorkspace struct {
 
 func (x *RepositoryWorkspace) Reset() {
 	*x = RepositoryWorkspace{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[104]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[95]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11716,7 +10682,7 @@ func (x *RepositoryWorkspace) String() string {
 func (*RepositoryWorkspace) ProtoMessage() {}
 
 func (x *RepositoryWorkspace) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[104]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[95]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11846,7 +10812,7 @@ type RequestListRepositoryWorkspaces struct {
 
 func (x *RequestListRepositoryWorkspaces) Reset() {
 	*x = RequestListRepositoryWorkspaces{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[105]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[96]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11858,7 +10824,7 @@ func (x *RequestListRepositoryWorkspaces) String() string {
 func (*RequestListRepositoryWorkspaces) ProtoMessage() {}
 
 func (x *RequestListRepositoryWorkspaces) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[105]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[96]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11922,7 +10888,7 @@ type ResponseListRepositoryWorkspaces struct {
 
 func (x *ResponseListRepositoryWorkspaces) Reset() {
 	*x = ResponseListRepositoryWorkspaces{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[106]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[97]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11934,7 +10900,7 @@ func (x *ResponseListRepositoryWorkspaces) String() string {
 func (*ResponseListRepositoryWorkspaces) ProtoMessage() {}
 
 func (x *ResponseListRepositoryWorkspaces) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[106]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[97]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11985,7 +10951,7 @@ type RequestAddRepositoryWorkspace struct {
 
 func (x *RequestAddRepositoryWorkspace) Reset() {
 	*x = RequestAddRepositoryWorkspace{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[107]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[98]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11997,7 +10963,7 @@ func (x *RequestAddRepositoryWorkspace) String() string {
 func (*RequestAddRepositoryWorkspace) ProtoMessage() {}
 
 func (x *RequestAddRepositoryWorkspace) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[107]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[98]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12128,7 +11094,7 @@ type ResponseAddRepositoryWorkspace struct {
 
 func (x *ResponseAddRepositoryWorkspace) Reset() {
 	*x = ResponseAddRepositoryWorkspace{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[108]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[99]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12140,7 +11106,7 @@ func (x *ResponseAddRepositoryWorkspace) String() string {
 func (*ResponseAddRepositoryWorkspace) ProtoMessage() {}
 
 func (x *ResponseAddRepositoryWorkspace) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[108]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[99]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12239,7 +11205,7 @@ type RequestForgetRepositoryWorkspace struct {
 
 func (x *RequestForgetRepositoryWorkspace) Reset() {
 	*x = RequestForgetRepositoryWorkspace{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[109]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[100]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12251,7 +11217,7 @@ func (x *RequestForgetRepositoryWorkspace) String() string {
 func (*RequestForgetRepositoryWorkspace) ProtoMessage() {}
 
 func (x *RequestForgetRepositoryWorkspace) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[109]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[100]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12349,7 +11315,7 @@ type ResponseForgetRepositoryWorkspace struct {
 
 func (x *ResponseForgetRepositoryWorkspace) Reset() {
 	*x = ResponseForgetRepositoryWorkspace{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[110]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[101]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12361,7 +11327,7 @@ func (x *ResponseForgetRepositoryWorkspace) String() string {
 func (*ResponseForgetRepositoryWorkspace) ProtoMessage() {}
 
 func (x *ResponseForgetRepositoryWorkspace) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[110]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[101]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12428,7 +11394,7 @@ type RequestRemoveRepositoryWorkspace struct {
 
 func (x *RequestRemoveRepositoryWorkspace) Reset() {
 	*x = RequestRemoveRepositoryWorkspace{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[111]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[102]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12440,7 +11406,7 @@ func (x *RequestRemoveRepositoryWorkspace) String() string {
 func (*RequestRemoveRepositoryWorkspace) ProtoMessage() {}
 
 func (x *RequestRemoveRepositoryWorkspace) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[111]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[102]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12538,7 +11504,7 @@ type ResponseRemoveRepositoryWorkspace struct {
 
 func (x *ResponseRemoveRepositoryWorkspace) Reset() {
 	*x = ResponseRemoveRepositoryWorkspace{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[112]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[103]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12550,7 +11516,7 @@ func (x *ResponseRemoveRepositoryWorkspace) String() string {
 func (*ResponseRemoveRepositoryWorkspace) ProtoMessage() {}
 
 func (x *ResponseRemoveRepositoryWorkspace) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[112]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[103]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12617,7 +11583,7 @@ type RequestRenameRepositoryWorkspace struct {
 
 func (x *RequestRenameRepositoryWorkspace) Reset() {
 	*x = RequestRenameRepositoryWorkspace{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[113]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[104]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12629,7 +11595,7 @@ func (x *RequestRenameRepositoryWorkspace) String() string {
 func (*RequestRenameRepositoryWorkspace) ProtoMessage() {}
 
 func (x *RequestRenameRepositoryWorkspace) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[113]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[104]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12727,7 +11693,7 @@ type ResponseRenameRepositoryWorkspace struct {
 
 func (x *ResponseRenameRepositoryWorkspace) Reset() {
 	*x = ResponseRenameRepositoryWorkspace{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[114]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[105]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12739,7 +11705,7 @@ func (x *ResponseRenameRepositoryWorkspace) String() string {
 func (*ResponseRenameRepositoryWorkspace) ProtoMessage() {}
 
 func (x *ResponseRenameRepositoryWorkspace) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[114]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[105]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12805,7 +11771,7 @@ type RequestUpdateStale struct {
 
 func (x *RequestUpdateStale) Reset() {
 	*x = RequestUpdateStale{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[115]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[106]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12817,7 +11783,7 @@ func (x *RequestUpdateStale) String() string {
 func (*RequestUpdateStale) ProtoMessage() {}
 
 func (x *RequestUpdateStale) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[115]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[106]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12883,7 +11849,7 @@ type ResponseUpdateStale struct {
 
 func (x *ResponseUpdateStale) Reset() {
 	*x = ResponseUpdateStale{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[116]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[107]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12895,7 +11861,7 @@ func (x *ResponseUpdateStale) String() string {
 func (*ResponseUpdateStale) ProtoMessage() {}
 
 func (x *ResponseUpdateStale) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[116]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[107]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12963,7 +11929,7 @@ type RequestDiffRange struct {
 
 func (x *RequestDiffRange) Reset() {
 	*x = RequestDiffRange{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[117]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[108]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12975,7 +11941,7 @@ func (x *RequestDiffRange) String() string {
 func (*RequestDiffRange) ProtoMessage() {}
 
 func (x *RequestDiffRange) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[117]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[108]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13103,7 +12069,7 @@ type ResponseDiffRange struct {
 
 func (x *ResponseDiffRange) Reset() {
 	*x = ResponseDiffRange{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[118]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[109]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13115,7 +12081,7 @@ func (x *ResponseDiffRange) String() string {
 func (*ResponseDiffRange) ProtoMessage() {}
 
 func (x *ResponseDiffRange) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[118]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[109]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13166,7 +12132,7 @@ type RequestListAgentCommits struct {
 
 func (x *RequestListAgentCommits) Reset() {
 	*x = RequestListAgentCommits{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[119]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[110]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13178,7 +12144,7 @@ func (x *RequestListAgentCommits) String() string {
 func (*RequestListAgentCommits) ProtoMessage() {}
 
 func (x *RequestListAgentCommits) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[119]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[110]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13307,7 +12273,7 @@ type ResponseListAgentCommits struct {
 
 func (x *ResponseListAgentCommits) Reset() {
 	*x = ResponseListAgentCommits{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[120]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[111]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13319,7 +12285,7 @@ func (x *ResponseListAgentCommits) String() string {
 func (*ResponseListAgentCommits) ProtoMessage() {}
 
 func (x *ResponseListAgentCommits) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[120]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[111]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13393,7 +12359,7 @@ type Alias struct {
 
 func (x *Alias) Reset() {
 	*x = Alias{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[121]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[112]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13405,7 +12371,7 @@ func (x *Alias) String() string {
 func (*Alias) ProtoMessage() {}
 
 func (x *Alias) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[121]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[112]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13484,7 +12450,7 @@ type RequestListAliases struct {
 
 func (x *RequestListAliases) Reset() {
 	*x = RequestListAliases{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[122]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[113]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13496,7 +12462,7 @@ func (x *RequestListAliases) String() string {
 func (*RequestListAliases) ProtoMessage() {}
 
 func (x *RequestListAliases) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[122]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[113]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13560,7 +12526,7 @@ type ResponseListAliases struct {
 
 func (x *ResponseListAliases) Reset() {
 	*x = ResponseListAliases{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[123]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[114]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13572,7 +12538,7 @@ func (x *ResponseListAliases) String() string {
 func (*ResponseListAliases) ProtoMessage() {}
 
 func (x *ResponseListAliases) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[123]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[114]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13622,7 +12588,7 @@ type RequestRunAlias struct {
 
 func (x *RequestRunAlias) Reset() {
 	*x = RequestRunAlias{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[124]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[115]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13634,7 +12600,7 @@ func (x *RequestRunAlias) String() string {
 func (*RequestRunAlias) ProtoMessage() {}
 
 func (x *RequestRunAlias) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[124]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[115]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13732,7 +12698,7 @@ type ResponseRunAlias struct {
 
 func (x *ResponseRunAlias) Reset() {
 	*x = ResponseRunAlias{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[125]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[116]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13744,7 +12710,7 @@ func (x *ResponseRunAlias) String() string {
 func (*ResponseRunAlias) ProtoMessage() {}
 
 func (x *ResponseRunAlias) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[125]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[116]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13816,7 +12782,7 @@ type TranscriptEntry struct {
 
 func (x *TranscriptEntry) Reset() {
 	*x = TranscriptEntry{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[126]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[117]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13828,7 +12794,7 @@ func (x *TranscriptEntry) String() string {
 func (*TranscriptEntry) ProtoMessage() {}
 
 func (x *TranscriptEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[126]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[117]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14074,7 +13040,7 @@ type TranscriptUsage struct {
 
 func (x *TranscriptUsage) Reset() {
 	*x = TranscriptUsage{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[127]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[118]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14086,7 +13052,7 @@ func (x *TranscriptUsage) String() string {
 func (*TranscriptUsage) ProtoMessage() {}
 
 func (x *TranscriptUsage) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[127]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[118]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14236,7 +13202,7 @@ type RequestWatchTranscript struct {
 
 func (x *RequestWatchTranscript) Reset() {
 	*x = RequestWatchTranscript{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[128]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[119]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14248,7 +13214,7 @@ func (x *RequestWatchTranscript) String() string {
 func (*RequestWatchTranscript) ProtoMessage() {}
 
 func (x *RequestWatchTranscript) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[128]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[119]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14316,7 +13282,7 @@ type ResponseWatchTranscript struct {
 
 func (x *ResponseWatchTranscript) Reset() {
 	*x = ResponseWatchTranscript{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[129]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[120]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14328,7 +13294,7 @@ func (x *ResponseWatchTranscript) String() string {
 func (*ResponseWatchTranscript) ProtoMessage() {}
 
 func (x *ResponseWatchTranscript) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[129]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[120]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14449,7 +13415,7 @@ type Review struct {
 
 func (x *Review) Reset() {
 	*x = Review{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[130]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[121]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14461,7 +13427,7 @@ func (x *Review) String() string {
 func (*Review) ProtoMessage() {}
 
 func (x *Review) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[130]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[121]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14708,7 +13674,7 @@ type ViewedFile struct {
 
 func (x *ViewedFile) Reset() {
 	*x = ViewedFile{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[131]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[122]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14720,7 +13686,7 @@ func (x *ViewedFile) String() string {
 func (*ViewedFile) ProtoMessage() {}
 
 func (x *ViewedFile) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[131]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[122]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14849,7 +13815,7 @@ type ReviewRound struct {
 
 func (x *ReviewRound) Reset() {
 	*x = ReviewRound{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[132]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[123]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14861,7 +13827,7 @@ func (x *ReviewRound) String() string {
 func (*ReviewRound) ProtoMessage() {}
 
 func (x *ReviewRound) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[132]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[123]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14969,7 +13935,7 @@ type RoundCommit struct {
 
 func (x *RoundCommit) Reset() {
 	*x = RoundCommit{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[133]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[124]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14981,7 +13947,7 @@ func (x *RoundCommit) String() string {
 func (*RoundCommit) ProtoMessage() {}
 
 func (x *RoundCommit) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[133]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[124]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -15093,7 +14059,7 @@ type ReviewComment struct {
 
 func (x *ReviewComment) Reset() {
 	*x = ReviewComment{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[134]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[125]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -15105,7 +14071,7 @@ func (x *ReviewComment) String() string {
 func (*ReviewComment) ProtoMessage() {}
 
 func (x *ReviewComment) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[134]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[125]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -15583,7 +14549,7 @@ type ReviewReply struct {
 
 func (x *ReviewReply) Reset() {
 	*x = ReviewReply{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[135]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[126]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -15595,7 +14561,7 @@ func (x *ReviewReply) String() string {
 func (*ReviewReply) ProtoMessage() {}
 
 func (x *ReviewReply) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[135]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[126]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -15754,7 +14720,7 @@ type RequestListReviews struct {
 
 func (x *RequestListReviews) Reset() {
 	*x = RequestListReviews{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[136]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[127]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -15766,7 +14732,7 @@ func (x *RequestListReviews) String() string {
 func (*RequestListReviews) ProtoMessage() {}
 
 func (x *RequestListReviews) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[136]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[127]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -15830,7 +14796,7 @@ type ResponseListReviews struct {
 
 func (x *ResponseListReviews) Reset() {
 	*x = ResponseListReviews{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[137]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[128]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -15842,7 +14808,7 @@ func (x *ResponseListReviews) String() string {
 func (*ResponseListReviews) ProtoMessage() {}
 
 func (x *ResponseListReviews) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[137]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[128]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -15891,7 +14857,7 @@ type RequestListApprovedCommits struct {
 
 func (x *RequestListApprovedCommits) Reset() {
 	*x = RequestListApprovedCommits{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[138]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[129]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -15903,7 +14869,7 @@ func (x *RequestListApprovedCommits) String() string {
 func (*RequestListApprovedCommits) ProtoMessage() {}
 
 func (x *RequestListApprovedCommits) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[138]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[129]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -15967,7 +14933,7 @@ type ResponseListApprovedCommits struct {
 
 func (x *ResponseListApprovedCommits) Reset() {
 	*x = ResponseListApprovedCommits{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[139]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[130]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -15979,7 +14945,7 @@ func (x *ResponseListApprovedCommits) String() string {
 func (*ResponseListApprovedCommits) ProtoMessage() {}
 
 func (x *ResponseListApprovedCommits) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[139]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[130]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -16026,7 +14992,7 @@ type RequestGetReview struct {
 
 func (x *RequestGetReview) Reset() {
 	*x = RequestGetReview{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[140]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[131]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -16038,7 +15004,7 @@ func (x *RequestGetReview) String() string {
 func (*RequestGetReview) ProtoMessage() {}
 
 func (x *RequestGetReview) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[140]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[131]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -16102,7 +15068,7 @@ type ResponseGetReview struct {
 
 func (x *ResponseGetReview) Reset() {
 	*x = ResponseGetReview{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[141]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[132]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -16114,7 +15080,7 @@ func (x *ResponseGetReview) String() string {
 func (*ResponseGetReview) ProtoMessage() {}
 
 func (x *ResponseGetReview) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[141]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[132]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -16173,7 +15139,7 @@ type RequestStartReview struct {
 
 func (x *RequestStartReview) Reset() {
 	*x = RequestStartReview{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[142]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[133]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -16185,7 +15151,7 @@ func (x *RequestStartReview) String() string {
 func (*RequestStartReview) ProtoMessage() {}
 
 func (x *RequestStartReview) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[142]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[133]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -16262,7 +15228,7 @@ type ResponseStartReview struct {
 
 func (x *ResponseStartReview) Reset() {
 	*x = ResponseStartReview{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[143]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[134]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -16274,7 +15240,7 @@ func (x *ResponseStartReview) String() string {
 func (*ResponseStartReview) ProtoMessage() {}
 
 func (x *ResponseStartReview) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[143]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[134]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -16338,7 +15304,7 @@ type RequestAddComment struct {
 
 func (x *RequestAddComment) Reset() {
 	*x = RequestAddComment{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[144]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[135]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -16350,7 +15316,7 @@ func (x *RequestAddComment) String() string {
 func (*RequestAddComment) ProtoMessage() {}
 
 func (x *RequestAddComment) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[144]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[135]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -16599,7 +15565,7 @@ type ResponseAddComment struct {
 
 func (x *ResponseAddComment) Reset() {
 	*x = ResponseAddComment{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[145]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[136]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -16611,7 +15577,7 @@ func (x *ResponseAddComment) String() string {
 func (*ResponseAddComment) ProtoMessage() {}
 
 func (x *ResponseAddComment) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[145]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[136]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -16671,7 +15637,7 @@ type RequestEditComment struct {
 
 func (x *RequestEditComment) Reset() {
 	*x = RequestEditComment{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[146]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[137]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -16683,7 +15649,7 @@ func (x *RequestEditComment) String() string {
 func (*RequestEditComment) ProtoMessage() {}
 
 func (x *RequestEditComment) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[146]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[137]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -16811,7 +15777,7 @@ type ResponseEditComment struct {
 
 func (x *ResponseEditComment) Reset() {
 	*x = ResponseEditComment{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[147]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[138]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -16823,7 +15789,7 @@ func (x *ResponseEditComment) String() string {
 func (*ResponseEditComment) ProtoMessage() {}
 
 func (x *ResponseEditComment) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[147]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[138]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -16882,7 +15848,7 @@ type RequestDeleteComment struct {
 
 func (x *RequestDeleteComment) Reset() {
 	*x = RequestDeleteComment{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[148]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[139]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -16894,7 +15860,7 @@ func (x *RequestDeleteComment) String() string {
 func (*RequestDeleteComment) ProtoMessage() {}
 
 func (x *RequestDeleteComment) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[148]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[139]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -16989,7 +15955,7 @@ type ResponseDeleteComment struct {
 
 func (x *ResponseDeleteComment) Reset() {
 	*x = ResponseDeleteComment{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[149]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[140]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -17001,7 +15967,7 @@ func (x *ResponseDeleteComment) String() string {
 func (*ResponseDeleteComment) ProtoMessage() {}
 
 func (x *ResponseDeleteComment) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[149]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[140]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -17037,7 +16003,7 @@ type RequestReply struct {
 
 func (x *RequestReply) Reset() {
 	*x = RequestReply{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[150]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[141]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -17049,7 +16015,7 @@ func (x *RequestReply) String() string {
 func (*RequestReply) ProtoMessage() {}
 
 func (x *RequestReply) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[150]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[141]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -17177,7 +16143,7 @@ type ResponseReply struct {
 
 func (x *ResponseReply) Reset() {
 	*x = ResponseReply{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[151]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[142]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -17189,7 +16155,7 @@ func (x *ResponseReply) String() string {
 func (*ResponseReply) ProtoMessage() {}
 
 func (x *ResponseReply) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[151]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[142]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -17249,7 +16215,7 @@ type RequestResolveComment struct {
 
 func (x *RequestResolveComment) Reset() {
 	*x = RequestResolveComment{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[152]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[143]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -17261,7 +16227,7 @@ func (x *RequestResolveComment) String() string {
 func (*RequestResolveComment) ProtoMessage() {}
 
 func (x *RequestResolveComment) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[152]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[143]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -17386,7 +16352,7 @@ type ResponseResolveComment struct {
 
 func (x *ResponseResolveComment) Reset() {
 	*x = ResponseResolveComment{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[153]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[144]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -17398,7 +16364,7 @@ func (x *ResponseResolveComment) String() string {
 func (*ResponseResolveComment) ProtoMessage() {}
 
 func (x *ResponseResolveComment) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[153]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[144]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -17456,7 +16422,7 @@ type RequestFinish struct {
 
 func (x *RequestFinish) Reset() {
 	*x = RequestFinish{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[154]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[145]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -17468,7 +16434,7 @@ func (x *RequestFinish) String() string {
 func (*RequestFinish) ProtoMessage() {}
 
 func (x *RequestFinish) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[154]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[145]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -17533,7 +16499,7 @@ type ResponseFinish struct {
 
 func (x *ResponseFinish) Reset() {
 	*x = ResponseFinish{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[155]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[146]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -17545,7 +16511,7 @@ func (x *ResponseFinish) String() string {
 func (*ResponseFinish) ProtoMessage() {}
 
 func (x *ResponseFinish) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[155]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[146]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -17618,7 +16584,7 @@ type RequestDiscard struct {
 
 func (x *RequestDiscard) Reset() {
 	*x = RequestDiscard{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[156]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[147]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -17630,7 +16596,7 @@ func (x *RequestDiscard) String() string {
 func (*RequestDiscard) ProtoMessage() {}
 
 func (x *RequestDiscard) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[156]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[147]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -17694,7 +16660,7 @@ type ResponseDiscard struct {
 
 func (x *ResponseDiscard) Reset() {
 	*x = ResponseDiscard{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[157]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[148]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -17706,7 +16672,7 @@ func (x *ResponseDiscard) String() string {
 func (*ResponseDiscard) ProtoMessage() {}
 
 func (x *ResponseDiscard) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[157]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[148]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -17764,7 +16730,7 @@ type RequestStartNextRound struct {
 
 func (x *RequestStartNextRound) Reset() {
 	*x = RequestStartNextRound{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[158]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[149]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -17776,7 +16742,7 @@ func (x *RequestStartNextRound) String() string {
 func (*RequestStartNextRound) ProtoMessage() {}
 
 func (x *RequestStartNextRound) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[158]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[149]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -17840,7 +16806,7 @@ type ResponseStartNextRound struct {
 
 func (x *ResponseStartNextRound) Reset() {
 	*x = ResponseStartNextRound{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[159]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[150]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -17852,7 +16818,7 @@ func (x *ResponseStartNextRound) String() string {
 func (*ResponseStartNextRound) ProtoMessage() {}
 
 func (x *ResponseStartNextRound) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[159]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[150]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -17913,7 +16879,7 @@ type RequestRoundDiff struct {
 
 func (x *RequestRoundDiff) Reset() {
 	*x = RequestRoundDiff{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[160]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[151]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -17925,7 +16891,7 @@ func (x *RequestRoundDiff) String() string {
 func (*RequestRoundDiff) ProtoMessage() {}
 
 func (x *RequestRoundDiff) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[160]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[151]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18082,7 +17048,7 @@ type ResponseRoundDiff struct {
 
 func (x *ResponseRoundDiff) Reset() {
 	*x = ResponseRoundDiff{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[161]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[152]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18094,7 +17060,7 @@ func (x *ResponseRoundDiff) String() string {
 func (*ResponseRoundDiff) ProtoMessage() {}
 
 func (x *ResponseRoundDiff) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[161]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[152]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18207,7 +17173,7 @@ type RequestSetViewed struct {
 
 func (x *RequestSetViewed) Reset() {
 	*x = RequestSetViewed{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[162]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[153]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18219,7 +17185,7 @@ func (x *RequestSetViewed) String() string {
 func (*RequestSetViewed) ProtoMessage() {}
 
 func (x *RequestSetViewed) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[162]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[153]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18376,7 +17342,7 @@ type ResponseSetViewed struct {
 
 func (x *ResponseSetViewed) Reset() {
 	*x = ResponseSetViewed{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[163]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[154]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18388,7 +17354,7 @@ func (x *ResponseSetViewed) String() string {
 func (*ResponseSetViewed) ProtoMessage() {}
 
 func (x *ResponseSetViewed) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[163]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[154]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18443,7 +17409,7 @@ type RequestGetStatus struct {
 
 func (x *RequestGetStatus) Reset() {
 	*x = RequestGetStatus{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[164]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[155]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18455,7 +17421,7 @@ func (x *RequestGetStatus) String() string {
 func (*RequestGetStatus) ProtoMessage() {}
 
 func (x *RequestGetStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[164]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[155]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18490,7 +17456,7 @@ type ResponseGetStatus struct {
 
 func (x *ResponseGetStatus) Reset() {
 	*x = ResponseGetStatus{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[165]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[156]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18502,7 +17468,7 @@ func (x *ResponseGetStatus) String() string {
 func (*ResponseGetStatus) ProtoMessage() {}
 
 func (x *ResponseGetStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[165]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[156]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18581,7 +17547,7 @@ type RequestListPullRequestTemplates struct {
 
 func (x *RequestListPullRequestTemplates) Reset() {
 	*x = RequestListPullRequestTemplates{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[166]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[157]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18593,7 +17559,7 @@ func (x *RequestListPullRequestTemplates) String() string {
 func (*RequestListPullRequestTemplates) ProtoMessage() {}
 
 func (x *RequestListPullRequestTemplates) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[166]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[157]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18657,7 +17623,7 @@ type ResponseListPullRequestTemplates struct {
 
 func (x *ResponseListPullRequestTemplates) Reset() {
 	*x = ResponseListPullRequestTemplates{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[167]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[158]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18669,7 +17635,7 @@ func (x *ResponseListPullRequestTemplates) String() string {
 func (*ResponseListPullRequestTemplates) ProtoMessage() {}
 
 func (x *ResponseListPullRequestTemplates) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[167]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[158]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18717,7 +17683,7 @@ type RequestValidatePullRequest struct {
 
 func (x *RequestValidatePullRequest) Reset() {
 	*x = RequestValidatePullRequest{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[168]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[159]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18729,7 +17695,7 @@ func (x *RequestValidatePullRequest) String() string {
 func (*RequestValidatePullRequest) ProtoMessage() {}
 
 func (x *RequestValidatePullRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[168]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[159]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18809,7 +17775,7 @@ type ResponseValidatePullRequest struct {
 
 func (x *ResponseValidatePullRequest) Reset() {
 	*x = ResponseValidatePullRequest{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[169]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[160]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18821,7 +17787,7 @@ func (x *ResponseValidatePullRequest) String() string {
 func (*ResponseValidatePullRequest) ProtoMessage() {}
 
 func (x *ResponseValidatePullRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[169]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[160]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18919,7 +17885,7 @@ type RequestSubmitPullRequest struct {
 
 func (x *RequestSubmitPullRequest) Reset() {
 	*x = RequestSubmitPullRequest{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[170]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[161]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18931,7 +17897,7 @@ func (x *RequestSubmitPullRequest) String() string {
 func (*RequestSubmitPullRequest) ProtoMessage() {}
 
 func (x *RequestSubmitPullRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[170]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[161]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -19073,7 +18039,7 @@ type SubmittedPullRequest struct {
 
 func (x *SubmittedPullRequest) Reset() {
 	*x = SubmittedPullRequest{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[171]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[162]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -19085,7 +18051,7 @@ func (x *SubmittedPullRequest) String() string {
 func (*SubmittedPullRequest) ProtoMessage() {}
 
 func (x *SubmittedPullRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[171]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[162]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -19213,7 +18179,7 @@ type ResponseSubmitPullRequest struct {
 
 func (x *ResponseSubmitPullRequest) Reset() {
 	*x = ResponseSubmitPullRequest{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[172]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[163]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -19225,7 +18191,7 @@ func (x *ResponseSubmitPullRequest) String() string {
 func (*ResponseSubmitPullRequest) ProtoMessage() {}
 
 func (x *ResponseSubmitPullRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[172]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[163]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -19287,7 +18253,7 @@ type RequestListPullRequests struct {
 
 func (x *RequestListPullRequests) Reset() {
 	*x = RequestListPullRequests{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[173]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[164]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -19299,7 +18265,7 @@ func (x *RequestListPullRequests) String() string {
 func (*RequestListPullRequests) ProtoMessage() {}
 
 func (x *RequestListPullRequests) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[173]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[164]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -19366,7 +18332,7 @@ type PullRequest struct {
 
 func (x *PullRequest) Reset() {
 	*x = PullRequest{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[174]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[165]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -19378,7 +18344,7 @@ func (x *PullRequest) String() string {
 func (*PullRequest) ProtoMessage() {}
 
 func (x *PullRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[174]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[165]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -19474,7 +18440,7 @@ type ResponseListPullRequests struct {
 
 func (x *ResponseListPullRequests) Reset() {
 	*x = ResponseListPullRequests{}
-	mi := &file_proto_codexel_codexel_proto_msgTypes[175]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[166]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -19486,7 +18452,7 @@ func (x *ResponseListPullRequests) String() string {
 func (*ResponseListPullRequests) ProtoMessage() {}
 
 func (x *ResponseListPullRequests) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_codexel_codexel_proto_msgTypes[175]
+	mi := &file_proto_codexel_codexel_proto_msgTypes[166]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -19821,38 +18787,10 @@ const file_proto_codexel_codexel_proto_rawDesc = "" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1a\n" +
 	"\brevision\x18\x02 \x01(\tR\brevision\")\n" +
 	"\x11ResponseListFiles\x12\x14\n" +
-	"\x05files\x18\x01 \x03(\tR\x05files\"T\n" +
-	"\x10RequestWriteFile\x12\x12\n" +
-	"\x04path\x18\x01 \x01(\tR\x04path\x12\x12\n" +
-	"\x04file\x18\x02 \x01(\tR\x04file\x12\x18\n" +
-	"\acontent\x18\x03 \x01(\fR\acontent\"\x13\n" +
-	"\x11ResponseWriteFile\":\n" +
+	"\x05files\x18\x01 \x03(\tR\x05files\":\n" +
 	"\x0eConflictedFile\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12\x14\n" +
-	"\x05sides\x18\x02 \x01(\x05R\x05sides\"\xc5\x01\n" +
-	"\x10ConflictedCommit\x12\x1b\n" +
-	"\tchange_id\x18\x01 \x01(\tR\bchangeId\x12\x1b\n" +
-	"\tcommit_id\x18\x02 \x01(\tR\bcommitId\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\x122\n" +
-	"\x05files\x18\x04 \x03(\v2\x1c.mono.codexel.ConflictedFileR\x05files\x12!\n" +
-	"\fworking_copy\x18\x05 \x01(\bR\vworkingCopy\"*\n" +
-	"\x14RequestListConflicts\x12\x12\n" +
-	"\x04path\x18\x01 \x01(\tR\x04path\"Q\n" +
-	"\x15ResponseListConflicts\x128\n" +
-	"\acommits\x18\x01 \x03(\v2\x1e.mono.codexel.ConflictedCommitR\acommits\"X\n" +
-	"\x12RequestGetConflict\x12\x12\n" +
-	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1a\n" +
-	"\brevision\x18\x02 \x01(\tR\brevision\x12\x12\n" +
-	"\x04file\x18\x03 \x01(\tR\x04file\"/\n" +
-	"\x13ResponseGetConflict\x12\x18\n" +
-	"\acontent\x18\x01 \x01(\tR\acontent\"\x83\x01\n" +
-	"\x0eRequestResolve\x12\x12\n" +
-	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1a\n" +
-	"\brevision\x18\x02 \x01(\tR\brevision\x12\x12\n" +
-	"\x04file\x18\x03 \x01(\tR\x04file\x12-\n" +
-	"\x04side\x18\x04 \x01(\x0e2\x19.mono.codexel.ResolveSideR\x04side\")\n" +
-	"\x0fResponseResolve\x12\x16\n" +
-	"\x06output\x18\x01 \x01(\tR\x06output\"v\n" +
+	"\x05sides\x18\x02 \x01(\x05R\x05sides\"v\n" +
 	"\fRequestSplit\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1a\n" +
 	"\brevision\x18\x02 \x01(\tR\brevision\x12 \n" +
@@ -20154,11 +19092,7 @@ const file_proto_codexel_codexel_proto_rawDesc = "" +
 	"\x19REBASE_TARGET_UNSPECIFIED\x10\x00\x12\x16\n" +
 	"\x12REBASE_TARGET_ONTO\x10\x01\x12\x1e\n" +
 	"\x1aREBASE_TARGET_INSERT_AFTER\x10\x02\x12\x1f\n" +
-	"\x1bREBASE_TARGET_INSERT_BEFORE\x10\x03*[\n" +
-	"\vResolveSide\x12\x1c\n" +
-	"\x18RESOLVE_SIDE_UNSPECIFIED\x10\x00\x12\x15\n" +
-	"\x11RESOLVE_SIDE_OURS\x10\x01\x12\x17\n" +
-	"\x13RESOLVE_SIDE_THEIRS\x10\x02*\xd8\x01\n" +
+	"\x1bREBASE_TARGET_INSERT_BEFORE\x10\x03*\xd8\x01\n" +
 	"\x13TranscriptEntryKind\x12%\n" +
 	"!TRANSCRIPT_ENTRY_KIND_UNSPECIFIED\x10\x00\x12%\n" +
 	"!TRANSCRIPT_ENTRY_KIND_USER_PROMPT\x10\x01\x12(\n" +
@@ -20192,7 +19126,7 @@ const file_proto_codexel_codexel_proto_rawDesc = "" +
 	"\x0eListWorkspaces\x12#.mono.codexel.RequestListWorkspaces\x1a$.mono.codexel.ResponseListWorkspaces\x12J\n" +
 	"\x05Start\x12\x1f.mono.codexel.RequestStartAgent\x1a .mono.codexel.ResponseStartAgent\x12G\n" +
 	"\x04Stop\x12\x1e.mono.codexel.RequestStopAgent\x1a\x1f.mono.codexel.ResponseStopAgent\x12`\n" +
-	"\x0fWatchTranscript\x12$.mono.codexel.RequestWatchTranscript\x1a%.mono.codexel.ResponseWatchTranscript0\x012\xb6\x1d\n" +
+	"\x0fWatchTranscript\x12$.mono.codexel.RequestWatchTranscript\x1a%.mono.codexel.ResponseWatchTranscript0\x012\xf2\x1a\n" +
 	"\x11RepositoryService\x12U\n" +
 	"\x04List\x12%.mono.codexel.RequestListRepositories\x1a&.mono.codexel.ResponseListRepositories\x12Q\n" +
 	"\x04Open\x12#.mono.codexel.RequestOpenRepository\x1a$.mono.codexel.ResponseOpenRepository\x12T\n" +
@@ -20226,11 +19160,7 @@ const file_proto_codexel_codexel_proto_rawDesc = "" +
 	"\x0fRevertOperation\x12$.mono.codexel.RequestRevertOperation\x1a%.mono.codexel.ResponseRevertOperation\x12a\n" +
 	"\x10RestoreOperation\x12%.mono.codexel.RequestRestoreOperation\x1a&.mono.codexel.ResponseRestoreOperation\x12F\n" +
 	"\aGetFile\x12\x1c.mono.codexel.RequestGetFile\x1a\x1d.mono.codexel.ResponseGetFile\x12L\n" +
-	"\tListFiles\x12\x1e.mono.codexel.RequestListFiles\x1a\x1f.mono.codexel.ResponseListFiles\x12L\n" +
-	"\tWriteFile\x12\x1e.mono.codexel.RequestWriteFile\x1a\x1f.mono.codexel.ResponseWriteFile\x12X\n" +
-	"\rListConflicts\x12\".mono.codexel.RequestListConflicts\x1a#.mono.codexel.ResponseListConflicts\x12R\n" +
-	"\vGetConflict\x12 .mono.codexel.RequestGetConflict\x1a!.mono.codexel.ResponseGetConflict\x12F\n" +
-	"\aResolve\x12\x1c.mono.codexel.RequestResolve\x1a\x1d.mono.codexel.ResponseResolve\x12o\n" +
+	"\tListFiles\x12\x1e.mono.codexel.RequestListFiles\x1a\x1f.mono.codexel.ResponseListFiles\x12o\n" +
 	"\x0eListWorkspaces\x12-.mono.codexel.RequestListRepositoryWorkspaces\x1a..mono.codexel.ResponseListRepositoryWorkspaces\x12i\n" +
 	"\fAddWorkspace\x12+.mono.codexel.RequestAddRepositoryWorkspace\x1a,.mono.codexel.ResponseAddRepositoryWorkspace\x12r\n" +
 	"\x0fForgetWorkspace\x12..mono.codexel.RequestForgetRepositoryWorkspace\x1a/.mono.codexel.ResponseForgetRepositoryWorkspace\x12r\n" +
@@ -20263,412 +19193,391 @@ const file_proto_codexel_codexel_proto_rawDesc = "" +
 	"\rSystemService\x12L\n" +
 	"\tGetStatus\x12\x1e.mono.codexel.RequestGetStatus\x1a\x1f.mono.codexel.ResponseGetStatusB)Z\x1fgo.f110.dev/mono/go/codexel/api\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
 
-var file_proto_codexel_codexel_proto_enumTypes = make([]protoimpl.EnumInfo, 10)
-var file_proto_codexel_codexel_proto_msgTypes = make([]protoimpl.MessageInfo, 176)
+var file_proto_codexel_codexel_proto_enumTypes = make([]protoimpl.EnumInfo, 9)
+var file_proto_codexel_codexel_proto_msgTypes = make([]protoimpl.MessageInfo, 167)
 var file_proto_codexel_codexel_proto_goTypes = []any{
 	(AgentStatus)(0),                          // 0: mono.codexel.AgentStatus
 	(FileStatus)(0),                           // 1: mono.codexel.FileStatus
 	(DiffLineKind)(0),                         // 2: mono.codexel.DiffLineKind
 	(RebaseSource)(0),                         // 3: mono.codexel.RebaseSource
 	(RebaseTarget)(0),                         // 4: mono.codexel.RebaseTarget
-	(ResolveSide)(0),                          // 5: mono.codexel.ResolveSide
-	(TranscriptEntryKind)(0),                  // 6: mono.codexel.TranscriptEntryKind
-	(ReviewState)(0),                          // 7: mono.codexel.ReviewState
-	(DiffSide)(0),                             // 8: mono.codexel.DiffSide
-	(PullRequestAction)(0),                    // 9: mono.codexel.PullRequestAction
-	(*Agent)(nil),                             // 10: mono.codexel.Agent
-	(*Workspace)(nil),                         // 11: mono.codexel.Workspace
-	(*RequestListAgents)(nil),                 // 12: mono.codexel.RequestListAgents
-	(*ResponseListAgents)(nil),                // 13: mono.codexel.ResponseListAgents
-	(*RequestWatchAgents)(nil),                // 14: mono.codexel.RequestWatchAgents
-	(*ResponseWatchAgents)(nil),               // 15: mono.codexel.ResponseWatchAgents
-	(*RequestReadOutput)(nil),                 // 16: mono.codexel.RequestReadOutput
-	(*ResponseReadOutput)(nil),                // 17: mono.codexel.ResponseReadOutput
-	(*RequestSendPrompt)(nil),                 // 18: mono.codexel.RequestSendPrompt
-	(*ResponseSendPrompt)(nil),                // 19: mono.codexel.ResponseSendPrompt
-	(*RequestSendKeys)(nil),                   // 20: mono.codexel.RequestSendKeys
-	(*ResponseSendKeys)(nil),                  // 21: mono.codexel.ResponseSendKeys
-	(*RequestFocusAgent)(nil),                 // 22: mono.codexel.RequestFocusAgent
-	(*ResponseFocusAgent)(nil),                // 23: mono.codexel.ResponseFocusAgent
-	(*RequestListWorkspaces)(nil),             // 24: mono.codexel.RequestListWorkspaces
-	(*ResponseListWorkspaces)(nil),            // 25: mono.codexel.ResponseListWorkspaces
-	(*RequestStartAgent)(nil),                 // 26: mono.codexel.RequestStartAgent
-	(*ResponseStartAgent)(nil),                // 27: mono.codexel.ResponseStartAgent
-	(*RequestStopAgent)(nil),                  // 28: mono.codexel.RequestStopAgent
-	(*ResponseStopAgent)(nil),                 // 29: mono.codexel.ResponseStopAgent
-	(*Repository)(nil),                        // 30: mono.codexel.Repository
-	(*RemoteBookmark)(nil),                    // 31: mono.codexel.RemoteBookmark
-	(*Trailer)(nil),                           // 32: mono.codexel.Trailer
-	(*Commit)(nil),                            // 33: mono.codexel.Commit
-	(*GraphLine)(nil),                         // 34: mono.codexel.GraphLine
-	(*LogRow)(nil),                            // 35: mono.codexel.LogRow
-	(*RequestListRepositories)(nil),           // 36: mono.codexel.RequestListRepositories
-	(*ResponseListRepositories)(nil),          // 37: mono.codexel.ResponseListRepositories
-	(*RequestOpenRepository)(nil),             // 38: mono.codexel.RequestOpenRepository
-	(*ResponseOpenRepository)(nil),            // 39: mono.codexel.ResponseOpenRepository
-	(*RequestCloseRepository)(nil),            // 40: mono.codexel.RequestCloseRepository
-	(*ResponseCloseRepository)(nil),           // 41: mono.codexel.ResponseCloseRepository
-	(*RequestWatchRepository)(nil),            // 42: mono.codexel.RequestWatchRepository
-	(*ResponseWatchRepository)(nil),           // 43: mono.codexel.ResponseWatchRepository
-	(*RequestLog)(nil),                        // 44: mono.codexel.RequestLog
-	(*ResponseLog)(nil),                       // 45: mono.codexel.ResponseLog
-	(*DiffLine)(nil),                          // 46: mono.codexel.DiffLine
-	(*Hunk)(nil),                              // 47: mono.codexel.Hunk
-	(*FileDiff)(nil),                          // 48: mono.codexel.FileDiff
-	(*RequestGetRevision)(nil),                // 49: mono.codexel.RequestGetRevision
-	(*ResponseGetRevision)(nil),               // 50: mono.codexel.ResponseGetRevision
-	(*RequestNew)(nil),                        // 51: mono.codexel.RequestNew
-	(*ResponseNew)(nil),                       // 52: mono.codexel.ResponseNew
-	(*RequestEdit)(nil),                       // 53: mono.codexel.RequestEdit
-	(*ResponseEdit)(nil),                      // 54: mono.codexel.ResponseEdit
-	(*RequestAbandon)(nil),                    // 55: mono.codexel.RequestAbandon
-	(*ResponseAbandon)(nil),                   // 56: mono.codexel.ResponseAbandon
-	(*RequestDescribe)(nil),                   // 57: mono.codexel.RequestDescribe
-	(*ResponseDescribe)(nil),                  // 58: mono.codexel.ResponseDescribe
-	(*RequestCommit)(nil),                     // 59: mono.codexel.RequestCommit
-	(*ResponseCommit)(nil),                    // 60: mono.codexel.ResponseCommit
-	(*RequestUndo)(nil),                       // 61: mono.codexel.RequestUndo
-	(*ResponseUndo)(nil),                      // 62: mono.codexel.ResponseUndo
-	(*RequestRebase)(nil),                     // 63: mono.codexel.RequestRebase
-	(*ResponseRebase)(nil),                    // 64: mono.codexel.ResponseRebase
-	(*RequestSquash)(nil),                     // 65: mono.codexel.RequestSquash
-	(*ResponseSquash)(nil),                    // 66: mono.codexel.ResponseSquash
-	(*Bookmark)(nil),                          // 67: mono.codexel.Bookmark
-	(*RequestListBookmarks)(nil),              // 68: mono.codexel.RequestListBookmarks
-	(*ResponseListBookmarks)(nil),             // 69: mono.codexel.ResponseListBookmarks
-	(*RequestSetBookmark)(nil),                // 70: mono.codexel.RequestSetBookmark
-	(*ResponseSetBookmark)(nil),               // 71: mono.codexel.ResponseSetBookmark
-	(*RequestMoveBookmark)(nil),               // 72: mono.codexel.RequestMoveBookmark
-	(*ResponseMoveBookmark)(nil),              // 73: mono.codexel.ResponseMoveBookmark
-	(*RequestDeleteBookmark)(nil),             // 74: mono.codexel.RequestDeleteBookmark
-	(*ResponseDeleteBookmark)(nil),            // 75: mono.codexel.ResponseDeleteBookmark
-	(*RequestForgetBookmark)(nil),             // 76: mono.codexel.RequestForgetBookmark
-	(*ResponseForgetBookmark)(nil),            // 77: mono.codexel.ResponseForgetBookmark
-	(*RequestTrackBookmark)(nil),              // 78: mono.codexel.RequestTrackBookmark
-	(*ResponseTrackBookmark)(nil),             // 79: mono.codexel.ResponseTrackBookmark
-	(*RequestUntrackBookmark)(nil),            // 80: mono.codexel.RequestUntrackBookmark
-	(*ResponseUntrackBookmark)(nil),           // 81: mono.codexel.ResponseUntrackBookmark
-	(*RequestFetch)(nil),                      // 82: mono.codexel.RequestFetch
-	(*ResponseFetch)(nil),                     // 83: mono.codexel.ResponseFetch
-	(*RequestPush)(nil),                       // 84: mono.codexel.RequestPush
-	(*ResponsePush)(nil),                      // 85: mono.codexel.ResponsePush
-	(*Operation)(nil),                         // 86: mono.codexel.Operation
-	(*RequestListOperations)(nil),             // 87: mono.codexel.RequestListOperations
-	(*ResponseListOperations)(nil),            // 88: mono.codexel.ResponseListOperations
-	(*RequestRevertOperation)(nil),            // 89: mono.codexel.RequestRevertOperation
-	(*ResponseRevertOperation)(nil),           // 90: mono.codexel.ResponseRevertOperation
-	(*RequestRestoreOperation)(nil),           // 91: mono.codexel.RequestRestoreOperation
-	(*ResponseRestoreOperation)(nil),          // 92: mono.codexel.ResponseRestoreOperation
-	(*EvologEntry)(nil),                       // 93: mono.codexel.EvologEntry
-	(*RequestEvolog)(nil),                     // 94: mono.codexel.RequestEvolog
-	(*ResponseEvolog)(nil),                    // 95: mono.codexel.ResponseEvolog
-	(*RequestGetFile)(nil),                    // 96: mono.codexel.RequestGetFile
-	(*ResponseGetFile)(nil),                   // 97: mono.codexel.ResponseGetFile
-	(*RequestListFiles)(nil),                  // 98: mono.codexel.RequestListFiles
-	(*ResponseListFiles)(nil),                 // 99: mono.codexel.ResponseListFiles
-	(*RequestWriteFile)(nil),                  // 100: mono.codexel.RequestWriteFile
-	(*ResponseWriteFile)(nil),                 // 101: mono.codexel.ResponseWriteFile
-	(*ConflictedFile)(nil),                    // 102: mono.codexel.ConflictedFile
-	(*ConflictedCommit)(nil),                  // 103: mono.codexel.ConflictedCommit
-	(*RequestListConflicts)(nil),              // 104: mono.codexel.RequestListConflicts
-	(*ResponseListConflicts)(nil),             // 105: mono.codexel.ResponseListConflicts
-	(*RequestGetConflict)(nil),                // 106: mono.codexel.RequestGetConflict
-	(*ResponseGetConflict)(nil),               // 107: mono.codexel.ResponseGetConflict
-	(*RequestResolve)(nil),                    // 108: mono.codexel.RequestResolve
-	(*ResponseResolve)(nil),                   // 109: mono.codexel.ResponseResolve
-	(*RequestSplit)(nil),                      // 110: mono.codexel.RequestSplit
-	(*ResponseSplit)(nil),                     // 111: mono.codexel.ResponseSplit
-	(*RequestRestore)(nil),                    // 112: mono.codexel.RequestRestore
-	(*ResponseRestore)(nil),                   // 113: mono.codexel.ResponseRestore
-	(*RepositoryWorkspace)(nil),               // 114: mono.codexel.RepositoryWorkspace
-	(*RequestListRepositoryWorkspaces)(nil),   // 115: mono.codexel.RequestListRepositoryWorkspaces
-	(*ResponseListRepositoryWorkspaces)(nil),  // 116: mono.codexel.ResponseListRepositoryWorkspaces
-	(*RequestAddRepositoryWorkspace)(nil),     // 117: mono.codexel.RequestAddRepositoryWorkspace
-	(*ResponseAddRepositoryWorkspace)(nil),    // 118: mono.codexel.ResponseAddRepositoryWorkspace
-	(*RequestForgetRepositoryWorkspace)(nil),  // 119: mono.codexel.RequestForgetRepositoryWorkspace
-	(*ResponseForgetRepositoryWorkspace)(nil), // 120: mono.codexel.ResponseForgetRepositoryWorkspace
-	(*RequestRemoveRepositoryWorkspace)(nil),  // 121: mono.codexel.RequestRemoveRepositoryWorkspace
-	(*ResponseRemoveRepositoryWorkspace)(nil), // 122: mono.codexel.ResponseRemoveRepositoryWorkspace
-	(*RequestRenameRepositoryWorkspace)(nil),  // 123: mono.codexel.RequestRenameRepositoryWorkspace
-	(*ResponseRenameRepositoryWorkspace)(nil), // 124: mono.codexel.ResponseRenameRepositoryWorkspace
-	(*RequestUpdateStale)(nil),                // 125: mono.codexel.RequestUpdateStale
-	(*ResponseUpdateStale)(nil),               // 126: mono.codexel.ResponseUpdateStale
-	(*RequestDiffRange)(nil),                  // 127: mono.codexel.RequestDiffRange
-	(*ResponseDiffRange)(nil),                 // 128: mono.codexel.ResponseDiffRange
-	(*RequestListAgentCommits)(nil),           // 129: mono.codexel.RequestListAgentCommits
-	(*ResponseListAgentCommits)(nil),          // 130: mono.codexel.ResponseListAgentCommits
-	(*Alias)(nil),                             // 131: mono.codexel.Alias
-	(*RequestListAliases)(nil),                // 132: mono.codexel.RequestListAliases
-	(*ResponseListAliases)(nil),               // 133: mono.codexel.ResponseListAliases
-	(*RequestRunAlias)(nil),                   // 134: mono.codexel.RequestRunAlias
-	(*ResponseRunAlias)(nil),                  // 135: mono.codexel.ResponseRunAlias
-	(*TranscriptEntry)(nil),                   // 136: mono.codexel.TranscriptEntry
-	(*TranscriptUsage)(nil),                   // 137: mono.codexel.TranscriptUsage
-	(*RequestWatchTranscript)(nil),            // 138: mono.codexel.RequestWatchTranscript
-	(*ResponseWatchTranscript)(nil),           // 139: mono.codexel.ResponseWatchTranscript
-	(*Review)(nil),                            // 140: mono.codexel.Review
-	(*ViewedFile)(nil),                        // 141: mono.codexel.ViewedFile
-	(*ReviewRound)(nil),                       // 142: mono.codexel.ReviewRound
-	(*RoundCommit)(nil),                       // 143: mono.codexel.RoundCommit
-	(*ReviewComment)(nil),                     // 144: mono.codexel.ReviewComment
-	(*ReviewReply)(nil),                       // 145: mono.codexel.ReviewReply
-	(*RequestListReviews)(nil),                // 146: mono.codexel.RequestListReviews
-	(*ResponseListReviews)(nil),               // 147: mono.codexel.ResponseListReviews
-	(*RequestListApprovedCommits)(nil),        // 148: mono.codexel.RequestListApprovedCommits
-	(*ResponseListApprovedCommits)(nil),       // 149: mono.codexel.ResponseListApprovedCommits
-	(*RequestGetReview)(nil),                  // 150: mono.codexel.RequestGetReview
-	(*ResponseGetReview)(nil),                 // 151: mono.codexel.ResponseGetReview
-	(*RequestStartReview)(nil),                // 152: mono.codexel.RequestStartReview
-	(*ResponseStartReview)(nil),               // 153: mono.codexel.ResponseStartReview
-	(*RequestAddComment)(nil),                 // 154: mono.codexel.RequestAddComment
-	(*ResponseAddComment)(nil),                // 155: mono.codexel.ResponseAddComment
-	(*RequestEditComment)(nil),                // 156: mono.codexel.RequestEditComment
-	(*ResponseEditComment)(nil),               // 157: mono.codexel.ResponseEditComment
-	(*RequestDeleteComment)(nil),              // 158: mono.codexel.RequestDeleteComment
-	(*ResponseDeleteComment)(nil),             // 159: mono.codexel.ResponseDeleteComment
-	(*RequestReply)(nil),                      // 160: mono.codexel.RequestReply
-	(*ResponseReply)(nil),                     // 161: mono.codexel.ResponseReply
-	(*RequestResolveComment)(nil),             // 162: mono.codexel.RequestResolveComment
-	(*ResponseResolveComment)(nil),            // 163: mono.codexel.ResponseResolveComment
-	(*RequestFinish)(nil),                     // 164: mono.codexel.RequestFinish
-	(*ResponseFinish)(nil),                    // 165: mono.codexel.ResponseFinish
-	(*RequestDiscard)(nil),                    // 166: mono.codexel.RequestDiscard
-	(*ResponseDiscard)(nil),                   // 167: mono.codexel.ResponseDiscard
-	(*RequestStartNextRound)(nil),             // 168: mono.codexel.RequestStartNextRound
-	(*ResponseStartNextRound)(nil),            // 169: mono.codexel.ResponseStartNextRound
-	(*RequestRoundDiff)(nil),                  // 170: mono.codexel.RequestRoundDiff
-	(*ResponseRoundDiff)(nil),                 // 171: mono.codexel.ResponseRoundDiff
-	(*RequestSetViewed)(nil),                  // 172: mono.codexel.RequestSetViewed
-	(*ResponseSetViewed)(nil),                 // 173: mono.codexel.ResponseSetViewed
-	(*RequestGetStatus)(nil),                  // 174: mono.codexel.RequestGetStatus
-	(*ResponseGetStatus)(nil),                 // 175: mono.codexel.ResponseGetStatus
-	(*RequestListPullRequestTemplates)(nil),   // 176: mono.codexel.RequestListPullRequestTemplates
-	(*ResponseListPullRequestTemplates)(nil),  // 177: mono.codexel.ResponseListPullRequestTemplates
-	(*RequestValidatePullRequest)(nil),        // 178: mono.codexel.RequestValidatePullRequest
-	(*ResponseValidatePullRequest)(nil),       // 179: mono.codexel.ResponseValidatePullRequest
-	(*RequestSubmitPullRequest)(nil),          // 180: mono.codexel.RequestSubmitPullRequest
-	(*SubmittedPullRequest)(nil),              // 181: mono.codexel.SubmittedPullRequest
-	(*ResponseSubmitPullRequest)(nil),         // 182: mono.codexel.ResponseSubmitPullRequest
-	(*RequestListPullRequests)(nil),           // 183: mono.codexel.RequestListPullRequests
-	(*PullRequest)(nil),                       // 184: mono.codexel.PullRequest
-	(*ResponseListPullRequests)(nil),          // 185: mono.codexel.ResponseListPullRequests
+	(TranscriptEntryKind)(0),                  // 5: mono.codexel.TranscriptEntryKind
+	(ReviewState)(0),                          // 6: mono.codexel.ReviewState
+	(DiffSide)(0),                             // 7: mono.codexel.DiffSide
+	(PullRequestAction)(0),                    // 8: mono.codexel.PullRequestAction
+	(*Agent)(nil),                             // 9: mono.codexel.Agent
+	(*Workspace)(nil),                         // 10: mono.codexel.Workspace
+	(*RequestListAgents)(nil),                 // 11: mono.codexel.RequestListAgents
+	(*ResponseListAgents)(nil),                // 12: mono.codexel.ResponseListAgents
+	(*RequestWatchAgents)(nil),                // 13: mono.codexel.RequestWatchAgents
+	(*ResponseWatchAgents)(nil),               // 14: mono.codexel.ResponseWatchAgents
+	(*RequestReadOutput)(nil),                 // 15: mono.codexel.RequestReadOutput
+	(*ResponseReadOutput)(nil),                // 16: mono.codexel.ResponseReadOutput
+	(*RequestSendPrompt)(nil),                 // 17: mono.codexel.RequestSendPrompt
+	(*ResponseSendPrompt)(nil),                // 18: mono.codexel.ResponseSendPrompt
+	(*RequestSendKeys)(nil),                   // 19: mono.codexel.RequestSendKeys
+	(*ResponseSendKeys)(nil),                  // 20: mono.codexel.ResponseSendKeys
+	(*RequestFocusAgent)(nil),                 // 21: mono.codexel.RequestFocusAgent
+	(*ResponseFocusAgent)(nil),                // 22: mono.codexel.ResponseFocusAgent
+	(*RequestListWorkspaces)(nil),             // 23: mono.codexel.RequestListWorkspaces
+	(*ResponseListWorkspaces)(nil),            // 24: mono.codexel.ResponseListWorkspaces
+	(*RequestStartAgent)(nil),                 // 25: mono.codexel.RequestStartAgent
+	(*ResponseStartAgent)(nil),                // 26: mono.codexel.ResponseStartAgent
+	(*RequestStopAgent)(nil),                  // 27: mono.codexel.RequestStopAgent
+	(*ResponseStopAgent)(nil),                 // 28: mono.codexel.ResponseStopAgent
+	(*Repository)(nil),                        // 29: mono.codexel.Repository
+	(*RemoteBookmark)(nil),                    // 30: mono.codexel.RemoteBookmark
+	(*Trailer)(nil),                           // 31: mono.codexel.Trailer
+	(*Commit)(nil),                            // 32: mono.codexel.Commit
+	(*GraphLine)(nil),                         // 33: mono.codexel.GraphLine
+	(*LogRow)(nil),                            // 34: mono.codexel.LogRow
+	(*RequestListRepositories)(nil),           // 35: mono.codexel.RequestListRepositories
+	(*ResponseListRepositories)(nil),          // 36: mono.codexel.ResponseListRepositories
+	(*RequestOpenRepository)(nil),             // 37: mono.codexel.RequestOpenRepository
+	(*ResponseOpenRepository)(nil),            // 38: mono.codexel.ResponseOpenRepository
+	(*RequestCloseRepository)(nil),            // 39: mono.codexel.RequestCloseRepository
+	(*ResponseCloseRepository)(nil),           // 40: mono.codexel.ResponseCloseRepository
+	(*RequestWatchRepository)(nil),            // 41: mono.codexel.RequestWatchRepository
+	(*ResponseWatchRepository)(nil),           // 42: mono.codexel.ResponseWatchRepository
+	(*RequestLog)(nil),                        // 43: mono.codexel.RequestLog
+	(*ResponseLog)(nil),                       // 44: mono.codexel.ResponseLog
+	(*DiffLine)(nil),                          // 45: mono.codexel.DiffLine
+	(*Hunk)(nil),                              // 46: mono.codexel.Hunk
+	(*FileDiff)(nil),                          // 47: mono.codexel.FileDiff
+	(*RequestGetRevision)(nil),                // 48: mono.codexel.RequestGetRevision
+	(*ResponseGetRevision)(nil),               // 49: mono.codexel.ResponseGetRevision
+	(*RequestNew)(nil),                        // 50: mono.codexel.RequestNew
+	(*ResponseNew)(nil),                       // 51: mono.codexel.ResponseNew
+	(*RequestEdit)(nil),                       // 52: mono.codexel.RequestEdit
+	(*ResponseEdit)(nil),                      // 53: mono.codexel.ResponseEdit
+	(*RequestAbandon)(nil),                    // 54: mono.codexel.RequestAbandon
+	(*ResponseAbandon)(nil),                   // 55: mono.codexel.ResponseAbandon
+	(*RequestDescribe)(nil),                   // 56: mono.codexel.RequestDescribe
+	(*ResponseDescribe)(nil),                  // 57: mono.codexel.ResponseDescribe
+	(*RequestCommit)(nil),                     // 58: mono.codexel.RequestCommit
+	(*ResponseCommit)(nil),                    // 59: mono.codexel.ResponseCommit
+	(*RequestUndo)(nil),                       // 60: mono.codexel.RequestUndo
+	(*ResponseUndo)(nil),                      // 61: mono.codexel.ResponseUndo
+	(*RequestRebase)(nil),                     // 62: mono.codexel.RequestRebase
+	(*ResponseRebase)(nil),                    // 63: mono.codexel.ResponseRebase
+	(*RequestSquash)(nil),                     // 64: mono.codexel.RequestSquash
+	(*ResponseSquash)(nil),                    // 65: mono.codexel.ResponseSquash
+	(*Bookmark)(nil),                          // 66: mono.codexel.Bookmark
+	(*RequestListBookmarks)(nil),              // 67: mono.codexel.RequestListBookmarks
+	(*ResponseListBookmarks)(nil),             // 68: mono.codexel.ResponseListBookmarks
+	(*RequestSetBookmark)(nil),                // 69: mono.codexel.RequestSetBookmark
+	(*ResponseSetBookmark)(nil),               // 70: mono.codexel.ResponseSetBookmark
+	(*RequestMoveBookmark)(nil),               // 71: mono.codexel.RequestMoveBookmark
+	(*ResponseMoveBookmark)(nil),              // 72: mono.codexel.ResponseMoveBookmark
+	(*RequestDeleteBookmark)(nil),             // 73: mono.codexel.RequestDeleteBookmark
+	(*ResponseDeleteBookmark)(nil),            // 74: mono.codexel.ResponseDeleteBookmark
+	(*RequestForgetBookmark)(nil),             // 75: mono.codexel.RequestForgetBookmark
+	(*ResponseForgetBookmark)(nil),            // 76: mono.codexel.ResponseForgetBookmark
+	(*RequestTrackBookmark)(nil),              // 77: mono.codexel.RequestTrackBookmark
+	(*ResponseTrackBookmark)(nil),             // 78: mono.codexel.ResponseTrackBookmark
+	(*RequestUntrackBookmark)(nil),            // 79: mono.codexel.RequestUntrackBookmark
+	(*ResponseUntrackBookmark)(nil),           // 80: mono.codexel.ResponseUntrackBookmark
+	(*RequestFetch)(nil),                      // 81: mono.codexel.RequestFetch
+	(*ResponseFetch)(nil),                     // 82: mono.codexel.ResponseFetch
+	(*RequestPush)(nil),                       // 83: mono.codexel.RequestPush
+	(*ResponsePush)(nil),                      // 84: mono.codexel.ResponsePush
+	(*Operation)(nil),                         // 85: mono.codexel.Operation
+	(*RequestListOperations)(nil),             // 86: mono.codexel.RequestListOperations
+	(*ResponseListOperations)(nil),            // 87: mono.codexel.ResponseListOperations
+	(*RequestRevertOperation)(nil),            // 88: mono.codexel.RequestRevertOperation
+	(*ResponseRevertOperation)(nil),           // 89: mono.codexel.ResponseRevertOperation
+	(*RequestRestoreOperation)(nil),           // 90: mono.codexel.RequestRestoreOperation
+	(*ResponseRestoreOperation)(nil),          // 91: mono.codexel.ResponseRestoreOperation
+	(*EvologEntry)(nil),                       // 92: mono.codexel.EvologEntry
+	(*RequestEvolog)(nil),                     // 93: mono.codexel.RequestEvolog
+	(*ResponseEvolog)(nil),                    // 94: mono.codexel.ResponseEvolog
+	(*RequestGetFile)(nil),                    // 95: mono.codexel.RequestGetFile
+	(*ResponseGetFile)(nil),                   // 96: mono.codexel.ResponseGetFile
+	(*RequestListFiles)(nil),                  // 97: mono.codexel.RequestListFiles
+	(*ResponseListFiles)(nil),                 // 98: mono.codexel.ResponseListFiles
+	(*ConflictedFile)(nil),                    // 99: mono.codexel.ConflictedFile
+	(*RequestSplit)(nil),                      // 100: mono.codexel.RequestSplit
+	(*ResponseSplit)(nil),                     // 101: mono.codexel.ResponseSplit
+	(*RequestRestore)(nil),                    // 102: mono.codexel.RequestRestore
+	(*ResponseRestore)(nil),                   // 103: mono.codexel.ResponseRestore
+	(*RepositoryWorkspace)(nil),               // 104: mono.codexel.RepositoryWorkspace
+	(*RequestListRepositoryWorkspaces)(nil),   // 105: mono.codexel.RequestListRepositoryWorkspaces
+	(*ResponseListRepositoryWorkspaces)(nil),  // 106: mono.codexel.ResponseListRepositoryWorkspaces
+	(*RequestAddRepositoryWorkspace)(nil),     // 107: mono.codexel.RequestAddRepositoryWorkspace
+	(*ResponseAddRepositoryWorkspace)(nil),    // 108: mono.codexel.ResponseAddRepositoryWorkspace
+	(*RequestForgetRepositoryWorkspace)(nil),  // 109: mono.codexel.RequestForgetRepositoryWorkspace
+	(*ResponseForgetRepositoryWorkspace)(nil), // 110: mono.codexel.ResponseForgetRepositoryWorkspace
+	(*RequestRemoveRepositoryWorkspace)(nil),  // 111: mono.codexel.RequestRemoveRepositoryWorkspace
+	(*ResponseRemoveRepositoryWorkspace)(nil), // 112: mono.codexel.ResponseRemoveRepositoryWorkspace
+	(*RequestRenameRepositoryWorkspace)(nil),  // 113: mono.codexel.RequestRenameRepositoryWorkspace
+	(*ResponseRenameRepositoryWorkspace)(nil), // 114: mono.codexel.ResponseRenameRepositoryWorkspace
+	(*RequestUpdateStale)(nil),                // 115: mono.codexel.RequestUpdateStale
+	(*ResponseUpdateStale)(nil),               // 116: mono.codexel.ResponseUpdateStale
+	(*RequestDiffRange)(nil),                  // 117: mono.codexel.RequestDiffRange
+	(*ResponseDiffRange)(nil),                 // 118: mono.codexel.ResponseDiffRange
+	(*RequestListAgentCommits)(nil),           // 119: mono.codexel.RequestListAgentCommits
+	(*ResponseListAgentCommits)(nil),          // 120: mono.codexel.ResponseListAgentCommits
+	(*Alias)(nil),                             // 121: mono.codexel.Alias
+	(*RequestListAliases)(nil),                // 122: mono.codexel.RequestListAliases
+	(*ResponseListAliases)(nil),               // 123: mono.codexel.ResponseListAliases
+	(*RequestRunAlias)(nil),                   // 124: mono.codexel.RequestRunAlias
+	(*ResponseRunAlias)(nil),                  // 125: mono.codexel.ResponseRunAlias
+	(*TranscriptEntry)(nil),                   // 126: mono.codexel.TranscriptEntry
+	(*TranscriptUsage)(nil),                   // 127: mono.codexel.TranscriptUsage
+	(*RequestWatchTranscript)(nil),            // 128: mono.codexel.RequestWatchTranscript
+	(*ResponseWatchTranscript)(nil),           // 129: mono.codexel.ResponseWatchTranscript
+	(*Review)(nil),                            // 130: mono.codexel.Review
+	(*ViewedFile)(nil),                        // 131: mono.codexel.ViewedFile
+	(*ReviewRound)(nil),                       // 132: mono.codexel.ReviewRound
+	(*RoundCommit)(nil),                       // 133: mono.codexel.RoundCommit
+	(*ReviewComment)(nil),                     // 134: mono.codexel.ReviewComment
+	(*ReviewReply)(nil),                       // 135: mono.codexel.ReviewReply
+	(*RequestListReviews)(nil),                // 136: mono.codexel.RequestListReviews
+	(*ResponseListReviews)(nil),               // 137: mono.codexel.ResponseListReviews
+	(*RequestListApprovedCommits)(nil),        // 138: mono.codexel.RequestListApprovedCommits
+	(*ResponseListApprovedCommits)(nil),       // 139: mono.codexel.ResponseListApprovedCommits
+	(*RequestGetReview)(nil),                  // 140: mono.codexel.RequestGetReview
+	(*ResponseGetReview)(nil),                 // 141: mono.codexel.ResponseGetReview
+	(*RequestStartReview)(nil),                // 142: mono.codexel.RequestStartReview
+	(*ResponseStartReview)(nil),               // 143: mono.codexel.ResponseStartReview
+	(*RequestAddComment)(nil),                 // 144: mono.codexel.RequestAddComment
+	(*ResponseAddComment)(nil),                // 145: mono.codexel.ResponseAddComment
+	(*RequestEditComment)(nil),                // 146: mono.codexel.RequestEditComment
+	(*ResponseEditComment)(nil),               // 147: mono.codexel.ResponseEditComment
+	(*RequestDeleteComment)(nil),              // 148: mono.codexel.RequestDeleteComment
+	(*ResponseDeleteComment)(nil),             // 149: mono.codexel.ResponseDeleteComment
+	(*RequestReply)(nil),                      // 150: mono.codexel.RequestReply
+	(*ResponseReply)(nil),                     // 151: mono.codexel.ResponseReply
+	(*RequestResolveComment)(nil),             // 152: mono.codexel.RequestResolveComment
+	(*ResponseResolveComment)(nil),            // 153: mono.codexel.ResponseResolveComment
+	(*RequestFinish)(nil),                     // 154: mono.codexel.RequestFinish
+	(*ResponseFinish)(nil),                    // 155: mono.codexel.ResponseFinish
+	(*RequestDiscard)(nil),                    // 156: mono.codexel.RequestDiscard
+	(*ResponseDiscard)(nil),                   // 157: mono.codexel.ResponseDiscard
+	(*RequestStartNextRound)(nil),             // 158: mono.codexel.RequestStartNextRound
+	(*ResponseStartNextRound)(nil),            // 159: mono.codexel.ResponseStartNextRound
+	(*RequestRoundDiff)(nil),                  // 160: mono.codexel.RequestRoundDiff
+	(*ResponseRoundDiff)(nil),                 // 161: mono.codexel.ResponseRoundDiff
+	(*RequestSetViewed)(nil),                  // 162: mono.codexel.RequestSetViewed
+	(*ResponseSetViewed)(nil),                 // 163: mono.codexel.ResponseSetViewed
+	(*RequestGetStatus)(nil),                  // 164: mono.codexel.RequestGetStatus
+	(*ResponseGetStatus)(nil),                 // 165: mono.codexel.ResponseGetStatus
+	(*RequestListPullRequestTemplates)(nil),   // 166: mono.codexel.RequestListPullRequestTemplates
+	(*ResponseListPullRequestTemplates)(nil),  // 167: mono.codexel.ResponseListPullRequestTemplates
+	(*RequestValidatePullRequest)(nil),        // 168: mono.codexel.RequestValidatePullRequest
+	(*ResponseValidatePullRequest)(nil),       // 169: mono.codexel.ResponseValidatePullRequest
+	(*RequestSubmitPullRequest)(nil),          // 170: mono.codexel.RequestSubmitPullRequest
+	(*SubmittedPullRequest)(nil),              // 171: mono.codexel.SubmittedPullRequest
+	(*ResponseSubmitPullRequest)(nil),         // 172: mono.codexel.ResponseSubmitPullRequest
+	(*RequestListPullRequests)(nil),           // 173: mono.codexel.RequestListPullRequests
+	(*PullRequest)(nil),                       // 174: mono.codexel.PullRequest
+	(*ResponseListPullRequests)(nil),          // 175: mono.codexel.ResponseListPullRequests
 }
 var file_proto_codexel_codexel_proto_depIdxs = []int32{
 	0,   // 0: mono.codexel.Agent.status:type_name -> mono.codexel.AgentStatus
-	10,  // 1: mono.codexel.ResponseListAgents.agents:type_name -> mono.codexel.Agent
-	10,  // 2: mono.codexel.ResponseWatchAgents.agents:type_name -> mono.codexel.Agent
-	11,  // 3: mono.codexel.ResponseListWorkspaces.workspaces:type_name -> mono.codexel.Workspace
-	10,  // 4: mono.codexel.ResponseStartAgent.agent:type_name -> mono.codexel.Agent
-	31,  // 5: mono.codexel.Commit.remote_bookmarks:type_name -> mono.codexel.RemoteBookmark
-	32,  // 6: mono.codexel.Commit.trailers:type_name -> mono.codexel.Trailer
-	33,  // 7: mono.codexel.LogRow.commit:type_name -> mono.codexel.Commit
-	34,  // 8: mono.codexel.LogRow.lines:type_name -> mono.codexel.GraphLine
-	30,  // 9: mono.codexel.ResponseListRepositories.repositories:type_name -> mono.codexel.Repository
-	30,  // 10: mono.codexel.ResponseOpenRepository.repository:type_name -> mono.codexel.Repository
-	35,  // 11: mono.codexel.ResponseLog.rows:type_name -> mono.codexel.LogRow
+	9,   // 1: mono.codexel.ResponseListAgents.agents:type_name -> mono.codexel.Agent
+	9,   // 2: mono.codexel.ResponseWatchAgents.agents:type_name -> mono.codexel.Agent
+	10,  // 3: mono.codexel.ResponseListWorkspaces.workspaces:type_name -> mono.codexel.Workspace
+	9,   // 4: mono.codexel.ResponseStartAgent.agent:type_name -> mono.codexel.Agent
+	30,  // 5: mono.codexel.Commit.remote_bookmarks:type_name -> mono.codexel.RemoteBookmark
+	31,  // 6: mono.codexel.Commit.trailers:type_name -> mono.codexel.Trailer
+	32,  // 7: mono.codexel.LogRow.commit:type_name -> mono.codexel.Commit
+	33,  // 8: mono.codexel.LogRow.lines:type_name -> mono.codexel.GraphLine
+	29,  // 9: mono.codexel.ResponseListRepositories.repositories:type_name -> mono.codexel.Repository
+	29,  // 10: mono.codexel.ResponseOpenRepository.repository:type_name -> mono.codexel.Repository
+	34,  // 11: mono.codexel.ResponseLog.rows:type_name -> mono.codexel.LogRow
 	2,   // 12: mono.codexel.DiffLine.kind:type_name -> mono.codexel.DiffLineKind
-	46,  // 13: mono.codexel.Hunk.lines:type_name -> mono.codexel.DiffLine
+	45,  // 13: mono.codexel.Hunk.lines:type_name -> mono.codexel.DiffLine
 	1,   // 14: mono.codexel.FileDiff.status:type_name -> mono.codexel.FileStatus
-	47,  // 15: mono.codexel.FileDiff.hunks:type_name -> mono.codexel.Hunk
-	33,  // 16: mono.codexel.ResponseGetRevision.commit:type_name -> mono.codexel.Commit
-	48,  // 17: mono.codexel.ResponseGetRevision.files:type_name -> mono.codexel.FileDiff
-	102, // 18: mono.codexel.ResponseGetRevision.conflicts:type_name -> mono.codexel.ConflictedFile
+	46,  // 15: mono.codexel.FileDiff.hunks:type_name -> mono.codexel.Hunk
+	32,  // 16: mono.codexel.ResponseGetRevision.commit:type_name -> mono.codexel.Commit
+	47,  // 17: mono.codexel.ResponseGetRevision.files:type_name -> mono.codexel.FileDiff
+	99,  // 18: mono.codexel.ResponseGetRevision.conflicts:type_name -> mono.codexel.ConflictedFile
 	3,   // 19: mono.codexel.RequestRebase.source:type_name -> mono.codexel.RebaseSource
 	4,   // 20: mono.codexel.RequestRebase.target:type_name -> mono.codexel.RebaseTarget
-	67,  // 21: mono.codexel.ResponseListBookmarks.bookmarks:type_name -> mono.codexel.Bookmark
-	86,  // 22: mono.codexel.ResponseListOperations.operations:type_name -> mono.codexel.Operation
-	48,  // 23: mono.codexel.EvologEntry.files:type_name -> mono.codexel.FileDiff
-	93,  // 24: mono.codexel.ResponseEvolog.entries:type_name -> mono.codexel.EvologEntry
-	102, // 25: mono.codexel.ConflictedCommit.files:type_name -> mono.codexel.ConflictedFile
-	103, // 26: mono.codexel.ResponseListConflicts.commits:type_name -> mono.codexel.ConflictedCommit
-	5,   // 27: mono.codexel.RequestResolve.side:type_name -> mono.codexel.ResolveSide
-	114, // 28: mono.codexel.ResponseListRepositoryWorkspaces.workspaces:type_name -> mono.codexel.RepositoryWorkspace
-	48,  // 29: mono.codexel.ResponseDiffRange.files:type_name -> mono.codexel.FileDiff
-	30,  // 30: mono.codexel.ResponseListAgentCommits.repository:type_name -> mono.codexel.Repository
-	33,  // 31: mono.codexel.ResponseListAgentCommits.commits:type_name -> mono.codexel.Commit
-	131, // 32: mono.codexel.ResponseListAliases.aliases:type_name -> mono.codexel.Alias
-	6,   // 33: mono.codexel.TranscriptEntry.kind:type_name -> mono.codexel.TranscriptEntryKind
-	137, // 34: mono.codexel.TranscriptEntry.usage:type_name -> mono.codexel.TranscriptUsage
-	136, // 35: mono.codexel.ResponseWatchTranscript.entries:type_name -> mono.codexel.TranscriptEntry
-	7,   // 36: mono.codexel.Review.state:type_name -> mono.codexel.ReviewState
-	142, // 37: mono.codexel.Review.rounds:type_name -> mono.codexel.ReviewRound
-	144, // 38: mono.codexel.Review.comments:type_name -> mono.codexel.ReviewComment
-	141, // 39: mono.codexel.Review.viewed:type_name -> mono.codexel.ViewedFile
-	143, // 40: mono.codexel.ReviewRound.commits:type_name -> mono.codexel.RoundCommit
-	8,   // 41: mono.codexel.ReviewComment.side:type_name -> mono.codexel.DiffSide
-	145, // 42: mono.codexel.ReviewComment.replies:type_name -> mono.codexel.ReviewReply
-	140, // 43: mono.codexel.ResponseListReviews.reviews:type_name -> mono.codexel.Review
-	140, // 44: mono.codexel.ResponseGetReview.review:type_name -> mono.codexel.Review
-	140, // 45: mono.codexel.ResponseStartReview.review:type_name -> mono.codexel.Review
-	8,   // 46: mono.codexel.RequestAddComment.side:type_name -> mono.codexel.DiffSide
-	144, // 47: mono.codexel.ResponseAddComment.comment:type_name -> mono.codexel.ReviewComment
-	144, // 48: mono.codexel.ResponseEditComment.comment:type_name -> mono.codexel.ReviewComment
-	144, // 49: mono.codexel.ResponseReply.comment:type_name -> mono.codexel.ReviewComment
-	144, // 50: mono.codexel.ResponseResolveComment.comment:type_name -> mono.codexel.ReviewComment
-	140, // 51: mono.codexel.ResponseFinish.review:type_name -> mono.codexel.Review
-	10,  // 52: mono.codexel.ResponseFinish.notified_agents:type_name -> mono.codexel.Agent
-	140, // 53: mono.codexel.ResponseDiscard.review:type_name -> mono.codexel.Review
-	140, // 54: mono.codexel.ResponseStartNextRound.review:type_name -> mono.codexel.Review
-	33,  // 55: mono.codexel.ResponseRoundDiff.commit:type_name -> mono.codexel.Commit
-	48,  // 56: mono.codexel.ResponseRoundDiff.files:type_name -> mono.codexel.FileDiff
-	48,  // 57: mono.codexel.ResponseRoundDiff.message:type_name -> mono.codexel.FileDiff
-	140, // 58: mono.codexel.ResponseSetViewed.review:type_name -> mono.codexel.Review
-	9,   // 59: mono.codexel.SubmittedPullRequest.action:type_name -> mono.codexel.PullRequestAction
-	181, // 60: mono.codexel.ResponseSubmitPullRequest.pull_requests:type_name -> mono.codexel.SubmittedPullRequest
-	184, // 61: mono.codexel.ResponseListPullRequests.pull_requests:type_name -> mono.codexel.PullRequest
-	12,  // 62: mono.codexel.AgentService.List:input_type -> mono.codexel.RequestListAgents
-	14,  // 63: mono.codexel.AgentService.Watch:input_type -> mono.codexel.RequestWatchAgents
-	16,  // 64: mono.codexel.AgentService.ReadOutput:input_type -> mono.codexel.RequestReadOutput
-	18,  // 65: mono.codexel.AgentService.SendPrompt:input_type -> mono.codexel.RequestSendPrompt
-	20,  // 66: mono.codexel.AgentService.SendKeys:input_type -> mono.codexel.RequestSendKeys
-	22,  // 67: mono.codexel.AgentService.Focus:input_type -> mono.codexel.RequestFocusAgent
-	24,  // 68: mono.codexel.AgentService.ListWorkspaces:input_type -> mono.codexel.RequestListWorkspaces
-	26,  // 69: mono.codexel.AgentService.Start:input_type -> mono.codexel.RequestStartAgent
-	28,  // 70: mono.codexel.AgentService.Stop:input_type -> mono.codexel.RequestStopAgent
-	138, // 71: mono.codexel.AgentService.WatchTranscript:input_type -> mono.codexel.RequestWatchTranscript
-	36,  // 72: mono.codexel.RepositoryService.List:input_type -> mono.codexel.RequestListRepositories
-	38,  // 73: mono.codexel.RepositoryService.Open:input_type -> mono.codexel.RequestOpenRepository
-	40,  // 74: mono.codexel.RepositoryService.Close:input_type -> mono.codexel.RequestCloseRepository
-	42,  // 75: mono.codexel.RepositoryService.Watch:input_type -> mono.codexel.RequestWatchRepository
-	44,  // 76: mono.codexel.RepositoryService.Log:input_type -> mono.codexel.RequestLog
-	49,  // 77: mono.codexel.RepositoryService.GetRevision:input_type -> mono.codexel.RequestGetRevision
-	51,  // 78: mono.codexel.RepositoryService.New:input_type -> mono.codexel.RequestNew
-	53,  // 79: mono.codexel.RepositoryService.Edit:input_type -> mono.codexel.RequestEdit
-	55,  // 80: mono.codexel.RepositoryService.Abandon:input_type -> mono.codexel.RequestAbandon
-	57,  // 81: mono.codexel.RepositoryService.Describe:input_type -> mono.codexel.RequestDescribe
-	59,  // 82: mono.codexel.RepositoryService.Commit:input_type -> mono.codexel.RequestCommit
-	61,  // 83: mono.codexel.RepositoryService.Undo:input_type -> mono.codexel.RequestUndo
-	63,  // 84: mono.codexel.RepositoryService.Rebase:input_type -> mono.codexel.RequestRebase
-	65,  // 85: mono.codexel.RepositoryService.Squash:input_type -> mono.codexel.RequestSquash
-	94,  // 86: mono.codexel.RepositoryService.Evolog:input_type -> mono.codexel.RequestEvolog
-	110, // 87: mono.codexel.RepositoryService.Split:input_type -> mono.codexel.RequestSplit
-	112, // 88: mono.codexel.RepositoryService.Restore:input_type -> mono.codexel.RequestRestore
-	127, // 89: mono.codexel.RepositoryService.DiffRange:input_type -> mono.codexel.RequestDiffRange
-	129, // 90: mono.codexel.RepositoryService.ListAgentCommits:input_type -> mono.codexel.RequestListAgentCommits
-	68,  // 91: mono.codexel.RepositoryService.ListBookmarks:input_type -> mono.codexel.RequestListBookmarks
-	70,  // 92: mono.codexel.RepositoryService.SetBookmark:input_type -> mono.codexel.RequestSetBookmark
-	72,  // 93: mono.codexel.RepositoryService.MoveBookmark:input_type -> mono.codexel.RequestMoveBookmark
-	74,  // 94: mono.codexel.RepositoryService.DeleteBookmark:input_type -> mono.codexel.RequestDeleteBookmark
-	76,  // 95: mono.codexel.RepositoryService.ForgetBookmark:input_type -> mono.codexel.RequestForgetBookmark
-	78,  // 96: mono.codexel.RepositoryService.TrackBookmark:input_type -> mono.codexel.RequestTrackBookmark
-	80,  // 97: mono.codexel.RepositoryService.UntrackBookmark:input_type -> mono.codexel.RequestUntrackBookmark
-	82,  // 98: mono.codexel.RepositoryService.Fetch:input_type -> mono.codexel.RequestFetch
-	84,  // 99: mono.codexel.RepositoryService.Push:input_type -> mono.codexel.RequestPush
-	87,  // 100: mono.codexel.RepositoryService.ListOperations:input_type -> mono.codexel.RequestListOperations
-	89,  // 101: mono.codexel.RepositoryService.RevertOperation:input_type -> mono.codexel.RequestRevertOperation
-	91,  // 102: mono.codexel.RepositoryService.RestoreOperation:input_type -> mono.codexel.RequestRestoreOperation
-	96,  // 103: mono.codexel.RepositoryService.GetFile:input_type -> mono.codexel.RequestGetFile
-	98,  // 104: mono.codexel.RepositoryService.ListFiles:input_type -> mono.codexel.RequestListFiles
-	100, // 105: mono.codexel.RepositoryService.WriteFile:input_type -> mono.codexel.RequestWriteFile
-	104, // 106: mono.codexel.RepositoryService.ListConflicts:input_type -> mono.codexel.RequestListConflicts
-	106, // 107: mono.codexel.RepositoryService.GetConflict:input_type -> mono.codexel.RequestGetConflict
-	108, // 108: mono.codexel.RepositoryService.Resolve:input_type -> mono.codexel.RequestResolve
-	115, // 109: mono.codexel.RepositoryService.ListWorkspaces:input_type -> mono.codexel.RequestListRepositoryWorkspaces
-	117, // 110: mono.codexel.RepositoryService.AddWorkspace:input_type -> mono.codexel.RequestAddRepositoryWorkspace
-	119, // 111: mono.codexel.RepositoryService.ForgetWorkspace:input_type -> mono.codexel.RequestForgetRepositoryWorkspace
-	121, // 112: mono.codexel.RepositoryService.RemoveWorkspace:input_type -> mono.codexel.RequestRemoveRepositoryWorkspace
-	123, // 113: mono.codexel.RepositoryService.RenameWorkspace:input_type -> mono.codexel.RequestRenameRepositoryWorkspace
-	125, // 114: mono.codexel.RepositoryService.UpdateStale:input_type -> mono.codexel.RequestUpdateStale
-	132, // 115: mono.codexel.RepositoryService.ListAliases:input_type -> mono.codexel.RequestListAliases
-	134, // 116: mono.codexel.RepositoryService.RunAlias:input_type -> mono.codexel.RequestRunAlias
-	146, // 117: mono.codexel.ReviewService.List:input_type -> mono.codexel.RequestListReviews
-	148, // 118: mono.codexel.ReviewService.ListApprovedCommits:input_type -> mono.codexel.RequestListApprovedCommits
-	150, // 119: mono.codexel.ReviewService.Get:input_type -> mono.codexel.RequestGetReview
-	152, // 120: mono.codexel.ReviewService.Start:input_type -> mono.codexel.RequestStartReview
-	154, // 121: mono.codexel.ReviewService.AddComment:input_type -> mono.codexel.RequestAddComment
-	156, // 122: mono.codexel.ReviewService.EditComment:input_type -> mono.codexel.RequestEditComment
-	158, // 123: mono.codexel.ReviewService.DeleteComment:input_type -> mono.codexel.RequestDeleteComment
-	160, // 124: mono.codexel.ReviewService.Reply:input_type -> mono.codexel.RequestReply
-	162, // 125: mono.codexel.ReviewService.ResolveComment:input_type -> mono.codexel.RequestResolveComment
-	164, // 126: mono.codexel.ReviewService.Finish:input_type -> mono.codexel.RequestFinish
-	166, // 127: mono.codexel.ReviewService.Discard:input_type -> mono.codexel.RequestDiscard
-	168, // 128: mono.codexel.ReviewService.StartNextRound:input_type -> mono.codexel.RequestStartNextRound
-	170, // 129: mono.codexel.ReviewService.RoundDiff:input_type -> mono.codexel.RequestRoundDiff
-	172, // 130: mono.codexel.ReviewService.SetViewed:input_type -> mono.codexel.RequestSetViewed
-	183, // 131: mono.codexel.PullRequestService.List:input_type -> mono.codexel.RequestListPullRequests
-	176, // 132: mono.codexel.PullRequestService.ListTemplates:input_type -> mono.codexel.RequestListPullRequestTemplates
-	178, // 133: mono.codexel.PullRequestService.Validate:input_type -> mono.codexel.RequestValidatePullRequest
-	180, // 134: mono.codexel.PullRequestService.Submit:input_type -> mono.codexel.RequestSubmitPullRequest
-	174, // 135: mono.codexel.SystemService.GetStatus:input_type -> mono.codexel.RequestGetStatus
-	13,  // 136: mono.codexel.AgentService.List:output_type -> mono.codexel.ResponseListAgents
-	15,  // 137: mono.codexel.AgentService.Watch:output_type -> mono.codexel.ResponseWatchAgents
-	17,  // 138: mono.codexel.AgentService.ReadOutput:output_type -> mono.codexel.ResponseReadOutput
-	19,  // 139: mono.codexel.AgentService.SendPrompt:output_type -> mono.codexel.ResponseSendPrompt
-	21,  // 140: mono.codexel.AgentService.SendKeys:output_type -> mono.codexel.ResponseSendKeys
-	23,  // 141: mono.codexel.AgentService.Focus:output_type -> mono.codexel.ResponseFocusAgent
-	25,  // 142: mono.codexel.AgentService.ListWorkspaces:output_type -> mono.codexel.ResponseListWorkspaces
-	27,  // 143: mono.codexel.AgentService.Start:output_type -> mono.codexel.ResponseStartAgent
-	29,  // 144: mono.codexel.AgentService.Stop:output_type -> mono.codexel.ResponseStopAgent
-	139, // 145: mono.codexel.AgentService.WatchTranscript:output_type -> mono.codexel.ResponseWatchTranscript
-	37,  // 146: mono.codexel.RepositoryService.List:output_type -> mono.codexel.ResponseListRepositories
-	39,  // 147: mono.codexel.RepositoryService.Open:output_type -> mono.codexel.ResponseOpenRepository
-	41,  // 148: mono.codexel.RepositoryService.Close:output_type -> mono.codexel.ResponseCloseRepository
-	43,  // 149: mono.codexel.RepositoryService.Watch:output_type -> mono.codexel.ResponseWatchRepository
-	45,  // 150: mono.codexel.RepositoryService.Log:output_type -> mono.codexel.ResponseLog
-	50,  // 151: mono.codexel.RepositoryService.GetRevision:output_type -> mono.codexel.ResponseGetRevision
-	52,  // 152: mono.codexel.RepositoryService.New:output_type -> mono.codexel.ResponseNew
-	54,  // 153: mono.codexel.RepositoryService.Edit:output_type -> mono.codexel.ResponseEdit
-	56,  // 154: mono.codexel.RepositoryService.Abandon:output_type -> mono.codexel.ResponseAbandon
-	58,  // 155: mono.codexel.RepositoryService.Describe:output_type -> mono.codexel.ResponseDescribe
-	60,  // 156: mono.codexel.RepositoryService.Commit:output_type -> mono.codexel.ResponseCommit
-	62,  // 157: mono.codexel.RepositoryService.Undo:output_type -> mono.codexel.ResponseUndo
-	64,  // 158: mono.codexel.RepositoryService.Rebase:output_type -> mono.codexel.ResponseRebase
-	66,  // 159: mono.codexel.RepositoryService.Squash:output_type -> mono.codexel.ResponseSquash
-	95,  // 160: mono.codexel.RepositoryService.Evolog:output_type -> mono.codexel.ResponseEvolog
-	111, // 161: mono.codexel.RepositoryService.Split:output_type -> mono.codexel.ResponseSplit
-	113, // 162: mono.codexel.RepositoryService.Restore:output_type -> mono.codexel.ResponseRestore
-	128, // 163: mono.codexel.RepositoryService.DiffRange:output_type -> mono.codexel.ResponseDiffRange
-	130, // 164: mono.codexel.RepositoryService.ListAgentCommits:output_type -> mono.codexel.ResponseListAgentCommits
-	69,  // 165: mono.codexel.RepositoryService.ListBookmarks:output_type -> mono.codexel.ResponseListBookmarks
-	71,  // 166: mono.codexel.RepositoryService.SetBookmark:output_type -> mono.codexel.ResponseSetBookmark
-	73,  // 167: mono.codexel.RepositoryService.MoveBookmark:output_type -> mono.codexel.ResponseMoveBookmark
-	75,  // 168: mono.codexel.RepositoryService.DeleteBookmark:output_type -> mono.codexel.ResponseDeleteBookmark
-	77,  // 169: mono.codexel.RepositoryService.ForgetBookmark:output_type -> mono.codexel.ResponseForgetBookmark
-	79,  // 170: mono.codexel.RepositoryService.TrackBookmark:output_type -> mono.codexel.ResponseTrackBookmark
-	81,  // 171: mono.codexel.RepositoryService.UntrackBookmark:output_type -> mono.codexel.ResponseUntrackBookmark
-	83,  // 172: mono.codexel.RepositoryService.Fetch:output_type -> mono.codexel.ResponseFetch
-	85,  // 173: mono.codexel.RepositoryService.Push:output_type -> mono.codexel.ResponsePush
-	88,  // 174: mono.codexel.RepositoryService.ListOperations:output_type -> mono.codexel.ResponseListOperations
-	90,  // 175: mono.codexel.RepositoryService.RevertOperation:output_type -> mono.codexel.ResponseRevertOperation
-	92,  // 176: mono.codexel.RepositoryService.RestoreOperation:output_type -> mono.codexel.ResponseRestoreOperation
-	97,  // 177: mono.codexel.RepositoryService.GetFile:output_type -> mono.codexel.ResponseGetFile
-	99,  // 178: mono.codexel.RepositoryService.ListFiles:output_type -> mono.codexel.ResponseListFiles
-	101, // 179: mono.codexel.RepositoryService.WriteFile:output_type -> mono.codexel.ResponseWriteFile
-	105, // 180: mono.codexel.RepositoryService.ListConflicts:output_type -> mono.codexel.ResponseListConflicts
-	107, // 181: mono.codexel.RepositoryService.GetConflict:output_type -> mono.codexel.ResponseGetConflict
-	109, // 182: mono.codexel.RepositoryService.Resolve:output_type -> mono.codexel.ResponseResolve
-	116, // 183: mono.codexel.RepositoryService.ListWorkspaces:output_type -> mono.codexel.ResponseListRepositoryWorkspaces
-	118, // 184: mono.codexel.RepositoryService.AddWorkspace:output_type -> mono.codexel.ResponseAddRepositoryWorkspace
-	120, // 185: mono.codexel.RepositoryService.ForgetWorkspace:output_type -> mono.codexel.ResponseForgetRepositoryWorkspace
-	122, // 186: mono.codexel.RepositoryService.RemoveWorkspace:output_type -> mono.codexel.ResponseRemoveRepositoryWorkspace
-	124, // 187: mono.codexel.RepositoryService.RenameWorkspace:output_type -> mono.codexel.ResponseRenameRepositoryWorkspace
-	126, // 188: mono.codexel.RepositoryService.UpdateStale:output_type -> mono.codexel.ResponseUpdateStale
-	133, // 189: mono.codexel.RepositoryService.ListAliases:output_type -> mono.codexel.ResponseListAliases
-	135, // 190: mono.codexel.RepositoryService.RunAlias:output_type -> mono.codexel.ResponseRunAlias
-	147, // 191: mono.codexel.ReviewService.List:output_type -> mono.codexel.ResponseListReviews
-	149, // 192: mono.codexel.ReviewService.ListApprovedCommits:output_type -> mono.codexel.ResponseListApprovedCommits
-	151, // 193: mono.codexel.ReviewService.Get:output_type -> mono.codexel.ResponseGetReview
-	153, // 194: mono.codexel.ReviewService.Start:output_type -> mono.codexel.ResponseStartReview
-	155, // 195: mono.codexel.ReviewService.AddComment:output_type -> mono.codexel.ResponseAddComment
-	157, // 196: mono.codexel.ReviewService.EditComment:output_type -> mono.codexel.ResponseEditComment
-	159, // 197: mono.codexel.ReviewService.DeleteComment:output_type -> mono.codexel.ResponseDeleteComment
-	161, // 198: mono.codexel.ReviewService.Reply:output_type -> mono.codexel.ResponseReply
-	163, // 199: mono.codexel.ReviewService.ResolveComment:output_type -> mono.codexel.ResponseResolveComment
-	165, // 200: mono.codexel.ReviewService.Finish:output_type -> mono.codexel.ResponseFinish
-	167, // 201: mono.codexel.ReviewService.Discard:output_type -> mono.codexel.ResponseDiscard
-	169, // 202: mono.codexel.ReviewService.StartNextRound:output_type -> mono.codexel.ResponseStartNextRound
-	171, // 203: mono.codexel.ReviewService.RoundDiff:output_type -> mono.codexel.ResponseRoundDiff
-	173, // 204: mono.codexel.ReviewService.SetViewed:output_type -> mono.codexel.ResponseSetViewed
-	185, // 205: mono.codexel.PullRequestService.List:output_type -> mono.codexel.ResponseListPullRequests
-	177, // 206: mono.codexel.PullRequestService.ListTemplates:output_type -> mono.codexel.ResponseListPullRequestTemplates
-	179, // 207: mono.codexel.PullRequestService.Validate:output_type -> mono.codexel.ResponseValidatePullRequest
-	182, // 208: mono.codexel.PullRequestService.Submit:output_type -> mono.codexel.ResponseSubmitPullRequest
-	175, // 209: mono.codexel.SystemService.GetStatus:output_type -> mono.codexel.ResponseGetStatus
-	136, // [136:210] is the sub-list for method output_type
-	62,  // [62:136] is the sub-list for method input_type
-	62,  // [62:62] is the sub-list for extension type_name
-	62,  // [62:62] is the sub-list for extension extendee
-	0,   // [0:62] is the sub-list for field type_name
+	66,  // 21: mono.codexel.ResponseListBookmarks.bookmarks:type_name -> mono.codexel.Bookmark
+	85,  // 22: mono.codexel.ResponseListOperations.operations:type_name -> mono.codexel.Operation
+	47,  // 23: mono.codexel.EvologEntry.files:type_name -> mono.codexel.FileDiff
+	92,  // 24: mono.codexel.ResponseEvolog.entries:type_name -> mono.codexel.EvologEntry
+	104, // 25: mono.codexel.ResponseListRepositoryWorkspaces.workspaces:type_name -> mono.codexel.RepositoryWorkspace
+	47,  // 26: mono.codexel.ResponseDiffRange.files:type_name -> mono.codexel.FileDiff
+	29,  // 27: mono.codexel.ResponseListAgentCommits.repository:type_name -> mono.codexel.Repository
+	32,  // 28: mono.codexel.ResponseListAgentCommits.commits:type_name -> mono.codexel.Commit
+	121, // 29: mono.codexel.ResponseListAliases.aliases:type_name -> mono.codexel.Alias
+	5,   // 30: mono.codexel.TranscriptEntry.kind:type_name -> mono.codexel.TranscriptEntryKind
+	127, // 31: mono.codexel.TranscriptEntry.usage:type_name -> mono.codexel.TranscriptUsage
+	126, // 32: mono.codexel.ResponseWatchTranscript.entries:type_name -> mono.codexel.TranscriptEntry
+	6,   // 33: mono.codexel.Review.state:type_name -> mono.codexel.ReviewState
+	132, // 34: mono.codexel.Review.rounds:type_name -> mono.codexel.ReviewRound
+	134, // 35: mono.codexel.Review.comments:type_name -> mono.codexel.ReviewComment
+	131, // 36: mono.codexel.Review.viewed:type_name -> mono.codexel.ViewedFile
+	133, // 37: mono.codexel.ReviewRound.commits:type_name -> mono.codexel.RoundCommit
+	7,   // 38: mono.codexel.ReviewComment.side:type_name -> mono.codexel.DiffSide
+	135, // 39: mono.codexel.ReviewComment.replies:type_name -> mono.codexel.ReviewReply
+	130, // 40: mono.codexel.ResponseListReviews.reviews:type_name -> mono.codexel.Review
+	130, // 41: mono.codexel.ResponseGetReview.review:type_name -> mono.codexel.Review
+	130, // 42: mono.codexel.ResponseStartReview.review:type_name -> mono.codexel.Review
+	7,   // 43: mono.codexel.RequestAddComment.side:type_name -> mono.codexel.DiffSide
+	134, // 44: mono.codexel.ResponseAddComment.comment:type_name -> mono.codexel.ReviewComment
+	134, // 45: mono.codexel.ResponseEditComment.comment:type_name -> mono.codexel.ReviewComment
+	134, // 46: mono.codexel.ResponseReply.comment:type_name -> mono.codexel.ReviewComment
+	134, // 47: mono.codexel.ResponseResolveComment.comment:type_name -> mono.codexel.ReviewComment
+	130, // 48: mono.codexel.ResponseFinish.review:type_name -> mono.codexel.Review
+	9,   // 49: mono.codexel.ResponseFinish.notified_agents:type_name -> mono.codexel.Agent
+	130, // 50: mono.codexel.ResponseDiscard.review:type_name -> mono.codexel.Review
+	130, // 51: mono.codexel.ResponseStartNextRound.review:type_name -> mono.codexel.Review
+	32,  // 52: mono.codexel.ResponseRoundDiff.commit:type_name -> mono.codexel.Commit
+	47,  // 53: mono.codexel.ResponseRoundDiff.files:type_name -> mono.codexel.FileDiff
+	47,  // 54: mono.codexel.ResponseRoundDiff.message:type_name -> mono.codexel.FileDiff
+	130, // 55: mono.codexel.ResponseSetViewed.review:type_name -> mono.codexel.Review
+	8,   // 56: mono.codexel.SubmittedPullRequest.action:type_name -> mono.codexel.PullRequestAction
+	171, // 57: mono.codexel.ResponseSubmitPullRequest.pull_requests:type_name -> mono.codexel.SubmittedPullRequest
+	174, // 58: mono.codexel.ResponseListPullRequests.pull_requests:type_name -> mono.codexel.PullRequest
+	11,  // 59: mono.codexel.AgentService.List:input_type -> mono.codexel.RequestListAgents
+	13,  // 60: mono.codexel.AgentService.Watch:input_type -> mono.codexel.RequestWatchAgents
+	15,  // 61: mono.codexel.AgentService.ReadOutput:input_type -> mono.codexel.RequestReadOutput
+	17,  // 62: mono.codexel.AgentService.SendPrompt:input_type -> mono.codexel.RequestSendPrompt
+	19,  // 63: mono.codexel.AgentService.SendKeys:input_type -> mono.codexel.RequestSendKeys
+	21,  // 64: mono.codexel.AgentService.Focus:input_type -> mono.codexel.RequestFocusAgent
+	23,  // 65: mono.codexel.AgentService.ListWorkspaces:input_type -> mono.codexel.RequestListWorkspaces
+	25,  // 66: mono.codexel.AgentService.Start:input_type -> mono.codexel.RequestStartAgent
+	27,  // 67: mono.codexel.AgentService.Stop:input_type -> mono.codexel.RequestStopAgent
+	128, // 68: mono.codexel.AgentService.WatchTranscript:input_type -> mono.codexel.RequestWatchTranscript
+	35,  // 69: mono.codexel.RepositoryService.List:input_type -> mono.codexel.RequestListRepositories
+	37,  // 70: mono.codexel.RepositoryService.Open:input_type -> mono.codexel.RequestOpenRepository
+	39,  // 71: mono.codexel.RepositoryService.Close:input_type -> mono.codexel.RequestCloseRepository
+	41,  // 72: mono.codexel.RepositoryService.Watch:input_type -> mono.codexel.RequestWatchRepository
+	43,  // 73: mono.codexel.RepositoryService.Log:input_type -> mono.codexel.RequestLog
+	48,  // 74: mono.codexel.RepositoryService.GetRevision:input_type -> mono.codexel.RequestGetRevision
+	50,  // 75: mono.codexel.RepositoryService.New:input_type -> mono.codexel.RequestNew
+	52,  // 76: mono.codexel.RepositoryService.Edit:input_type -> mono.codexel.RequestEdit
+	54,  // 77: mono.codexel.RepositoryService.Abandon:input_type -> mono.codexel.RequestAbandon
+	56,  // 78: mono.codexel.RepositoryService.Describe:input_type -> mono.codexel.RequestDescribe
+	58,  // 79: mono.codexel.RepositoryService.Commit:input_type -> mono.codexel.RequestCommit
+	60,  // 80: mono.codexel.RepositoryService.Undo:input_type -> mono.codexel.RequestUndo
+	62,  // 81: mono.codexel.RepositoryService.Rebase:input_type -> mono.codexel.RequestRebase
+	64,  // 82: mono.codexel.RepositoryService.Squash:input_type -> mono.codexel.RequestSquash
+	93,  // 83: mono.codexel.RepositoryService.Evolog:input_type -> mono.codexel.RequestEvolog
+	100, // 84: mono.codexel.RepositoryService.Split:input_type -> mono.codexel.RequestSplit
+	102, // 85: mono.codexel.RepositoryService.Restore:input_type -> mono.codexel.RequestRestore
+	117, // 86: mono.codexel.RepositoryService.DiffRange:input_type -> mono.codexel.RequestDiffRange
+	119, // 87: mono.codexel.RepositoryService.ListAgentCommits:input_type -> mono.codexel.RequestListAgentCommits
+	67,  // 88: mono.codexel.RepositoryService.ListBookmarks:input_type -> mono.codexel.RequestListBookmarks
+	69,  // 89: mono.codexel.RepositoryService.SetBookmark:input_type -> mono.codexel.RequestSetBookmark
+	71,  // 90: mono.codexel.RepositoryService.MoveBookmark:input_type -> mono.codexel.RequestMoveBookmark
+	73,  // 91: mono.codexel.RepositoryService.DeleteBookmark:input_type -> mono.codexel.RequestDeleteBookmark
+	75,  // 92: mono.codexel.RepositoryService.ForgetBookmark:input_type -> mono.codexel.RequestForgetBookmark
+	77,  // 93: mono.codexel.RepositoryService.TrackBookmark:input_type -> mono.codexel.RequestTrackBookmark
+	79,  // 94: mono.codexel.RepositoryService.UntrackBookmark:input_type -> mono.codexel.RequestUntrackBookmark
+	81,  // 95: mono.codexel.RepositoryService.Fetch:input_type -> mono.codexel.RequestFetch
+	83,  // 96: mono.codexel.RepositoryService.Push:input_type -> mono.codexel.RequestPush
+	86,  // 97: mono.codexel.RepositoryService.ListOperations:input_type -> mono.codexel.RequestListOperations
+	88,  // 98: mono.codexel.RepositoryService.RevertOperation:input_type -> mono.codexel.RequestRevertOperation
+	90,  // 99: mono.codexel.RepositoryService.RestoreOperation:input_type -> mono.codexel.RequestRestoreOperation
+	95,  // 100: mono.codexel.RepositoryService.GetFile:input_type -> mono.codexel.RequestGetFile
+	97,  // 101: mono.codexel.RepositoryService.ListFiles:input_type -> mono.codexel.RequestListFiles
+	105, // 102: mono.codexel.RepositoryService.ListWorkspaces:input_type -> mono.codexel.RequestListRepositoryWorkspaces
+	107, // 103: mono.codexel.RepositoryService.AddWorkspace:input_type -> mono.codexel.RequestAddRepositoryWorkspace
+	109, // 104: mono.codexel.RepositoryService.ForgetWorkspace:input_type -> mono.codexel.RequestForgetRepositoryWorkspace
+	111, // 105: mono.codexel.RepositoryService.RemoveWorkspace:input_type -> mono.codexel.RequestRemoveRepositoryWorkspace
+	113, // 106: mono.codexel.RepositoryService.RenameWorkspace:input_type -> mono.codexel.RequestRenameRepositoryWorkspace
+	115, // 107: mono.codexel.RepositoryService.UpdateStale:input_type -> mono.codexel.RequestUpdateStale
+	122, // 108: mono.codexel.RepositoryService.ListAliases:input_type -> mono.codexel.RequestListAliases
+	124, // 109: mono.codexel.RepositoryService.RunAlias:input_type -> mono.codexel.RequestRunAlias
+	136, // 110: mono.codexel.ReviewService.List:input_type -> mono.codexel.RequestListReviews
+	138, // 111: mono.codexel.ReviewService.ListApprovedCommits:input_type -> mono.codexel.RequestListApprovedCommits
+	140, // 112: mono.codexel.ReviewService.Get:input_type -> mono.codexel.RequestGetReview
+	142, // 113: mono.codexel.ReviewService.Start:input_type -> mono.codexel.RequestStartReview
+	144, // 114: mono.codexel.ReviewService.AddComment:input_type -> mono.codexel.RequestAddComment
+	146, // 115: mono.codexel.ReviewService.EditComment:input_type -> mono.codexel.RequestEditComment
+	148, // 116: mono.codexel.ReviewService.DeleteComment:input_type -> mono.codexel.RequestDeleteComment
+	150, // 117: mono.codexel.ReviewService.Reply:input_type -> mono.codexel.RequestReply
+	152, // 118: mono.codexel.ReviewService.ResolveComment:input_type -> mono.codexel.RequestResolveComment
+	154, // 119: mono.codexel.ReviewService.Finish:input_type -> mono.codexel.RequestFinish
+	156, // 120: mono.codexel.ReviewService.Discard:input_type -> mono.codexel.RequestDiscard
+	158, // 121: mono.codexel.ReviewService.StartNextRound:input_type -> mono.codexel.RequestStartNextRound
+	160, // 122: mono.codexel.ReviewService.RoundDiff:input_type -> mono.codexel.RequestRoundDiff
+	162, // 123: mono.codexel.ReviewService.SetViewed:input_type -> mono.codexel.RequestSetViewed
+	173, // 124: mono.codexel.PullRequestService.List:input_type -> mono.codexel.RequestListPullRequests
+	166, // 125: mono.codexel.PullRequestService.ListTemplates:input_type -> mono.codexel.RequestListPullRequestTemplates
+	168, // 126: mono.codexel.PullRequestService.Validate:input_type -> mono.codexel.RequestValidatePullRequest
+	170, // 127: mono.codexel.PullRequestService.Submit:input_type -> mono.codexel.RequestSubmitPullRequest
+	164, // 128: mono.codexel.SystemService.GetStatus:input_type -> mono.codexel.RequestGetStatus
+	12,  // 129: mono.codexel.AgentService.List:output_type -> mono.codexel.ResponseListAgents
+	14,  // 130: mono.codexel.AgentService.Watch:output_type -> mono.codexel.ResponseWatchAgents
+	16,  // 131: mono.codexel.AgentService.ReadOutput:output_type -> mono.codexel.ResponseReadOutput
+	18,  // 132: mono.codexel.AgentService.SendPrompt:output_type -> mono.codexel.ResponseSendPrompt
+	20,  // 133: mono.codexel.AgentService.SendKeys:output_type -> mono.codexel.ResponseSendKeys
+	22,  // 134: mono.codexel.AgentService.Focus:output_type -> mono.codexel.ResponseFocusAgent
+	24,  // 135: mono.codexel.AgentService.ListWorkspaces:output_type -> mono.codexel.ResponseListWorkspaces
+	26,  // 136: mono.codexel.AgentService.Start:output_type -> mono.codexel.ResponseStartAgent
+	28,  // 137: mono.codexel.AgentService.Stop:output_type -> mono.codexel.ResponseStopAgent
+	129, // 138: mono.codexel.AgentService.WatchTranscript:output_type -> mono.codexel.ResponseWatchTranscript
+	36,  // 139: mono.codexel.RepositoryService.List:output_type -> mono.codexel.ResponseListRepositories
+	38,  // 140: mono.codexel.RepositoryService.Open:output_type -> mono.codexel.ResponseOpenRepository
+	40,  // 141: mono.codexel.RepositoryService.Close:output_type -> mono.codexel.ResponseCloseRepository
+	42,  // 142: mono.codexel.RepositoryService.Watch:output_type -> mono.codexel.ResponseWatchRepository
+	44,  // 143: mono.codexel.RepositoryService.Log:output_type -> mono.codexel.ResponseLog
+	49,  // 144: mono.codexel.RepositoryService.GetRevision:output_type -> mono.codexel.ResponseGetRevision
+	51,  // 145: mono.codexel.RepositoryService.New:output_type -> mono.codexel.ResponseNew
+	53,  // 146: mono.codexel.RepositoryService.Edit:output_type -> mono.codexel.ResponseEdit
+	55,  // 147: mono.codexel.RepositoryService.Abandon:output_type -> mono.codexel.ResponseAbandon
+	57,  // 148: mono.codexel.RepositoryService.Describe:output_type -> mono.codexel.ResponseDescribe
+	59,  // 149: mono.codexel.RepositoryService.Commit:output_type -> mono.codexel.ResponseCommit
+	61,  // 150: mono.codexel.RepositoryService.Undo:output_type -> mono.codexel.ResponseUndo
+	63,  // 151: mono.codexel.RepositoryService.Rebase:output_type -> mono.codexel.ResponseRebase
+	65,  // 152: mono.codexel.RepositoryService.Squash:output_type -> mono.codexel.ResponseSquash
+	94,  // 153: mono.codexel.RepositoryService.Evolog:output_type -> mono.codexel.ResponseEvolog
+	101, // 154: mono.codexel.RepositoryService.Split:output_type -> mono.codexel.ResponseSplit
+	103, // 155: mono.codexel.RepositoryService.Restore:output_type -> mono.codexel.ResponseRestore
+	118, // 156: mono.codexel.RepositoryService.DiffRange:output_type -> mono.codexel.ResponseDiffRange
+	120, // 157: mono.codexel.RepositoryService.ListAgentCommits:output_type -> mono.codexel.ResponseListAgentCommits
+	68,  // 158: mono.codexel.RepositoryService.ListBookmarks:output_type -> mono.codexel.ResponseListBookmarks
+	70,  // 159: mono.codexel.RepositoryService.SetBookmark:output_type -> mono.codexel.ResponseSetBookmark
+	72,  // 160: mono.codexel.RepositoryService.MoveBookmark:output_type -> mono.codexel.ResponseMoveBookmark
+	74,  // 161: mono.codexel.RepositoryService.DeleteBookmark:output_type -> mono.codexel.ResponseDeleteBookmark
+	76,  // 162: mono.codexel.RepositoryService.ForgetBookmark:output_type -> mono.codexel.ResponseForgetBookmark
+	78,  // 163: mono.codexel.RepositoryService.TrackBookmark:output_type -> mono.codexel.ResponseTrackBookmark
+	80,  // 164: mono.codexel.RepositoryService.UntrackBookmark:output_type -> mono.codexel.ResponseUntrackBookmark
+	82,  // 165: mono.codexel.RepositoryService.Fetch:output_type -> mono.codexel.ResponseFetch
+	84,  // 166: mono.codexel.RepositoryService.Push:output_type -> mono.codexel.ResponsePush
+	87,  // 167: mono.codexel.RepositoryService.ListOperations:output_type -> mono.codexel.ResponseListOperations
+	89,  // 168: mono.codexel.RepositoryService.RevertOperation:output_type -> mono.codexel.ResponseRevertOperation
+	91,  // 169: mono.codexel.RepositoryService.RestoreOperation:output_type -> mono.codexel.ResponseRestoreOperation
+	96,  // 170: mono.codexel.RepositoryService.GetFile:output_type -> mono.codexel.ResponseGetFile
+	98,  // 171: mono.codexel.RepositoryService.ListFiles:output_type -> mono.codexel.ResponseListFiles
+	106, // 172: mono.codexel.RepositoryService.ListWorkspaces:output_type -> mono.codexel.ResponseListRepositoryWorkspaces
+	108, // 173: mono.codexel.RepositoryService.AddWorkspace:output_type -> mono.codexel.ResponseAddRepositoryWorkspace
+	110, // 174: mono.codexel.RepositoryService.ForgetWorkspace:output_type -> mono.codexel.ResponseForgetRepositoryWorkspace
+	112, // 175: mono.codexel.RepositoryService.RemoveWorkspace:output_type -> mono.codexel.ResponseRemoveRepositoryWorkspace
+	114, // 176: mono.codexel.RepositoryService.RenameWorkspace:output_type -> mono.codexel.ResponseRenameRepositoryWorkspace
+	116, // 177: mono.codexel.RepositoryService.UpdateStale:output_type -> mono.codexel.ResponseUpdateStale
+	123, // 178: mono.codexel.RepositoryService.ListAliases:output_type -> mono.codexel.ResponseListAliases
+	125, // 179: mono.codexel.RepositoryService.RunAlias:output_type -> mono.codexel.ResponseRunAlias
+	137, // 180: mono.codexel.ReviewService.List:output_type -> mono.codexel.ResponseListReviews
+	139, // 181: mono.codexel.ReviewService.ListApprovedCommits:output_type -> mono.codexel.ResponseListApprovedCommits
+	141, // 182: mono.codexel.ReviewService.Get:output_type -> mono.codexel.ResponseGetReview
+	143, // 183: mono.codexel.ReviewService.Start:output_type -> mono.codexel.ResponseStartReview
+	145, // 184: mono.codexel.ReviewService.AddComment:output_type -> mono.codexel.ResponseAddComment
+	147, // 185: mono.codexel.ReviewService.EditComment:output_type -> mono.codexel.ResponseEditComment
+	149, // 186: mono.codexel.ReviewService.DeleteComment:output_type -> mono.codexel.ResponseDeleteComment
+	151, // 187: mono.codexel.ReviewService.Reply:output_type -> mono.codexel.ResponseReply
+	153, // 188: mono.codexel.ReviewService.ResolveComment:output_type -> mono.codexel.ResponseResolveComment
+	155, // 189: mono.codexel.ReviewService.Finish:output_type -> mono.codexel.ResponseFinish
+	157, // 190: mono.codexel.ReviewService.Discard:output_type -> mono.codexel.ResponseDiscard
+	159, // 191: mono.codexel.ReviewService.StartNextRound:output_type -> mono.codexel.ResponseStartNextRound
+	161, // 192: mono.codexel.ReviewService.RoundDiff:output_type -> mono.codexel.ResponseRoundDiff
+	163, // 193: mono.codexel.ReviewService.SetViewed:output_type -> mono.codexel.ResponseSetViewed
+	175, // 194: mono.codexel.PullRequestService.List:output_type -> mono.codexel.ResponseListPullRequests
+	167, // 195: mono.codexel.PullRequestService.ListTemplates:output_type -> mono.codexel.ResponseListPullRequestTemplates
+	169, // 196: mono.codexel.PullRequestService.Validate:output_type -> mono.codexel.ResponseValidatePullRequest
+	172, // 197: mono.codexel.PullRequestService.Submit:output_type -> mono.codexel.ResponseSubmitPullRequest
+	165, // 198: mono.codexel.SystemService.GetStatus:output_type -> mono.codexel.ResponseGetStatus
+	129, // [129:199] is the sub-list for method output_type
+	59,  // [59:129] is the sub-list for method input_type
+	59,  // [59:59] is the sub-list for extension type_name
+	59,  // [59:59] is the sub-list for extension extendee
+	0,   // [0:59] is the sub-list for field type_name
 }
 
 func init() { file_proto_codexel_codexel_proto_init() }
@@ -20681,8 +19590,8 @@ func file_proto_codexel_codexel_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_codexel_codexel_proto_rawDesc), len(file_proto_codexel_codexel_proto_rawDesc)),
-			NumEnums:      10,
-			NumMessages:   176,
+			NumEnums:      9,
+			NumMessages:   167,
 			NumExtensions: 0,
 			NumServices:   5,
 		},

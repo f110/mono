@@ -568,68 +568,6 @@ func (h *RepositoryHandler) ListFiles(ctx context.Context, req *connect.Request[
 	return connect.NewResponse(api.ResponseListFiles_builder{Files: files}.Build()), nil
 }
 
-func (h *RepositoryHandler) WriteFile(ctx context.Context, req *connect.Request[api.RequestWriteFile]) (*connect.Response[api.ResponseWriteFile], error) {
-	repo, err := openedRepository(h.config, req.Msg.GetPath())
-	if err != nil {
-		return nil, err
-	}
-	if err := repo.WriteFile(ctx, req.Msg.GetFile(), req.Msg.GetContent()); err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, err)
-	}
-	return connect.NewResponse(&api.ResponseWriteFile{}), nil
-}
-
-func (h *RepositoryHandler) ListConflicts(ctx context.Context, req *connect.Request[api.RequestListConflicts]) (*connect.Response[api.ResponseListConflicts], error) {
-	repo, err := openedRepository(h.config, req.Msg.GetPath())
-	if err != nil {
-		return nil, err
-	}
-	commits, err := repo.Conflicts(ctx)
-	if err != nil {
-		return nil, toJujutsuError(err)
-	}
-	res := make([]*api.ConflictedCommit, 0, len(commits))
-	for _, c := range commits {
-		res = append(res, api.ConflictedCommit_builder{
-			ChangeId:    new(c.ChangeID),
-			CommitId:    new(c.CommitID),
-			Description: new(c.Description),
-			Files:       toConflictedFiles(c.Files),
-			WorkingCopy: new(c.WorkingCopy),
-		}.Build())
-	}
-	return connect.NewResponse(api.ResponseListConflicts_builder{Commits: res}.Build()), nil
-}
-
-func (h *RepositoryHandler) GetConflict(ctx context.Context, req *connect.Request[api.RequestGetConflict]) (*connect.Response[api.ResponseGetConflict], error) {
-	if req.Msg.GetRevision() == "" || req.Msg.GetFile() == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("revision and file are required"))
-	}
-	repo, err := openedRepository(h.config, req.Msg.GetPath())
-	if err != nil {
-		return nil, err
-	}
-	content, err := repo.ConflictFile(ctx, req.Msg.GetRevision(), req.Msg.GetFile())
-	if err != nil {
-		return nil, toJujutsuError(err)
-	}
-	return connect.NewResponse(api.ResponseGetConflict_builder{Content: new(string(content))}.Build()), nil
-}
-
-func (h *RepositoryHandler) Resolve(ctx context.Context, req *connect.Request[api.RequestResolve]) (*connect.Response[api.ResponseResolve], error) {
-	side, ok := resolveSides[req.Msg.GetSide()]
-	if !ok || req.Msg.GetRevision() == "" || req.Msg.GetFile() == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("revision, file and side are required"))
-	}
-	out, err := mutate(h.config, req.Msg.GetPath(), func(r *jujutsu.Repository) (string, error) {
-		return r.Resolve(ctx, req.Msg.GetRevision(), req.Msg.GetFile(), side)
-	})
-	if err != nil {
-		return nil, err
-	}
-	return connect.NewResponse(api.ResponseResolve_builder{Output: new(out)}.Build()), nil
-}
-
 func (h *RepositoryHandler) ListWorkspaces(ctx context.Context, req *connect.Request[api.RequestListRepositoryWorkspaces]) (*connect.Response[api.ResponseListRepositoryWorkspaces], error) {
 	repo, err := openedRepository(h.config, req.Msg.GetPath())
 	if err != nil {
@@ -751,11 +689,6 @@ var diffLineKinds = map[jujutsu.DiffLineKind]api.DiffLineKind{
 	jujutsu.DiffLineContext: api.DiffLineKind_DIFF_LINE_KIND_CONTEXT,
 	jujutsu.DiffLineAdded:   api.DiffLineKind_DIFF_LINE_KIND_ADDED,
 	jujutsu.DiffLineRemoved: api.DiffLineKind_DIFF_LINE_KIND_REMOVED,
-}
-
-var resolveSides = map[api.ResolveSide]jujutsu.ResolveSide{
-	api.ResolveSide_RESOLVE_SIDE_OURS:   jujutsu.ResolveOurs,
-	api.ResolveSide_RESOLVE_SIDE_THEIRS: jujutsu.ResolveTheirs,
 }
 
 // openAgentRepositories opens the workspaces where the agents work. The home directory is excluded because the agent

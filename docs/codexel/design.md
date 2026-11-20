@@ -107,18 +107,17 @@ lightjj の機能を次のとおり分類する。キーバインドは lightjj 
 |---|---|---|
 | リビジョングラフ | revset 入力、SVG の DAG、`@`/immutable/conflict/divergent の表示、各 workspace の working copy (`<name>@`)・bookmark・PR バッジ (§7.3)、`?change=` 等のリンク | `j`/`k`, `/`, `@`, `r` |
 | 差分 | unified/split、シンタックスハイライト、単語単位の差分、コンテキスト展開、hunk 移動、Markdown プレビュー、画像差分、エディタで開く | `]`/`[`, `\|`, `m`, `f` |
-| ファイル | リビジョン時点の全ファイルツリー、パス検索、ファイル履歴と 2 点比較、インライン編集 (`@` のみ) | `F` |
+| ファイル | リビジョン時点の全ファイルツリー、パス検索、ファイル履歴と 2 点比較 | `F` |
 | 変更操作 | new / edit / abandon / describe / commit / restore / squash / split (ファイル・hunk) / slide / undo | `n`, `e`, `c`, `s`, `S`, `J`/`K`, `u` |
 | rebase | インライン rebase (`-r`/`-s`/`-b` × onto/after/before)、複数選択、megamerge | `R`, `M`, `Space` |
 | bookmark | 一覧と同期状態 (ahead/behind/diverged/conflict)、set/move/advance/delete/forget/track/untrack | `2`, `b`, `B` |
 | git | fetch / push (ストリーミング出力) | `f`/`p` (修飾キー付き), `g` |
-| コンフリクト | コンフリクト一覧、`:ours`/`:theirs`、3 ペインのマージエディタ | `3` |
 | 履歴 | op log (undo/restore)、evolog とステップごとの差分 | `4`/`O`, `5`/`E` |
 | divergence | divergent なコミットの比較と解決 | — |
 | workspace | 一覧 / add / remove / forget / rename / stale の復旧 | `w` |
 | その他 | コマンドパレット (Cmd+K)、jj alias の実行、設定 | — |
 
-リビジョングラフ・bookmark 一覧・コンフリクト一覧・op log・workspace 一覧は、キーに加えて左ペイン上部のタブでも切り替えられる。
+リビジョングラフ・bookmark 一覧・op log・workspace 一覧は、キーに加えて左ペイン上部のタブでも切り替えられる。
 
 workspace 一覧では `d` で remove (`jj workspace remove`)、`f` で forget する (#175)。bookmark 一覧の `d` (delete) / `f` (forget) に合わせる。
 作業を終えた workspace はディレクトリごと消す remove を使うことが多いので、選択中の行のボタンは Remove を Forget の前に置く。
@@ -150,6 +149,8 @@ remove・forget ともに Codexel で開いている workspace は対象にで�
 - エージェント向け HTTP API と `lightjj api` / `lightjj skill`: Codexel の MCP (§5.4) に置き換える
 - テーマ (Ghostty 由来の 486 テーマ、dark/light の切り替え): ライトテーマだけにする
 - `rg` による定義ジャンプ
+- コンフリクト一覧、`:ours`/`:theirs`、3 ペインのマージエディタ: 使わないので廃止した (#183)
+- ファイルのインライン編集 (`@` のみ)
 
 ### 4.4 状態の同期
 
@@ -373,7 +374,7 @@ UI から作成した PR の URL を保存し、リビジョングラフの PR �
 | サービス | 主な RPC |
 |---|---|
 | `AgentService` | `List`, `Watch` (stream), `ReadOutput`, `SendPrompt`, `SendKeys`, `Focus`, `ListWorkspaces`, `Start`, `Stop`, `WatchTranscript` (stream) |
-| `RepositoryService` | `List`, `Open`, `Close`, `Watch` (stream, op ID の変化), `Log`, `GetRevision`, `Diff`, `DiffRange`, `Files`, `FileTree`, `FileHistory`, ... と §4.2 の各操作 (リビジョン、ブックマーク、Git、オペレーション、ファイル、コンフリクト、ワークスペース、エイリアス) |
+| `RepositoryService` | `List`, `Open`, `Close`, `Watch` (stream, op ID の変化), `Log`, `GetRevision`, `Diff`, `DiffRange`, `Files`, `FileTree`, `FileHistory`, ... と §4.2 の各操作 (リビジョン、ブックマーク、Git、オペレーション、ファイル、ワークスペース、エイリアス) |
 | `ReviewService` | `List`, `Get`, `Start`, `AddComment`, `EditComment`, `DeleteComment`, `Reply`, `ResolveComment`, `Finish`, `Discard`, `StartNextRound`, `RoundDiff`, `SetViewed` |
 | `PullRequestService` | `List`, `ListTemplates`, `Validate`, `Submit` |
 | `SystemService` | `GetStatus` (起動時に PATH に見つからなかった `herdr` と `jj`、`--issue-url`) |

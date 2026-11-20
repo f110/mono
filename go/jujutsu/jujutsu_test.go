@@ -152,47 +152,6 @@ func TestFileArgs(t *testing.T) {
 	assertion.Equal(t, fileListArgs("--config=x")[3], "--revision=--config=x")
 }
 
-func TestWorkingCopyPath(t *testing.T) {
-	r := NewRepository("/repo")
-	cases := []struct {
-		Path string
-		Want string
-	}{
-		{Path: "a/b.txt", Want: "/repo/a/b.txt"},
-		{Path: "a/../b.txt", Want: "/repo/b.txt"},
-		{Path: "../etc/passwd"},
-		{Path: "a/../../etc/passwd"},
-		{Path: "/etc/passwd"},
-		{Path: ".jj/repo/store"},
-		{Path: ".git/config"},
-		{Path: ""},
-	}
-	for _, tc := range cases {
-		t.Run(tc.Path, func(t *testing.T) {
-			got, err := r.workingCopyPath(tc.Path)
-			if tc.Want == "" {
-				assertion.MustError(t, err)
-				return
-			}
-			assertion.MustNoError(t, err)
-			assertion.Equal(t, got, tc.Want)
-		})
-	}
-}
-
-func TestWriteFileRejectsSymlinkOutside(t *testing.T) {
-	root := t.TempDir()
-	outside := t.TempDir()
-	assertion.MustNoError(t, os.WriteFile(filepath.Join(outside, "secret"), []byte("x"), 0644))
-	assertion.MustNoError(t, os.Symlink(outside, filepath.Join(root, "link")))
-
-	err := NewRepository(root).WriteFile(t.Context(), "link/secret", []byte("overwritten"))
-	assertion.MustError(t, err)
-	buf, err := os.ReadFile(filepath.Join(outside, "secret"))
-	assertion.MustNoError(t, err)
-	assertion.Equal(t, string(buf), "x")
-}
-
 func TestParseGitDiff(t *testing.T) {
 	// testdata/diff.txt is the output of jj diff by diffArgs which adds, deletes, modifies and renames the files.
 	out, err := os.ReadFile("testdata/diff.txt")
@@ -281,8 +240,6 @@ func TestInterdiffArgs(t *testing.T) {
 
 func TestConflictArgs(t *testing.T) {
 	assertion.Equal(t, conflictsArgs("abc"), []string{"log", "--no-graph", "--ignore-working-copy", "--revisions=abc", "-T", conflictTemplate})
-	assertion.Equal(t, conflictFileArgs("abc", "a b.txt"), []string{"file", "show", "--ignore-working-copy", "--config", "ui.conflict-marker-style=snapshot", "--revision=abc", "--", `root-file:"a b.txt"`})
-	assertion.Equal(t, resolveArgs("abc", "f", ResolveOurs), []string{"resolve", "--revision=abc", "--tool=:ours", "--", `root-file:"f"`})
 }
 
 func TestParseEvolog(t *testing.T) {

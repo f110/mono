@@ -150,18 +150,6 @@ const (
 	// RepositoryServiceListFilesProcedure is the fully-qualified name of the RepositoryService's
 	// ListFiles RPC.
 	RepositoryServiceListFilesProcedure = "/mono.codexel.RepositoryService/ListFiles"
-	// RepositoryServiceWriteFileProcedure is the fully-qualified name of the RepositoryService's
-	// WriteFile RPC.
-	RepositoryServiceWriteFileProcedure = "/mono.codexel.RepositoryService/WriteFile"
-	// RepositoryServiceListConflictsProcedure is the fully-qualified name of the RepositoryService's
-	// ListConflicts RPC.
-	RepositoryServiceListConflictsProcedure = "/mono.codexel.RepositoryService/ListConflicts"
-	// RepositoryServiceGetConflictProcedure is the fully-qualified name of the RepositoryService's
-	// GetConflict RPC.
-	RepositoryServiceGetConflictProcedure = "/mono.codexel.RepositoryService/GetConflict"
-	// RepositoryServiceResolveProcedure is the fully-qualified name of the RepositoryService's Resolve
-	// RPC.
-	RepositoryServiceResolveProcedure = "/mono.codexel.RepositoryService/Resolve"
 	// RepositoryServiceListWorkspacesProcedure is the fully-qualified name of the RepositoryService's
 	// ListWorkspaces RPC.
 	RepositoryServiceListWorkspacesProcedure = "/mono.codexel.RepositoryService/ListWorkspaces"
@@ -574,10 +562,6 @@ type RepositoryServiceClient interface {
 	RestoreOperation(context.Context, *connect.Request[RequestRestoreOperation]) (*connect.Response[ResponseRestoreOperation], error)
 	GetFile(context.Context, *connect.Request[RequestGetFile]) (*connect.Response[ResponseGetFile], error)
 	ListFiles(context.Context, *connect.Request[RequestListFiles]) (*connect.Response[ResponseListFiles], error)
-	WriteFile(context.Context, *connect.Request[RequestWriteFile]) (*connect.Response[ResponseWriteFile], error)
-	ListConflicts(context.Context, *connect.Request[RequestListConflicts]) (*connect.Response[ResponseListConflicts], error)
-	GetConflict(context.Context, *connect.Request[RequestGetConflict]) (*connect.Response[ResponseGetConflict], error)
-	Resolve(context.Context, *connect.Request[RequestResolve]) (*connect.Response[ResponseResolve], error)
 	ListWorkspaces(context.Context, *connect.Request[RequestListRepositoryWorkspaces]) (*connect.Response[ResponseListRepositoryWorkspaces], error)
 	AddWorkspace(context.Context, *connect.Request[RequestAddRepositoryWorkspace]) (*connect.Response[ResponseAddRepositoryWorkspace], error)
 	ForgetWorkspace(context.Context, *connect.Request[RequestForgetRepositoryWorkspace]) (*connect.Response[ResponseForgetRepositoryWorkspace], error)
@@ -797,30 +781,6 @@ func NewRepositoryServiceClient(httpClient connect.HTTPClient, baseURL string, o
 			connect.WithSchema(repositoryServiceMethods.ByName("ListFiles")),
 			connect.WithClientOptions(opts...),
 		),
-		writeFile: connect.NewClient[RequestWriteFile, ResponseWriteFile](
-			httpClient,
-			baseURL+RepositoryServiceWriteFileProcedure,
-			connect.WithSchema(repositoryServiceMethods.ByName("WriteFile")),
-			connect.WithClientOptions(opts...),
-		),
-		listConflicts: connect.NewClient[RequestListConflicts, ResponseListConflicts](
-			httpClient,
-			baseURL+RepositoryServiceListConflictsProcedure,
-			connect.WithSchema(repositoryServiceMethods.ByName("ListConflicts")),
-			connect.WithClientOptions(opts...),
-		),
-		getConflict: connect.NewClient[RequestGetConflict, ResponseGetConflict](
-			httpClient,
-			baseURL+RepositoryServiceGetConflictProcedure,
-			connect.WithSchema(repositoryServiceMethods.ByName("GetConflict")),
-			connect.WithClientOptions(opts...),
-		),
-		resolve: connect.NewClient[RequestResolve, ResponseResolve](
-			httpClient,
-			baseURL+RepositoryServiceResolveProcedure,
-			connect.WithSchema(repositoryServiceMethods.ByName("Resolve")),
-			connect.WithClientOptions(opts...),
-		),
 		listWorkspaces: connect.NewClient[RequestListRepositoryWorkspaces, ResponseListRepositoryWorkspaces](
 			httpClient,
 			baseURL+RepositoryServiceListWorkspacesProcedure,
@@ -907,10 +867,6 @@ type repositoryServiceClient struct {
 	restoreOperation *connect.Client[RequestRestoreOperation, ResponseRestoreOperation]
 	getFile          *connect.Client[RequestGetFile, ResponseGetFile]
 	listFiles        *connect.Client[RequestListFiles, ResponseListFiles]
-	writeFile        *connect.Client[RequestWriteFile, ResponseWriteFile]
-	listConflicts    *connect.Client[RequestListConflicts, ResponseListConflicts]
-	getConflict      *connect.Client[RequestGetConflict, ResponseGetConflict]
-	resolve          *connect.Client[RequestResolve, ResponseResolve]
 	listWorkspaces   *connect.Client[RequestListRepositoryWorkspaces, ResponseListRepositoryWorkspaces]
 	addWorkspace     *connect.Client[RequestAddRepositoryWorkspace, ResponseAddRepositoryWorkspace]
 	forgetWorkspace  *connect.Client[RequestForgetRepositoryWorkspace, ResponseForgetRepositoryWorkspace]
@@ -1086,26 +1042,6 @@ func (c *repositoryServiceClient) ListFiles(ctx context.Context, req *connect.Re
 	return c.listFiles.CallUnary(ctx, req)
 }
 
-// WriteFile calls mono.codexel.RepositoryService.WriteFile.
-func (c *repositoryServiceClient) WriteFile(ctx context.Context, req *connect.Request[RequestWriteFile]) (*connect.Response[ResponseWriteFile], error) {
-	return c.writeFile.CallUnary(ctx, req)
-}
-
-// ListConflicts calls mono.codexel.RepositoryService.ListConflicts.
-func (c *repositoryServiceClient) ListConflicts(ctx context.Context, req *connect.Request[RequestListConflicts]) (*connect.Response[ResponseListConflicts], error) {
-	return c.listConflicts.CallUnary(ctx, req)
-}
-
-// GetConflict calls mono.codexel.RepositoryService.GetConflict.
-func (c *repositoryServiceClient) GetConflict(ctx context.Context, req *connect.Request[RequestGetConflict]) (*connect.Response[ResponseGetConflict], error) {
-	return c.getConflict.CallUnary(ctx, req)
-}
-
-// Resolve calls mono.codexel.RepositoryService.Resolve.
-func (c *repositoryServiceClient) Resolve(ctx context.Context, req *connect.Request[RequestResolve]) (*connect.Response[ResponseResolve], error) {
-	return c.resolve.CallUnary(ctx, req)
-}
-
 // ListWorkspaces calls mono.codexel.RepositoryService.ListWorkspaces.
 func (c *repositoryServiceClient) ListWorkspaces(ctx context.Context, req *connect.Request[RequestListRepositoryWorkspaces]) (*connect.Response[ResponseListRepositoryWorkspaces], error) {
 	return c.listWorkspaces.CallUnary(ctx, req)
@@ -1181,10 +1117,6 @@ type RepositoryServiceHandler interface {
 	RestoreOperation(context.Context, *connect.Request[RequestRestoreOperation]) (*connect.Response[ResponseRestoreOperation], error)
 	GetFile(context.Context, *connect.Request[RequestGetFile]) (*connect.Response[ResponseGetFile], error)
 	ListFiles(context.Context, *connect.Request[RequestListFiles]) (*connect.Response[ResponseListFiles], error)
-	WriteFile(context.Context, *connect.Request[RequestWriteFile]) (*connect.Response[ResponseWriteFile], error)
-	ListConflicts(context.Context, *connect.Request[RequestListConflicts]) (*connect.Response[ResponseListConflicts], error)
-	GetConflict(context.Context, *connect.Request[RequestGetConflict]) (*connect.Response[ResponseGetConflict], error)
-	Resolve(context.Context, *connect.Request[RequestResolve]) (*connect.Response[ResponseResolve], error)
 	ListWorkspaces(context.Context, *connect.Request[RequestListRepositoryWorkspaces]) (*connect.Response[ResponseListRepositoryWorkspaces], error)
 	AddWorkspace(context.Context, *connect.Request[RequestAddRepositoryWorkspace]) (*connect.Response[ResponseAddRepositoryWorkspace], error)
 	ForgetWorkspace(context.Context, *connect.Request[RequestForgetRepositoryWorkspace]) (*connect.Response[ResponseForgetRepositoryWorkspace], error)
@@ -1400,30 +1332,6 @@ func NewRepositoryServiceHandler(svc RepositoryServiceHandler, opts ...connect.H
 		connect.WithSchema(repositoryServiceMethods.ByName("ListFiles")),
 		connect.WithHandlerOptions(opts...),
 	)
-	repositoryServiceWriteFileHandler := connect.NewUnaryHandler(
-		RepositoryServiceWriteFileProcedure,
-		svc.WriteFile,
-		connect.WithSchema(repositoryServiceMethods.ByName("WriteFile")),
-		connect.WithHandlerOptions(opts...),
-	)
-	repositoryServiceListConflictsHandler := connect.NewUnaryHandler(
-		RepositoryServiceListConflictsProcedure,
-		svc.ListConflicts,
-		connect.WithSchema(repositoryServiceMethods.ByName("ListConflicts")),
-		connect.WithHandlerOptions(opts...),
-	)
-	repositoryServiceGetConflictHandler := connect.NewUnaryHandler(
-		RepositoryServiceGetConflictProcedure,
-		svc.GetConflict,
-		connect.WithSchema(repositoryServiceMethods.ByName("GetConflict")),
-		connect.WithHandlerOptions(opts...),
-	)
-	repositoryServiceResolveHandler := connect.NewUnaryHandler(
-		RepositoryServiceResolveProcedure,
-		svc.Resolve,
-		connect.WithSchema(repositoryServiceMethods.ByName("Resolve")),
-		connect.WithHandlerOptions(opts...),
-	)
 	repositoryServiceListWorkspacesHandler := connect.NewUnaryHandler(
 		RepositoryServiceListWorkspacesProcedure,
 		svc.ListWorkspaces,
@@ -1540,14 +1448,6 @@ func NewRepositoryServiceHandler(svc RepositoryServiceHandler, opts ...connect.H
 			repositoryServiceGetFileHandler.ServeHTTP(w, r)
 		case RepositoryServiceListFilesProcedure:
 			repositoryServiceListFilesHandler.ServeHTTP(w, r)
-		case RepositoryServiceWriteFileProcedure:
-			repositoryServiceWriteFileHandler.ServeHTTP(w, r)
-		case RepositoryServiceListConflictsProcedure:
-			repositoryServiceListConflictsHandler.ServeHTTP(w, r)
-		case RepositoryServiceGetConflictProcedure:
-			repositoryServiceGetConflictHandler.ServeHTTP(w, r)
-		case RepositoryServiceResolveProcedure:
-			repositoryServiceResolveHandler.ServeHTTP(w, r)
 		case RepositoryServiceListWorkspacesProcedure:
 			repositoryServiceListWorkspacesHandler.ServeHTTP(w, r)
 		case RepositoryServiceAddWorkspaceProcedure:
@@ -1703,22 +1603,6 @@ func (UnimplementedRepositoryServiceHandler) GetFile(context.Context, *connect.R
 
 func (UnimplementedRepositoryServiceHandler) ListFiles(context.Context, *connect.Request[RequestListFiles]) (*connect.Response[ResponseListFiles], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.ListFiles is not implemented"))
-}
-
-func (UnimplementedRepositoryServiceHandler) WriteFile(context.Context, *connect.Request[RequestWriteFile]) (*connect.Response[ResponseWriteFile], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.WriteFile is not implemented"))
-}
-
-func (UnimplementedRepositoryServiceHandler) ListConflicts(context.Context, *connect.Request[RequestListConflicts]) (*connect.Response[ResponseListConflicts], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.ListConflicts is not implemented"))
-}
-
-func (UnimplementedRepositoryServiceHandler) GetConflict(context.Context, *connect.Request[RequestGetConflict]) (*connect.Response[ResponseGetConflict], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.GetConflict is not implemented"))
-}
-
-func (UnimplementedRepositoryServiceHandler) Resolve(context.Context, *connect.Request[RequestResolve]) (*connect.Response[ResponseResolve], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.Resolve is not implemented"))
 }
 
 func (UnimplementedRepositoryServiceHandler) ListWorkspaces(context.Context, *connect.Request[RequestListRepositoryWorkspaces]) (*connect.Response[ResponseListRepositoryWorkspaces], error) {
