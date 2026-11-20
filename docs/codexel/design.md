@@ -115,21 +115,22 @@ lightjj の機能を次のとおり分類する。キーバインドは lightjj 
 | コンフリクト | コンフリクト一覧、`:ours`/`:theirs`、3 ペインのマージエディタ | `3` |
 | 履歴 | op log (undo/restore)、evolog とステップごとの差分 | `4`/`O`, `5`/`E` |
 | divergence | divergent なコミットの比較と解決 | — |
-| workspace | 一覧 / add / forget / rename / stale の復旧 | — |
+| workspace | 一覧 / add / forget / rename / stale の復旧 | `w` |
 | その他 | コマンドパレット (Cmd+K)、jj alias の実行、設定 | — |
 
-リビジョングラフ・bookmark 一覧・コンフリクト一覧・op log は、キーに加えて左ペイン上部のタブでも切り替えられる。
+リビジョングラフ・bookmark 一覧・コンフリクト一覧・op log・workspace 一覧は、キーに加えて左ペイン上部のタブでも切り替えられる。
 
 すべての操作はボタンでも実行できるようにする (#155)。iPad などのタッチ端末ではキーボード・右クリック・コマンドパレットが使えないため。
 キー・コンテキストメニュー・コマンドパレットはショートカットとして残す。長押しでメニューを開く操作は見つけにくいので使わない。
 
 | 操作 | ボタンの配置 |
 |---|---|
-| 選択中のリビジョンの操作 (new / edit / describe / abandon / split / rebase / squash / slide / bookmark / evolog / ファイル / レビュー / PR 作成) | 詳細パネルの change ID の行の右端の「⋯」ボタンで開くメニュー。右クリックのメニューと同じ項目にする。ボタンを横に並べると詳細パネルの主役である説明と差分より目立つため。チェックがある場合はチェックしたリビジョンが対象になる (キーと同じ) |
+| 選択中のリビジョンの操作 (new / edit / describe / abandon / split / rebase / squash / slide / bookmark / workspace の追加 / evolog / ファイル / レビュー / PR 作成) | 詳細パネルの change ID の行の右端の「⋯」ボタンで開くメニュー。右クリックのメニューと同じ項目にする。ボタンを横に並べると詳細パネルの主役である説明と差分より目立つため。チェックがある場合はチェックしたリビジョンが対象になる (キーと同じ) |
 | 複数選択のチェック | 左ペインのタブの右の Select ボタンで選択モードに入り、グラフの各行にチェックボックスを出す。普段はグラフを狭くしないようにチェックボックスを出さない。Cancel・操作の実行・Esc でチェックを外して選択モードを終える |
-| リポジトリ全体の操作 (commit / undo / fetch / push / workspace / alias / `@` への移動 / 再読み込み) | revset 入力の右 |
+| リポジトリ全体の操作 (commit / undo / fetch / push / `@` への移動 / 再読み込み / alias) | revset 入力の右の「⋯」ボタンで開くメニュー。ボタンを並べると種類の違う操作の区別がつかず見づらいため |
 | rebase / squash モード | モード中の警告バーにソース・ターゲット (squash は説明の結合) の切り替えと、実行・キャンセル。移動先は行のタップで選ぶ |
-| bookmark の delete / forget / track / untrack、op log の revert / restore | 一覧の選択中の行 |
+| bookmark の delete / forget / track / untrack、op log の revert / restore、workspace の open / forget | 一覧の選択中の行 |
+| 開いている workspace の rename / stale の復旧 | workspace 一覧の上部 |
 | ファイルブラウザからログに戻る | ファイルツリーの上部 |
 | 差分の split 表示・Markdown プレビュー・hunk 移動 | 右ペインの上部 (スクロールしない位置) |
 

@@ -11,6 +11,7 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
+  IconButton,
   Menu,
   MenuItem,
   Snackbar,
@@ -22,6 +23,7 @@ import {
   Typography,
   ToggleButtonGroup,
 } from '@mui/material'
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz'
 import {
   RebaseSource,
   RebaseTarget,
@@ -29,6 +31,7 @@ import {
   ReviewService,
   type Bookmark,
   type Commit,
+  type RepositoryWorkspace,
 } from '../connect/codexel_pb.js'
 import { useAgents } from '../hooks/useAgents.ts'
 import { useApprovedCommits } from '../hooks/useApprovedCommits.ts'
@@ -55,7 +58,7 @@ import { PullRequestDialog } from './PullRequestDialog.tsx'
 import { RevisionDetail } from './RevisionDetail.tsx'
 import { RevisionGraph } from './RevisionGraph.tsx'
 import { SplitDialog } from './SplitDialog.tsx'
-import { WorkspaceDialog } from './WorkspaceDialog.tsx'
+import { WorkspaceNameDialog, WorkspacesPanel } from './WorkspacesPanel.tsx'
 
 // revisionKey identifies the revision across the operations. The change ID doesn't change by rewriting the revision but
 // it is ambiguous for the divergent revisions.
@@ -67,7 +70,7 @@ const reviewClient = createClient(ReviewService, transport)
 // operationLimit is the number of the operations shown in the operation log.
 const operationLimit = 200
 
-type View = 'log' | 'bookmarks' | 'oplog' | 'evolog' | 'files' | 'conflicts'
+type View = 'log' | 'bookmarks' | 'oplog' | 'evolog' | 'files' | 'conflicts' | 'workspaces'
 
 type Editing ={ kind: 'describe'; commit: Commit; initial: string } | { kind: 'commit'; initial: string }
 
@@ -136,7 +139,9 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   const [view, setView] = useState<View>(() => (treeTarget ? 'files' : 'log'))
   const [conflictSelected, setConflictSelected] = useState(0)
   const [splitting, setSplitting] = useState<Commit>()
-  const [workspaceOpen, setWorkspaceOpen] = useState(false)
+  const [workspaceSelected, setWorkspaceSelected] = useState(0)
+  const [addingWorkspace, setAddingWorkspace] = useState<Commit>()
+  const [renamingWorkspace, setRenamingWorkspace] = useState(false)
   const [divergent, setDivergent] = useState<Commit>()
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [aliasAnchor, setAliasAnchor] = useState<HTMLElement>()
@@ -149,6 +154,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   // menu is the position of the menu of the operations on the selected revision opened by the right click, or the button
   // which opens it.
   const [menu, setMenu] = useState<{ x: number; y: number } | { anchor: HTMLElement }>()
+  const [repoMenuAnchor, setRepoMenuAnchor] = useState<HTMLElement>()
   const [selecting, setSelecting] = useState(false)
   const [opSelected, setOpSelected] = useState(0)
   const [opMenu, setOpMenu] = useState<{ x: number; y: number; id: string }>()
@@ -177,6 +183,12 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   const evolog = evologData?.entries ?? []
   const { data: conflictData, refetch: refetchConflicts } = useQuery(RepositoryService.method.listConflicts, { path }, { enabled: view === 'conflicts' })
   const conflicts = useMemo(() => conflictEntries(conflictData?.commits ?? []), [conflictData])
+  const { data: workspaceData, refetch: refetchWorkspaces } = useQuery(
+    RepositoryService.method.listWorkspaces,
+    { path },
+    { enabled: view === 'workspaces' },
+  )
+  const workspaces = workspaceData?.workspaces ?? []
   const restoreFiles = useCallback((r: FileRevision) => {
     setTreeTarget(r)
     setView('files')
@@ -217,8 +229,11 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
       if (view === 'conflicts') {
         refetchConflicts()
       }
+      if (view === 'workspaces') {
+        refetchWorkspaces()
+      }
     }
-  }, [operation, view, refetch, refetchBookmarks, refetchOperations, refetchConflicts])
+  }, [operation, view, refetch, refetchBookmarks, refetchOperations, refetchConflicts, refetchWorkspaces])
 
   const selectIndex = useCallback((i: number) => {
     const c = commits[Math.max(0, Math.min(i, commits.length - 1))]
@@ -305,9 +320,26 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
       setConflictSelected(0)
     } else if (v === 'oplog') {
       setOpSelected(0)
+    } else if (v === 'workspaces') {
+      setWorkspaceSelected(0)
     }
     setView(v)
   }, [])
+  const openWorkspace = useCallback(
+    async (w: RepositoryWorkspace) => {
+      try {
+        const res = await repositoryClient.open({ path: w.root })
+        onOpenRepository(res.repository?.path ?? w.root)
+      } catch (e) {
+        setMessage({ text: e instanceof Error ? e.message : String(e), error: true })
+      }
+    },
+    [onOpenRepository],
+  )
+  const forgetWorkspace = useCallback(
+    (w: RepositoryWorkspace) => run(() => repositoryClient.forgetWorkspace({ path, name: w.name }), false),
+    [path, run],
+  )
   const toggleChecked = useCallback((c: Commit) => {
     setChecked((s) => {
       const next = new Set(s)
@@ -445,6 +477,36 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
         e.preventDefault()
         return
       }
+      if (view === 'workspaces') {
+        const w = workspaces[workspaceSelected]
+        const other = w !== undefined && w.root !== path
+        switch (e.key) {
+          case 'j':
+            setWorkspaceSelected((i) => Math.min(i + 1, workspaces.length - 1))
+            break
+          case 'k':
+            setWorkspaceSelected((i) => Math.max(i - 1, 0))
+            break
+          case '1':
+          case 'Escape':
+            setView('log')
+            break
+          case 'o':
+            if (other) {
+              openWorkspace(w)
+            }
+            break
+          case 'f':
+            if (other) {
+              forgetWorkspace(w)
+            }
+            break
+          default:
+            return
+        }
+        e.preventDefault()
+        return
+      }
       if (mode) {
         switch (e.key) {
           case 'j':
@@ -519,7 +581,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           startSquash()
           break
         case 'w':
-          setWorkspaceOpen(true)
+          showView('workspaces')
           break
         case 's':
           if (selectedCommit && !selectedCommit.immutable && checked.size === 0) {
@@ -587,6 +649,10 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
     restoring,
     bookmarks,
     bookmarkSelected,
+    workspaces,
+    workspaceSelected,
+    openWorkspace,
+    forgetWorkspace,
     settingBookmark,
     pushing,
     path,
@@ -636,6 +702,16 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
       {key ? `${label} (${key})` : label}
     </MenuItem>
   )
+  const repositoryMenuItem = (label: string, key: string, fn: () => void) => (
+    <MenuItem
+      onClick={() => {
+        setRepoMenuAnchor(undefined)
+        fn()
+      }}
+    >
+      {`${label} (${key})`}
+    </MenuItem>
+  )
   const revisionMenuItems = (c: Commit) => [
     revisionMenuItem('New', 'n', false, () => newRevision(targets())),
     revisionMenuItem('Edit', undefined, c.immutable || !single, () => edit(c)),
@@ -648,6 +724,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
     revisionMenuItem('Slide up', 'K', !single, () => slide('up')),
     <Divider key="d2" />,
     revisionMenuItem('Set the bookmark', 'B', !single, () => setSettingBookmark(c)),
+    revisionMenuItem('Add a workspace', undefined, !single, () => setAddingWorkspace(c)),
     revisionMenuItem('Show the evolog', 'E', false, () => showEvolog(c)),
     revisionMenuItem('Browse the files', 'F', false, () => browseFiles(c)),
     <Divider key="d3" />,
@@ -679,32 +756,9 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           }}
           slotProps={{ input: { sx: { fontFamily: 'monospace' } } }}
         />
-        <Stack direction="row" sx={{ flexShrink: 0, '& .MuiButton-root': { minWidth: 0 } }}>
-          <Button size="small" title="c" disabled={mode !== undefined} onClick={startCommit}>
-            Commit
-          </Button>
-          <Button size="small" title="u" disabled={mode !== undefined} onClick={undo}>
-            Undo
-          </Button>
-          <Button size="small" title="f" disabled={mode !== undefined} onClick={gitFetch}>
-            Fetch
-          </Button>
-          <Button size="small" title="p" disabled={mode !== undefined} onClick={() => setPushing(true)}>
-            Push
-          </Button>
-          <Button size="small" title="w" disabled={mode !== undefined} onClick={() => setWorkspaceOpen(true)}>
-            Workspaces
-          </Button>
-          <Button size="small" disabled={mode !== undefined} onClick={(e) => setAliasAnchor(e.currentTarget)}>
-            Aliases
-          </Button>
-          <Button size="small" title="@" disabled={mode !== undefined} onClick={jumpToWorkingCopy}>
-            @
-          </Button>
-          <Button size="small" title="r" disabled={mode !== undefined} onClick={() => refetch()}>
-            Refresh
-          </Button>
-        </Stack>
+        <IconButton size="small" aria-label="Repository operations" disabled={mode !== undefined} onClick={(e) => setRepoMenuAnchor(e.currentTarget)}>
+          <MoreHorizIcon fontSize="small" />
+        </IconButton>
       </Stack>
       {mode && (
         <Alert severity="warning" sx={{ borderRadius: 0 }}>
@@ -757,7 +811,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
         <Stack sx={{ width: '45%', flexShrink: 0, borderRight: 1, borderColor: 'divider' }}>
           <Stack direction="row" sx={{ alignItems: 'center', borderBottom: 1, borderColor: 'divider' }}>
             <Tabs
-              value={view === 'log' || view === 'bookmarks' || view === 'conflicts' || view === 'oplog' ? view : false}
+              value={view === 'log' || view === 'bookmarks' || view === 'conflicts' || view === 'oplog' || view === 'workspaces' ? view : false}
               onChange={(_, v) => showView(v)}
               variant="scrollable"
               sx={{ flex: 1, minWidth: 0, minHeight: 36 }}
@@ -766,6 +820,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
               <Tab value="bookmarks" label="Bookmarks" sx={{ minHeight: 36 }} />
               <Tab value="conflicts" label="Conflicts" sx={{ minHeight: 36 }} />
               <Tab value="oplog" label="Operations" sx={{ minHeight: 36 }} />
+              <Tab value="workspaces" label="Workspaces" sx={{ minHeight: 36 }} />
             </Tabs>
             {view === 'log' && selecting && (
               <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
@@ -804,6 +859,18 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
                   setOpSelected(i)
                   setOpMenu({ x, y, id: operations[i].id })
                 }}
+              />
+            )}
+            {view === 'workspaces' && (
+              <WorkspacesPanel
+                repoPath={path}
+                workspaces={workspaces}
+                selected={workspaceSelected}
+                onSelect={setWorkspaceSelected}
+                onOpen={openWorkspace}
+                onForget={forgetWorkspace}
+                onRename={() => setRenamingWorkspace(true)}
+                onUpdateStale={() => run(() => repositoryClient.updateStale({ path }), false)}
               />
             )}
             {view === 'evolog' && <EvologPanel entries={evolog} selected={evologSelected} onSelect={setEvologSelected} />}
@@ -908,6 +975,26 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           }}
         >
           Restore to this operation…
+        </MenuItem>
+      </Menu>
+
+      <Menu open={repoMenuAnchor !== undefined} anchorEl={repoMenuAnchor} onClose={() => setRepoMenuAnchor(undefined)}>
+        {repositoryMenuItem('Commit', 'c', startCommit)}
+        {repositoryMenuItem('Undo', 'u', undo)}
+        <Divider />
+        {repositoryMenuItem('Fetch', 'f', gitFetch)}
+        {repositoryMenuItem('Push', 'p', () => setPushing(true))}
+        <Divider />
+        {repositoryMenuItem('Jump to the working copy', '@', jumpToWorkingCopy)}
+        {repositoryMenuItem('Refresh', 'r', () => refetch())}
+        <Divider />
+        <MenuItem
+          onClick={() => {
+            setAliasAnchor(repoMenuAnchor)
+            setRepoMenuAnchor(undefined)
+          }}
+        >
+          Aliases…
         </MenuItem>
       </Menu>
 
@@ -1070,7 +1157,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
             { label: 'Show the bookmarks', shortcut: '2', run: () => setView('bookmarks') },
             { label: 'Show the conflicts', shortcut: '3', run: () => setView('conflicts') },
             { label: 'Show the operation log', shortcut: '4', run: () => setView('oplog') },
-            { label: 'Workspaces', shortcut: 'w', run: () => setWorkspaceOpen(true) },
+            { label: 'Show the workspaces', shortcut: 'w', run: () => showView('workspaces') },
             { label: 'Jump to the working copy', shortcut: '@', run: jumpToWorkingCopy },
             { label: 'Refresh', shortcut: 'r', run: () => refetch() },
             { label: 'Focus the revset', shortcut: '/', run: () => setTimeout(() => revsetRef.current?.focus(), 0) },
@@ -1099,40 +1186,32 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
         />
       )}
 
-      {workspaceOpen && (
-        <WorkspaceDialog
-          repoPath={path}
-          selected={selectedCommit}
-          onClose={() => setWorkspaceOpen(false)}
-          onOpen={async (root) => {
-            setWorkspaceOpen(false)
-            try {
-              const res = await repositoryClient.open({ path: root })
-              onOpenRepository(res.repository?.path ?? root)
-            } catch (e) {
-              setMessage({ text: e instanceof Error ? e.message : String(e), error: true })
-            }
-          }}
-          onAdd={(name) => {
-            setWorkspaceOpen(false)
+      {addingWorkspace && (
+        <WorkspaceNameDialog
+          title={`Add a workspace on ${addingWorkspace.changeId.slice(0, 8)}`}
+          submitLabel="Add"
+          onClose={() => setAddingWorkspace(undefined)}
+          onSubmit={(name) => {
+            const revision = addingWorkspace.commitId
+            setAddingWorkspace(undefined)
             run(async () => {
-              const res = await repositoryClient.addWorkspace({ path, name, revision: selectedCommit!.commitId })
+              const res = await repositoryClient.addWorkspace({ path, name, revision })
               const opened = await repositoryClient.open({ path: res.root })
               onOpenRepository(opened.repository?.path ?? res.root)
               return res
             }, false)
           }}
-          onForget={(name) => {
-            setWorkspaceOpen(false)
-            run(() => repositoryClient.forgetWorkspace({ path, name }), false)
-          }}
-          onRename={(name) => {
-            setWorkspaceOpen(false)
+        />
+      )}
+
+      {renamingWorkspace && (
+        <WorkspaceNameDialog
+          title="Rename the current workspace"
+          submitLabel="Rename"
+          onClose={() => setRenamingWorkspace(false)}
+          onSubmit={(name) => {
+            setRenamingWorkspace(false)
             run(() => repositoryClient.renameWorkspace({ path, name }), false)
-          }}
-          onUpdateStale={() => {
-            setWorkspaceOpen(false)
-            run(() => repositoryClient.updateStale({ path }), false)
           }}
         />
       )}
