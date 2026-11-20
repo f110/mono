@@ -57,6 +57,8 @@ const (
 	AgentServiceListWorkspacesProcedure = "/mono.codexel.AgentService/ListWorkspaces"
 	// AgentServiceStartProcedure is the fully-qualified name of the AgentService's Start RPC.
 	AgentServiceStartProcedure = "/mono.codexel.AgentService/Start"
+	// AgentServiceStopProcedure is the fully-qualified name of the AgentService's Stop RPC.
+	AgentServiceStopProcedure = "/mono.codexel.AgentService/Stop"
 	// AgentServiceWatchTranscriptProcedure is the fully-qualified name of the AgentService's
 	// WatchTranscript RPC.
 	AgentServiceWatchTranscriptProcedure = "/mono.codexel.AgentService/WatchTranscript"
@@ -238,6 +240,7 @@ type AgentServiceClient interface {
 	Focus(context.Context, *connect.Request[RequestFocusAgent]) (*connect.Response[ResponseFocusAgent], error)
 	ListWorkspaces(context.Context, *connect.Request[RequestListWorkspaces]) (*connect.Response[ResponseListWorkspaces], error)
 	Start(context.Context, *connect.Request[RequestStartAgent]) (*connect.Response[ResponseStartAgent], error)
+	Stop(context.Context, *connect.Request[RequestStopAgent]) (*connect.Response[ResponseStopAgent], error)
 	WatchTranscript(context.Context, *connect.Request[RequestWatchTranscript]) (*connect.ServerStreamForClient[ResponseWatchTranscript], error)
 }
 
@@ -300,6 +303,12 @@ func NewAgentServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(agentServiceMethods.ByName("Start")),
 			connect.WithClientOptions(opts...),
 		),
+		stop: connect.NewClient[RequestStopAgent, ResponseStopAgent](
+			httpClient,
+			baseURL+AgentServiceStopProcedure,
+			connect.WithSchema(agentServiceMethods.ByName("Stop")),
+			connect.WithClientOptions(opts...),
+		),
 		watchTranscript: connect.NewClient[RequestWatchTranscript, ResponseWatchTranscript](
 			httpClient,
 			baseURL+AgentServiceWatchTranscriptProcedure,
@@ -319,6 +328,7 @@ type agentServiceClient struct {
 	focus           *connect.Client[RequestFocusAgent, ResponseFocusAgent]
 	listWorkspaces  *connect.Client[RequestListWorkspaces, ResponseListWorkspaces]
 	start           *connect.Client[RequestStartAgent, ResponseStartAgent]
+	stop            *connect.Client[RequestStopAgent, ResponseStopAgent]
 	watchTranscript *connect.Client[RequestWatchTranscript, ResponseWatchTranscript]
 }
 
@@ -362,6 +372,11 @@ func (c *agentServiceClient) Start(ctx context.Context, req *connect.Request[Req
 	return c.start.CallUnary(ctx, req)
 }
 
+// Stop calls mono.codexel.AgentService.Stop.
+func (c *agentServiceClient) Stop(ctx context.Context, req *connect.Request[RequestStopAgent]) (*connect.Response[ResponseStopAgent], error) {
+	return c.stop.CallUnary(ctx, req)
+}
+
 // WatchTranscript calls mono.codexel.AgentService.WatchTranscript.
 func (c *agentServiceClient) WatchTranscript(ctx context.Context, req *connect.Request[RequestWatchTranscript]) (*connect.ServerStreamForClient[ResponseWatchTranscript], error) {
 	return c.watchTranscript.CallServerStream(ctx, req)
@@ -377,6 +392,7 @@ type AgentServiceHandler interface {
 	Focus(context.Context, *connect.Request[RequestFocusAgent]) (*connect.Response[ResponseFocusAgent], error)
 	ListWorkspaces(context.Context, *connect.Request[RequestListWorkspaces]) (*connect.Response[ResponseListWorkspaces], error)
 	Start(context.Context, *connect.Request[RequestStartAgent]) (*connect.Response[ResponseStartAgent], error)
+	Stop(context.Context, *connect.Request[RequestStopAgent]) (*connect.Response[ResponseStopAgent], error)
 	WatchTranscript(context.Context, *connect.Request[RequestWatchTranscript], *connect.ServerStream[ResponseWatchTranscript]) error
 }
 
@@ -435,6 +451,12 @@ func NewAgentServiceHandler(svc AgentServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(agentServiceMethods.ByName("Start")),
 		connect.WithHandlerOptions(opts...),
 	)
+	agentServiceStopHandler := connect.NewUnaryHandler(
+		AgentServiceStopProcedure,
+		svc.Stop,
+		connect.WithSchema(agentServiceMethods.ByName("Stop")),
+		connect.WithHandlerOptions(opts...),
+	)
 	agentServiceWatchTranscriptHandler := connect.NewServerStreamHandler(
 		AgentServiceWatchTranscriptProcedure,
 		svc.WatchTranscript,
@@ -459,6 +481,8 @@ func NewAgentServiceHandler(svc AgentServiceHandler, opts ...connect.HandlerOpti
 			agentServiceListWorkspacesHandler.ServeHTTP(w, r)
 		case AgentServiceStartProcedure:
 			agentServiceStartHandler.ServeHTTP(w, r)
+		case AgentServiceStopProcedure:
+			agentServiceStopHandler.ServeHTTP(w, r)
 		case AgentServiceWatchTranscriptProcedure:
 			agentServiceWatchTranscriptHandler.ServeHTTP(w, r)
 		default:
@@ -500,6 +524,10 @@ func (UnimplementedAgentServiceHandler) ListWorkspaces(context.Context, *connect
 
 func (UnimplementedAgentServiceHandler) Start(context.Context, *connect.Request[RequestStartAgent]) (*connect.Response[ResponseStartAgent], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.AgentService.Start is not implemented"))
+}
+
+func (UnimplementedAgentServiceHandler) Stop(context.Context, *connect.Request[RequestStopAgent]) (*connect.Response[ResponseStopAgent], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.AgentService.Stop is not implemented"))
 }
 
 func (UnimplementedAgentServiceHandler) WatchTranscript(context.Context, *connect.Request[RequestWatchTranscript], *connect.ServerStream[ResponseWatchTranscript]) error {

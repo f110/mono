@@ -7,6 +7,10 @@ import {
   Button,
   ButtonGroup,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
   List,
   ListItemButton,
@@ -166,6 +170,9 @@ const AgentDetail = ({ agent }: { agent: Agent }) => {
   const sendPrompt = useMutation(AgentService.method.sendPrompt)
   const sendKeys = useMutation(AgentService.method.sendKeys)
   const focus = useMutation(AgentService.method.focus)
+  const stop = useMutation(AgentService.method.stop)
+  const [stopping, setStopping] = useState(false)
+  const navigate = useNavigate({ from: '/agents' })
   const [prompt, setPrompt] = useState('')
   const [tab, setTab] = useState<'output' | 'commits' | 'timeline'>('output')
   // The transcript is available only for Claude Code.
@@ -186,7 +193,7 @@ const AgentDetail = ({ agent }: { agent: Agent }) => {
       },
     )
   }
-  const shownError = error ?? sendPrompt.error ?? sendKeys.error ?? focus.error ?? transcriptError
+  const shownError = error ?? sendPrompt.error ?? sendKeys.error ?? focus.error ?? stop.error ?? transcriptError
   const shownTab = tab === 'timeline' && !hasTranscript ? 'output' : tab
 
   return (
@@ -202,6 +209,9 @@ const AgentDetail = ({ agent }: { agent: Agent }) => {
         </Typography>
         <Button size="small" onClick={() => focus.mutate({ paneId: agent.paneId })}>
           Focus in herdr
+        </Button>
+        <Button size="small" color="error" onClick={() => setStopping(true)}>
+          Stop
         </Button>
       </Stack>
       {hasTranscript && transcript?.title && (
@@ -258,6 +268,28 @@ const AgentDetail = ({ agent }: { agent: Agent }) => {
           ))}
         </ButtonGroup>
       </Stack>
+      <Dialog open={stopping} onClose={() => setStopping(false)}>
+        <DialogTitle>Stop {agent.title || agent.kind}?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">
+            The pane of the agent is closed in herdr.{agent.status === AgentStatus.WORKING && ' The agent is working.'}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setStopping(false)}>Cancel</Button>
+          <Button
+            color="error"
+            variant="contained"
+            autoFocus
+            onClick={() => {
+              setStopping(false)
+              stop.mutate({ paneId: agent.paneId }, { onSuccess: () => navigate({ search: {} }) })
+            }}
+          >
+            Stop
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   )
 }

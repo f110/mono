@@ -199,6 +199,22 @@ func (h *AgentHandler) Start(ctx context.Context, req *connect.Request[api.Reque
 	return connect.NewResponse(api.ResponseStartAgent_builder{Agent: toAgent(agent, workspaces)}.Build()), nil
 }
 
+// Stop closes the pane only if the agent is still running in it, so that the shell is not closed after the agent has
+// exited.
+func (h *AgentHandler) Stop(ctx context.Context, req *connect.Request[api.RequestStopAgent]) (*connect.Response[api.ResponseStopAgent], error) {
+	if req.Msg.GetPaneId() == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("pane_id is required"))
+	}
+	agent, err := h.herdr.GetAgent(ctx, req.Msg.GetPaneId())
+	if err != nil {
+		return nil, toConnectError(err)
+	}
+	if err := h.herdr.ClosePane(ctx, agent.PaneID); err != nil {
+		return nil, toConnectError(err)
+	}
+	return connect.NewResponse(&api.ResponseStopAgent{}), nil
+}
+
 // WatchTranscript reads the transcript of Claude Code in projectsDir periodically because Claude Code appends to it
 // during the session.
 func (h *AgentHandler) WatchTranscript(ctx context.Context, req *connect.Request[api.RequestWatchTranscript], stream *connect.ServerStream[api.ResponseWatchTranscript]) error {

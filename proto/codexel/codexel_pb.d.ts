@@ -373,6 +373,34 @@ export declare type ResponseStartAgent = Message<"mono.codexel.ResponseStartAgen
 export declare const ResponseStartAgentSchema: GenMessage<ResponseStartAgent>;
 
 /**
+ * @generated from message mono.codexel.RequestStopAgent
+ */
+export declare type RequestStopAgent = Message<"mono.codexel.RequestStopAgent"> & {
+  /**
+   * @generated from field: string pane_id = 1;
+   */
+  paneId: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestStopAgent.
+ * Use `create(RequestStopAgentSchema)` to create a new message.
+ */
+export declare const RequestStopAgentSchema: GenMessage<RequestStopAgent>;
+
+/**
+ * @generated from message mono.codexel.ResponseStopAgent
+ */
+export declare type ResponseStopAgent = Message<"mono.codexel.ResponseStopAgent"> & {
+};
+
+/**
+ * Describes the message mono.codexel.ResponseStopAgent.
+ * Use `create(ResponseStopAgentSchema)` to create a new message.
+ */
+export declare const ResponseStopAgentSchema: GenMessage<ResponseStopAgent>;
+
+/**
  * @generated from message mono.codexel.Repository
  */
 export declare type Repository = Message<"mono.codexel.Repository"> & {
@@ -4323,6 +4351,16 @@ export declare const AgentService: GenService<{
     methodKind: "unary";
     input: typeof RequestStartAgentSchema;
     output: typeof ResponseStartAgentSchema;
+  },
+  /**
+   * Stop closes the pane of the agent to terminate it. herdr closes the tab and the workspace which become empty.
+   *
+   * @generated from rpc mono.codexel.AgentService.Stop
+   */
+  stop: {
+    methodKind: "unary";
+    input: typeof RequestStopAgentSchema;
+    output: typeof ResponseStopAgentSchema;
   },
   /**
    * WatchTranscript sends the timeline of the session of Claude Code from its transcript. It sends the theme and all

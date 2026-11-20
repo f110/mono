@@ -142,6 +142,17 @@ func TestCloseTab(t *testing.T) {
 	assertion.Equal(t, req.Params["tab_id"], any("w1:t2"))
 }
 
+func TestClosePane(t *testing.T) {
+	c, reqs := startServer(t, func(req *request) []string {
+		return []string{`{"id":"` + req.ID + `","result":{"type":"ok"}}`}
+	})
+
+	assertion.MustNoError(t, c.ClosePane(t.Context(), "w1:p3"))
+	req := <-reqs
+	assertion.Equal(t, req.Method, "pane.close")
+	assertion.Equal(t, req.Params["pane_id"], any("w1:p3"))
+}
+
 func TestError(t *testing.T) {
 	c, _ := startServer(t, func(req *request) []string {
 		return []string{`{"id":"` + req.ID + `","error":{"code":"not_found","message":"agent not found"}}`}

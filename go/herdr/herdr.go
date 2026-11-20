@@ -227,6 +227,12 @@ func (c *Client) CloseTab(ctx context.Context, tabID string) error {
 	return c.call(ctx, "tab.close", map[string]any{"tab_id": tabID}, nil)
 }
 
+// ClosePane closes the pane and terminates the processes in it. herdr closes the tab and the workspace which become
+// empty.
+func (c *Client) ClosePane(ctx context.Context, paneID string) error {
+	return c.call(ctx, "pane.close", map[string]any{"pane_id": paneID}, nil)
+}
+
 // CreateWorkspace creates the workspace and returns the root pane of it.
 func (c *Client) CreateWorkspace(ctx context.Context, cwd string) (*Pane, error) {
 	params := map[string]any{}

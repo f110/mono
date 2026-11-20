@@ -70,6 +70,7 @@ herdr はソケット (`$HERDR_SOCKET_PATH`、既定 `~/.config/herdr/herdr.sock
 | 出力の閲覧 | `agent.read` (`source=recent`, `format=ansi`)。出力の変化は購読できないので、表示している間だけ定期的に再取得する |
 | プロンプト送信 | `agent.prompt`。キー入力は `agent.send_keys` |
 | エージェント起動 | 既存ペインを指定して `agent.start`。新しく起動する場合は `tab.create` / `pane.split` でペインを作ってから `agent.start`。ワークスペースを指定しない場合は `workspace.create` で作り、herdr のサーバーが動いていなければ `herdr server` を起動する |
+| エージェント終了 | `pane.close` でエージェントのペインを閉じる。herdr に `agent.stop` 相当はなく、終了コマンドはエージェントの種類ごとに違うため。タブ・workspace の最後のペインなら herdr がタブ・workspace も閉じる。閉じる前に `agent.get` でエージェントが動いていることを確かめ、エージェントが終わった後のシェルのペインは閉じない。UI では確認ダイアログを出してから実行する |
 
 `agent.list` が返すエージェントの情報のうち、Codexel が使うもの:
 
@@ -346,7 +347,7 @@ UI から作成した PR の URL を保存し、リビジョングラフの PR �
 
 | サービス | 主な RPC |
 |---|---|
-| `AgentService` | `List`, `Watch` (stream), `ReadOutput`, `SendPrompt`, `SendKeys`, `Focus`, `ListWorkspaces`, `Start`, `WatchTranscript` (stream) |
+| `AgentService` | `List`, `Watch` (stream), `ReadOutput`, `SendPrompt`, `SendKeys`, `Focus`, `ListWorkspaces`, `Start`, `Stop`, `WatchTranscript` (stream) |
 | `RepositoryService` | `List`, `Open`, `Close`, `Watch` (stream, op ID の変化), `Log`, `GetRevision`, `Diff`, `DiffRange`, `Files`, `FileTree`, `FileHistory`, ... と §4.2 の各操作 (リビジョン、ブックマーク、Git、オペレーション、ファイル、コンフリクト、ワークスペース、エイリアス) |
 | `ReviewService` | `List`, `Get`, `Start`, `AddComment`, `EditComment`, `DeleteComment`, `Reply`, `ResolveComment`, `Finish`, `StartNextRound`, `RoundDiff`, `SetViewed` |
 | `PullRequestService` | `List`, `ListTemplates`, `Validate`, `Submit` |

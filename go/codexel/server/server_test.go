@@ -261,6 +261,36 @@ func TestStartAgent(t *testing.T) {
 	})
 }
 
+func TestStopAgent(t *testing.T) {
+	t.Run("Close the pane", func(t *testing.T) {
+		c, received := startHerdrWithSequence(t, map[string][]string{
+			"agent.get":  {`"result":{"type":"agent_info","agent":{"agent":"claude","agent_status":"working","pane_id":"w1:p3","tab_id":"w1:t2","workspace_id":"w1"}}`},
+			"pane.close": {`"result":{"type":"ok"}`},
+		})
+		h := NewAgentHandler(c, nil, "")
+
+		_, err := h.Stop(t.Context(), connect.NewRequest(api.RequestStopAgent_builder{PaneId: new("w1:p3")}.Build()))
+		assertion.MustNoError(t, err)
+		reqs := received()
+		assertion.Equal(t, methods(reqs), []string{"agent.get", "pane.close"})
+		assertion.Equal(t, reqs[1].Params["pane_id"], any("w1:p3"))
+	})
+
+	t.Run("Don't close the pane without the agent", func(t *testing.T) {
+		c, received := startHerdrWithSequence(t, map[string][]string{
+			"agent.get": {`"error":{"code":"agent_not_found","message":"agent target w1:p3 not found"}`},
+		})
+		h := NewAgentHandler(c, nil, "")
+
+		_, err := h.Stop(t.Context(), connect.NewRequest(api.RequestStopAgent_builder{PaneId: new("w1:p3")}.Build()))
+		assertion.MustError(t, err)
+		connectErr, ok := errors.AsType[*connect.Error](err)
+		assertion.True(t, ok)
+		assertion.Equal(t, connectErr.Code(), connect.CodeNotFound)
+		assertion.Equal(t, methods(received()), []string{"agent.get"})
+	})
+}
+
 func TestReadOutputWhileWorking(t *testing.T) {
 	c, received := startHerdrWithSequence(t, map[string][]string{
 		"agent.read": {
