@@ -234,7 +234,10 @@ crit はブランチと作業ツリーを単位にするが、Codexel は jj の
       行番号をクリックしても広げられる
     - split 表示・Markdown プレビュー・hunk 移動のボタンは、Finish と同じくスクロールしない上部のヘッダーに置く
 - Markdown・Mermaid のレンダリング。mermaid はサイズが大きいので図を表示する時だけ読み込む
-- `linguist-generated` の折りたたみ: コミット時点のトップレベルの `.gitattributes` だけを読む。パターンは git と同じ解釈にする
+- 自動生成ファイルの折りたたみ (#165): GitHub と同じく、`linguist-generated` が設定されていればそれに従い、未設定なら Linguist のヒューリスティック
+  (Go 移植の go-enry の `IsGenerated`) で判定する
+    - `.gitattributes` はコミット時点のトップレベルだけを読む。パターンは git と同じ解釈にする。`-linguist-generated` と `=false` はヒューリスティックを打ち消す
+    - ヒューリスティックはファイルの内容を使う。削除されたファイルとバイナリはパスだけで判定する
 - 既読: 既読のファイルは折りたたむ。次のラウンドでは前のラウンドとの差分 (`jj diff --from --to`) に含まれるファイルの既読を外す
 - 自動で既読にするパターン: `config.json` の `auto_viewed_patterns` (全リポジトリ共通)。レビュー開始時とラウンド開始時に、記録のない変更ファイルに適用する
 

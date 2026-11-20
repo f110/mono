@@ -216,7 +216,7 @@ const ChangeReview = ({
             collapsed={collapsed}
             actions={
               <>
-                {generated && <Chip label="generated" size="small" variant="outlined" title="linguist-generated in .gitattributes" />}
+                {generated && <Chip label="generated" size="small" variant="outlined" title="Detected by linguist-generated in .gitattributes or the heuristics of Linguist" />}
                 {fileComments.length > 0 && collapsed && (
                   <Typography variant="caption" color="text.secondary">
                     {fileComments.length} comment(s)

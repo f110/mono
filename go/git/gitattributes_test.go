@@ -11,6 +11,7 @@ func TestAttributesGenerated(t *testing.T) {
 *.pb.go linguist-generated
 /vendor/** linguist-generated=true
 vendor/keep.go -linguist-generated
+vendor/auto.go !linguist-generated
 docs/**/*.gen.md linguist-generated
 gen/ linguist-generated
 src/[ab].js linguist-generated
@@ -22,29 +23,35 @@ lock.json linguist-generated=false
 	cases := []struct {
 		path      string
 		generated bool
+		specified bool
 	}{
-		{path: "api.pb.go", generated: true},
-		{path: "go/api/api.pb.go", generated: true},
-		{path: "go/api/api.go", generated: false},
-		{path: "vendor/a/b.go", generated: true},
-		{path: "go/vendor/a.go", generated: false},
-		{path: "vendor/keep.go", generated: false},
-		{path: "docs/a.gen.md", generated: true},
-		{path: "docs/a/b/c.gen.md", generated: true},
-		{path: "gen/a.go", generated: false},
-		{path: "src/a.js", generated: true},
-		{path: "src/c.js", generated: false},
-		{path: "a.txt", generated: false},
-		{path: "lock.json", generated: true},
-		{path: "a/lock.json", generated: true},
+		{path: "api.pb.go", generated: true, specified: true},
+		{path: "go/api/api.pb.go", generated: true, specified: true},
+		{path: "go/api/api.go"},
+		{path: "vendor/a/b.go", generated: true, specified: true},
+		{path: "go/vendor/a.go"},
+		{path: "vendor/keep.go", specified: true},
+		{path: "vendor/auto.go"},
+		{path: "docs/a.gen.md", generated: true, specified: true},
+		{path: "docs/a/b/c.gen.md", generated: true, specified: true},
+		{path: "gen/a.go"},
+		{path: "src/a.js", generated: true, specified: true},
+		{path: "src/c.js"},
+		{path: "a.txt"},
+		{path: "lock.json", generated: true, specified: true},
+		{path: "a/lock.json", generated: true, specified: true},
 	}
 	for _, tc := range cases {
 		t.Run(tc.path, func(t *testing.T) {
-			assertion.Equal(t, f.Generated(tc.path), tc.generated)
+			generated, specified := f.Generated(tc.path)
+			assertion.Equal(t, generated, tc.generated)
+			assertion.Equal(t, specified, tc.specified)
 		})
 	}
 }
 
 func TestAttributesGeneratedEmpty(t *testing.T) {
-	assertion.False(t, ParseAttributes(nil).Generated("a.go"))
+	generated, specified := ParseAttributes(nil).Generated("a.go")
+	assertion.False(t, generated)
+	assertion.False(t, specified)
 }
