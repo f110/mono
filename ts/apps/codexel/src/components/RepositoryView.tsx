@@ -43,6 +43,7 @@ import { BookmarkDialog } from './BookmarkDialog.tsx'
 import { BookmarksPanel, bookmarkLabel } from './BookmarksPanel.tsx'
 import { CommandPalette } from './CommandPalette.tsx'
 import { DescriptionDialog } from './DescriptionDialog.tsx'
+import { DiffControls } from './DiffControls.tsx'
 import { DivergenceDialog } from './DivergenceDialog.tsx'
 import { FileDiffView } from './FileDiffView.tsx'
 import { FileBrowser } from './FileTree.tsx'
@@ -152,7 +153,8 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   const [evologSelected, setEvologSelected] = useState(0)
   const revsetRef = useRef<HTMLInputElement>(null)
   const detailRef = useRef<HTMLDivElement>(null)
-  const { split, preview } = useDiffNavigation(detailRef)
+  const diffNavigation = useDiffNavigation(detailRef)
+  const { split, preview } = diffNavigation
   const operation = useOperation(path)
   const { agents } = useAgents()
   const approved = useApprovedCommits(path, operation)
@@ -834,58 +836,63 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
             )}
           </Box>
         </Stack>
-        <Box ref={detailRef} sx={{ flex: 1, minWidth: 0, overflow: 'auto' }}>
-          {view === 'conflicts' && conflicts[conflictSelected] && (
-            <MergeEditor
-              key={`${conflicts[conflictSelected].commit.commitId}:${conflicts[conflictSelected].file.path}`}
-              repoPath={path}
-              commit={conflicts[conflictSelected].commit}
-              file={conflicts[conflictSelected].file}
-              onResolve={(side) => {
-                const e = conflicts[conflictSelected]
-                run(() => repositoryClient.resolve({ path, revision: e.commit.commitId, file: e.file.path, side }), false)
-              }}
-              onSave={(content) => {
-                const e = conflicts[conflictSelected]
-                run(async () => {
-                  await repositoryClient.writeFile({ path, file: e.file.path, content: new TextEncoder().encode(content) })
-                  return { output: `Saved ${e.file.path}` }
-                }, false)
-              }}
-              onEdit={() => run(() => repositoryClient.edit({ path, revision: conflicts[conflictSelected].commit.commitId }), true)}
-            />
-          )}
-          {view === 'evolog' && (
-            <Box sx={{ p: 2 }}>
-              {evolog[evologSelected]?.files.map((f) => (
-                <FileDiffView
-                  key={f.path}
-                  file={f}
-                  split={split}
-                  preview={preview}
-                  repoPath={path}
-                  revision={evolog[evologSelected].commitId}
-                  oldRevision={undefined}
-                  onHistory={showHistory}
-                />
-              ))}
-            </Box>
-          )}
-          {(view === 'log' || view === 'bookmarks' || view === 'oplog') && selectedCommit && (
-            <RevisionDetail
-              key={selectedCommit.commitId}
-              path={path}
-              commit={selectedCommit}
-              split={split}
-              preview={preview}
-              reviews={reviews.get(selectedCommit.changeId)}
-              onHistory={showHistory}
-              onRestore={(commit, file) => setRestoringFile({ commit, file })}
-              onResolveDivergence={setDivergent}
-              actions={view === 'log' ? revisionActions : undefined}
-            />
-          )}
-        </Box>
+        <Stack sx={{ flex: 1, minWidth: 0 }}>
+          <Stack direction="row" sx={{ minHeight: 36, px: 1, justifyContent: 'flex-end', alignItems: 'center', borderBottom: 1, borderColor: 'divider' }}>
+            {view !== 'conflicts' && <DiffControls navigation={diffNavigation} />}
+          </Stack>
+          <Box ref={detailRef} sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+            {view === 'conflicts' && conflicts[conflictSelected] && (
+              <MergeEditor
+                key={`${conflicts[conflictSelected].commit.commitId}:${conflicts[conflictSelected].file.path}`}
+                repoPath={path}
+                commit={conflicts[conflictSelected].commit}
+                file={conflicts[conflictSelected].file}
+                onResolve={(side) => {
+                  const e = conflicts[conflictSelected]
+                  run(() => repositoryClient.resolve({ path, revision: e.commit.commitId, file: e.file.path, side }), false)
+                }}
+                onSave={(content) => {
+                  const e = conflicts[conflictSelected]
+                  run(async () => {
+                    await repositoryClient.writeFile({ path, file: e.file.path, content: new TextEncoder().encode(content) })
+                    return { output: `Saved ${e.file.path}` }
+                  }, false)
+                }}
+                onEdit={() => run(() => repositoryClient.edit({ path, revision: conflicts[conflictSelected].commit.commitId }), true)}
+              />
+            )}
+            {view === 'evolog' && (
+              <Box sx={{ p: 2 }}>
+                {evolog[evologSelected]?.files.map((f) => (
+                  <FileDiffView
+                    key={f.path}
+                    file={f}
+                    split={split}
+                    preview={preview}
+                    repoPath={path}
+                    revision={evolog[evologSelected].commitId}
+                    oldRevision={undefined}
+                    onHistory={showHistory}
+                  />
+                ))}
+              </Box>
+            )}
+            {(view === 'log' || view === 'bookmarks' || view === 'oplog') && selectedCommit && (
+              <RevisionDetail
+                key={selectedCommit.commitId}
+                path={path}
+                commit={selectedCommit}
+                split={split}
+                preview={preview}
+                reviews={reviews.get(selectedCommit.changeId)}
+                onHistory={showHistory}
+                onRestore={(commit, file) => setRestoringFile({ commit, file })}
+                onResolveDivergence={setDivergent}
+                actions={view === 'log' ? revisionActions : undefined}
+              />
+            )}
+          </Box>
+        </Stack>
       </Stack>
       {treeTarget && (
         <FileBrowser repoPath={path} revision={treeTarget} hidden={view !== 'files'} onRestore={restoreFiles} onClose={closeFiles} onHistory={showHistory} />

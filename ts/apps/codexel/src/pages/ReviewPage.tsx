@@ -22,10 +22,12 @@ import {
   TableCell,
   TableRow,
   TextField,
+  ToggleButton,
   Typography,
 } from '@mui/material'
 import { useParams } from '@tanstack/react-router'
 import { ChangedFiles } from '../components/ChangedFiles.tsx'
+import { DiffControls } from '../components/DiffControls.tsx'
 import { FileDiffView, type LineAnnotation } from '../components/FileDiffView.tsx'
 import { CommentComposer, CommentThread } from '../components/ReviewComments.tsx'
 import { DiffSide, ReviewService, ReviewState, type Review, type ReviewComment } from '../connect/codexel_pb.js'
@@ -60,8 +62,9 @@ const shortcuts: [string, string][] = [
 // LinePosition is the line in the file of the change.
 type LinePosition = { changeId: string; path: string; side: LineSide; line: number }
 
-// Selection is the lines selected to comment. origin is the line clicked first to extend the range by Shift.
-type Selection = { changeId: string; path: string; side: LineSide; start: number; end: number; origin: number }
+// Selection is the lines selected to comment. origin is the line clicked first to extend the range by Shift. extending makes
+// the click extend the range without Shift.
+type Selection = { changeId: string; path: string; side: LineSide; start: number; end: number; origin: number; extending?: boolean }
 
 // Actions are the operations of the review. They report the error and read the review again.
 type Actions = {
@@ -159,7 +162,7 @@ const ChangeReview = ({
               onSelect: (side, line, extend) => {
                 if (!commentable) return
                 onSelect(
-                  extend && selected && selected.side === side
+                  (extend || selected?.extending) && selected && selected.side === side
                     ? { ...selected, start: Math.min(selected.origin, line), end: Math.max(selected.origin, line) }
                     : { changeId, path: f.path, side, start: line, end: line, origin: line },
                 )
@@ -175,6 +178,16 @@ const ChangeReview = ({
                     ))}
                   {selected?.side === side && selected.end === line && (
                     <Box sx={{ m: 1, maxWidth: 960, border: 1, borderColor: 'divider', borderRadius: 1, position: 'sticky', left: 8 }}>
+                      <ToggleButton
+                        size="small"
+                        value="extending"
+                        selected={selected.extending ?? false}
+                        onChange={() => onSelect({ ...selected, extending: !selected.extending })}
+                        title="Click the line number to extend the range (Shift+Click)"
+                        sx={{ m: 1, mb: 0, textTransform: 'none', py: 0.25 }}
+                      >
+                        Extend the range
+                      </ToggleButton>
                       <CommentComposer
                         label={`Comment on L${selected.start}${selected.end > selected.start ? `-${selected.end}` : ''}`}
                         onSubmit={async (body) => {
@@ -293,7 +306,8 @@ export const ReviewPage = () => {
   // the review is finished in the next round.
   const [waitingClosedRound, setWaitingClosedRound] = useState<number>()
   const ref = useRef<HTMLDivElement>(null)
-  const { split, preview } = useDiffNavigation(ref)
+  const diffNavigation = useDiffNavigation(ref)
+  const { split, preview } = diffNavigation
 
   const run = useCallback(
     async (fn: () => Promise<unknown>) => {
@@ -409,8 +423,8 @@ export const ReviewPage = () => {
   const unresolved = review.comments.filter((c) => !c.resolved).length
 
   return (
-    <Box ref={ref} sx={{ height: '100%', overflow: 'auto', px: 2 }}>
-      <Stack direction="row" spacing={2} sx={{ alignItems: 'center', py: 1, flexWrap: 'wrap' }}>
+    <Stack sx={{ height: '100%' }}>
+      <Stack direction="row" spacing={2} sx={{ alignItems: 'center', px: 2, py: 1, flexWrap: 'wrap', borderBottom: 1, borderColor: 'divider' }}>
         <Typography variant="h5">{review.repository.split('/').pop()}</Typography>
         <Chip label={stateChip[review.state].label} color={stateChip[review.state].color} size="small" />
         <Typography variant="body2" color="text.secondary">
@@ -444,6 +458,7 @@ export const ReviewPage = () => {
             </MenuItem>
           ))}
         </TextField>
+        <DiffControls navigation={diffNavigation} />
         {/* Finish approves the review if all comments are resolved. */}
         <Button
           variant="contained"
@@ -458,57 +473,59 @@ export const ReviewPage = () => {
           Keys
         </Button>
       </Stack>
-      {review.state === ReviewState.FINISHED && (
-        <Alert severity="info" sx={{ mb: 1 }}>
-          Waiting for the agent to address the comments and start the next round.
-        </Alert>
-      )}
+      <Box ref={ref} sx={{ flex: 1, minHeight: 0, overflow: 'auto', px: 2, pt: 1 }}>
+        {review.state === ReviewState.FINISHED && (
+          <Alert severity="info" sx={{ mb: 1 }}>
+            Waiting for the agent to address the comments and start the next round.
+          </Alert>
+        )}
 
-      <Box sx={{ mb: 2 }}>
-        {reviewComments.map((c) => (
-          <CommentThread key={c.id} comment={c} {...actions.thread(c)} />
-        ))}
-        {review.state !== ReviewState.APPROVED &&
-          (composing ? (
-            <CommentComposer
-              label="Comment on the review"
-              onSubmit={async (body) => {
-                await actions.add('', '', DiffSide.UNSPECIFIED, 0, 0, body)
-                setComposing(false)
-              }}
-              onCancel={() => setComposing(false)}
+        <Box sx={{ mb: 2 }}>
+          {reviewComments.map((c) => (
+            <CommentThread key={c.id} comment={c} {...actions.thread(c)} />
+          ))}
+          {review.state !== ReviewState.APPROVED &&
+            (composing ? (
+              <CommentComposer
+                label="Comment on the review"
+                onSubmit={async (body) => {
+                  await actions.add('', '', DiffSide.UNSPECIFIED, 0, 0, body)
+                  setComposing(false)
+                }}
+                onCancel={() => setComposing(false)}
+              />
+            ) : (
+              <Button size="small" onClick={() => setComposing(true)}>
+                Comment on the review
+              </Button>
+            ))}
+        </Box>
+        <Divider sx={{ mb: 2 }} />
+
+        {review.changeIds.map((changeId) =>
+          round?.commits.some((c) => c.changeId === changeId) ? (
+            <ChangeReview
+              key={`${changeId}:${fromRound}:${toRound}`}
+              review={review}
+              changeId={changeId}
+              fromRound={fromRound}
+              toRound={toRound}
+              inline={inline}
+              commentable={commentable}
+              split={split}
+              preview={preview}
+              selection={selection}
+              onSelect={setSelection}
+              focus={focus}
+              actions={actions}
             />
           ) : (
-            <Button size="small" onClick={() => setComposing(true)}>
-              Comment on the review
-            </Button>
-          ))}
+            <Alert key={changeId} severity="warning" sx={{ mb: 2 }}>
+              {changeId.slice(0, 8)} doesn't exist in round {toRound}
+            </Alert>
+          ),
+        )}
       </Box>
-      <Divider sx={{ mb: 2 }} />
-
-      {review.changeIds.map((changeId) =>
-        round?.commits.some((c) => c.changeId === changeId) ? (
-          <ChangeReview
-            key={`${changeId}:${fromRound}:${toRound}`}
-            review={review}
-            changeId={changeId}
-            fromRound={fromRound}
-            toRound={toRound}
-            inline={inline}
-            commentable={commentable}
-            split={split}
-            preview={preview}
-            selection={selection}
-            onSelect={setSelection}
-            focus={focus}
-            actions={actions}
-          />
-        ) : (
-          <Alert key={changeId} severity="warning" sx={{ mb: 2 }}>
-            {changeId.slice(0, 8)} doesn't exist in round {toRound}
-          </Alert>
-        ),
-      )}
 
       <Dialog open={helpOpen} onClose={() => setHelpOpen(false)}>
         <DialogTitle>Keys</DialogTitle>
@@ -550,6 +567,6 @@ export const ReviewPage = () => {
           {message?.text}
         </Alert>
       </Snackbar>
-    </Box>
+    </Stack>
   )
 }

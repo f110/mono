@@ -1,35 +1,60 @@
-import { useEffect, useState, type RefObject } from 'react'
+import { useCallback, useEffect, useState, type RefObject } from 'react'
 import { ignoreKey } from '../lib/keys.ts'
 
 const splitKey = 'codexel.diff.split'
 
+export type DiffNavigation = {
+  split: boolean
+  preview: boolean
+  toggleSplit: () => void
+  togglePreview: () => void
+  // moveHunk scrolls the container to the next / previous hunk.
+  moveHunk: (direction: 'next' | 'previous') => void
+}
+
 // useDiffNavigation handles the keys of the diff in the container: | toggles the split view, m toggles the preview of
 // Markdown and ] / [ move to the next / previous hunk. The setting of the split view is kept in the local storage.
-export const useDiffNavigation = (container: RefObject<HTMLElement | null>): { split: boolean; preview: boolean } => {
+export const useDiffNavigation = (container: RefObject<HTMLElement | null>): DiffNavigation => {
   const [split, setSplit] = useState(() => localStorage.getItem(splitKey) === 'true')
   const [preview, setPreview] = useState(false)
+
+  const toggleSplit = useCallback(
+    () =>
+      setSplit((s) => {
+        localStorage.setItem(splitKey, String(!s))
+        return !s
+      }),
+    [],
+  )
+  const togglePreview = useCallback(() => setPreview((p) => !p), [])
+  const moveHunk = useCallback(
+    (direction: 'next' | 'previous') => {
+      const el = container.current
+      if (!el) {
+        return
+      }
+      const top = el.getBoundingClientRect().top
+      const hunks = [...el.querySelectorAll<HTMLElement>('[data-hunk]')]
+      const offsets = hunks.map((h) => h.getBoundingClientRect().top - top)
+      // The hunk at the top is the current one. scrollMarginTop of the hunk leaves the space for the sticky header.
+      const above = hunks.filter((_, i) => offsets[i] < 40)
+      const target = direction === 'next' ? hunks.find((_, i) => offsets[i] > 60) : above[above.length - 1]
+      target?.scrollIntoView({ block: 'start' })
+    },
+    [container],
+  )
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (ignoreKey(e)) {
         return
       }
-      const el = container.current
       if (e.key === '|') {
-        setSplit((s) => {
-          localStorage.setItem(splitKey, String(!s))
-          return !s
-        })
+        toggleSplit()
       } else if (e.key === 'm') {
-        setPreview((p) => !p)
-      } else if ((e.key === ']' || e.key === '[') && el) {
-        const top = el.getBoundingClientRect().top
-        const hunks = [...el.querySelectorAll<HTMLElement>('[data-hunk]')]
-        const offsets = hunks.map((h) => h.getBoundingClientRect().top - top)
-        // The hunk at the top is the current one. scrollMarginTop of the hunk leaves the space for the sticky header.
-        const above = hunks.filter((_, i) => offsets[i] < 40)
-        const target = e.key === ']' ? hunks.find((_, i) => offsets[i] > 60) : above[above.length - 1]
-        target?.scrollIntoView({ block: 'start' })
+        togglePreview()
+      } else if (e.key === ']' || e.key === '[') {
+        moveHunk(e.key === ']' ? 'next' : 'previous')
       } else {
         return
       }
@@ -37,7 +62,7 @@ export const useDiffNavigation = (container: RefObject<HTMLElement | null>): { s
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [container])
+  }, [toggleSplit, togglePreview, moveHunk])
 
-  return { split, preview }
+  return { split, preview, toggleSplit, togglePreview, moveHunk }
 }
