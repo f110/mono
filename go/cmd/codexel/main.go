@@ -33,6 +33,7 @@ type command struct {
 	NoBrowser   bool
 	HerdrSocket string
 	Config      string
+	IssueURL    string
 }
 
 func (c *command) Flags(fs *flag.FlagSet) {
@@ -40,6 +41,7 @@ func (c *command) Flags(fs *flag.FlagSet) {
 	fs.Bool("no-browser", "Don't open the browser").Var(&c.NoBrowser)
 	fs.String("herdr-socket", "Path of the socket of herdr. If not specified, $HERDR_SOCKET_PATH or ~/.config/herdr/herdr.sock").Var(&c.HerdrSocket)
 	fs.String("config", "Path of the config file. If not specified, ~/.config/codexel/config.json").Var(&c.Config)
+	fs.String("issue-url", "URL of the Web UI of the Issue tracker to link #N in the trailers to the ticket N (e.g. https://issue.example.com). If not specified, they are not linked").Var(&c.IssueURL)
 }
 
 func (c *command) Run(ctx context.Context) error {
@@ -86,7 +88,7 @@ func (c *command) Run(ctx context.Context) error {
 			logger.Log.Info("Failed to open the browser", logger.E(err))
 		}
 	}
-	return serve(ctx, l, server.New(herdr.NewClient(socket), config.NewFile(confPath), review.NewStore(reviewDir), pullrequest.NewFile(pullRequestsPath), static.FS(), claudeProjectsDir, missing))
+	return serve(ctx, l, server.New(herdr.NewClient(socket), config.NewFile(confPath), review.NewStore(reviewDir), pullrequest.NewFile(pullRequestsPath), static.FS(), claudeProjectsDir, missing, c.IssueURL))
 }
 
 // Setup registers the MCP of the server listening on --addr to Claude Code.

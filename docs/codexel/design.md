@@ -306,6 +306,14 @@ jj のテンプレート `self.trailers()` で Trailer を構造化して取得�
   絞り込み、本文中の同じ行に一致したコミットは Trailer で除外する。リポジトリはエージェントの `cwd` から `jj workspace root` で引く。選んだコミットの説明と差分をリポジトリ画面と同じ部品で表示する。一覧からそのセッションのコミットのレビューを開始できる (§5.3)
 - 終了したエージェントは herdr から消えるので、バッジにはエージェントの種類とセッション ID だけを表示する
 
+### 6.3 Issue へのリンク (#178)
+
+リビジョンの説明の Trailer にある `#N` を Issue トラッカーのチケット N へのリンクにする。
+
+- Issue トラッカーの Web UI の URL は `--issue-url` で指定する (例: `https://issue.internal.x.f110.dev`)。チケット N の URL は `<--issue-url>/N` にする。issue-server の `--url` と同じ形
+- フロントエンドへは `SystemService.GetStatus` で渡す。指定しない場合はリンクにしない
+- Trailer は説明の最後の段落とする (jj の `trailers()` と同じ)。`trailers` が空のコミットはリンクにしない
+
 ## 7. jj-pr の統合 (#127)
 
 ### 7.1 ロジックの切り出し
@@ -368,7 +376,7 @@ UI から作成した PR の URL を保存し、リビジョングラフの PR �
 | `RepositoryService` | `List`, `Open`, `Close`, `Watch` (stream, op ID の変化), `Log`, `GetRevision`, `Diff`, `DiffRange`, `Files`, `FileTree`, `FileHistory`, ... と §4.2 の各操作 (リビジョン、ブックマーク、Git、オペレーション、ファイル、コンフリクト、ワークスペース、エイリアス) |
 | `ReviewService` | `List`, `Get`, `Start`, `AddComment`, `EditComment`, `DeleteComment`, `Reply`, `ResolveComment`, `Finish`, `Discard`, `StartNextRound`, `RoundDiff`, `SetViewed` |
 | `PullRequestService` | `List`, `ListTemplates`, `Validate`, `Submit` |
-| `SystemService` | `GetStatus` (起動時に PATH に見つからなかった `herdr` と `jj`) |
+| `SystemService` | `GetStatus` (起動時に PATH に見つからなかった `herdr` と `jj`、`--issue-url`) |
 
 lightjj の HTTP API を 1:1 で Connect の RPC に写す。git push/fetch や alias のようにストリーミング出力があるものは server streaming にする。
 
@@ -390,10 +398,11 @@ lightjj の HTTP API を 1:1 で Connect の RPC に写す。git push/fetch や 
 ### 9.3 起動
 
 ```
-codexel [--addr localhost:<固定ポート>] [--no-browser]
+codexel [--addr localhost:<固定ポート>] [--no-browser] [--issue-url <URL>]
 ```
 
 - 起動したらブラウザを開く
+- `--issue-url` は Trailer の `#N` をリンクにする Issue トラッカーの URL (§6.3)
 - `codexel setup [--addr ...]` はエージェントに Codexel を使わせるための設定を行う。今は MCP の登録 (§5.4) だけを行う
 
 ## 10. 段階実装

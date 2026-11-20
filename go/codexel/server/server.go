@@ -26,8 +26,9 @@ import (
 )
 
 // New returns the handler of the API and the frontend. claudeProjectsDir is the directory of the transcripts of Claude
-// Code. MCP for the coding agents is served at /mcp. missingBinaries are the binaries not found at startup.
-func New(herdrClient *herdr.Client, conf *config.File, reviews *review.Store, pullRequests *pullrequest.File, frontend fs.FS, claudeProjectsDir string, missingBinaries []string) http.Handler {
+// Code. MCP for the coding agents is served at /mcp. missingBinaries are the binaries not found at startup. issueURL is
+// the URL of the Web UI of the Issue tracker to link the tickets.
+func New(herdrClient *herdr.Client, conf *config.File, reviews *review.Store, pullRequests *pullrequest.File, frontend fs.FS, claudeProjectsDir string, missingBinaries []string, issueURL string) http.Handler {
 	mux := http.NewServeMux()
 	reviewHandler := NewReviewHandler(conf, reviews, herdrClient)
 	mux.Handle(api.NewReviewServiceHandler(reviewHandler))
@@ -35,7 +36,7 @@ func New(herdrClient *herdr.Client, conf *config.File, reviews *review.Store, pu
 	mux.Handle(api.NewAgentServiceHandler(NewAgentHandler(herdrClient, conf, claudeProjectsDir)))
 	mux.Handle(api.NewRepositoryServiceHandler(NewRepositoryHandler(conf)))
 	mux.Handle(api.NewPullRequestServiceHandler(NewPullRequestHandler(conf, pullRequests)))
-	mux.Handle(api.NewSystemServiceHandler(NewSystemHandler(missingBinaries)))
+	mux.Handle(api.NewSystemServiceHandler(NewSystemHandler(missingBinaries, issueURL)))
 	mux.Handle("/", newFrontendHandler(frontend))
 	return mux
 }
@@ -443,14 +444,15 @@ func toConnectError(err error) error {
 
 type SystemHandler struct {
 	missingBinaries []string
+	issueURL        string
 }
 
 var _ api.SystemServiceHandler = (*SystemHandler)(nil)
 
-func NewSystemHandler(missingBinaries []string) *SystemHandler {
-	return &SystemHandler{missingBinaries: missingBinaries}
+func NewSystemHandler(missingBinaries []string, issueURL string) *SystemHandler {
+	return &SystemHandler{missingBinaries: missingBinaries, issueURL: issueURL}
 }
 
 func (h *SystemHandler) GetStatus(_ context.Context, _ *connect.Request[api.RequestGetStatus]) (*connect.Response[api.ResponseGetStatus], error) {
-	return connect.NewResponse(api.ResponseGetStatus_builder{MissingBinaries: h.missingBinaries}.Build()), nil
+	return connect.NewResponse(api.ResponseGetStatus_builder{MissingBinaries: h.missingBinaries, IssueUrl: new(h.issueURL)}.Build()), nil
 }

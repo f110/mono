@@ -3785,6 +3785,13 @@ export declare type ResponseGetStatus = Message<"mono.codexel.ResponseGetStatus"
    * @generated from field: repeated string missing_binaries = 1;
    */
   missingBinaries: string[];
+
+  /**
+   * issue_url is the URL of the Web UI of the Issue tracker. The ticket N is issue_url/N. It is empty if not specified.
+   *
+   * @generated from field: string issue_url = 2;
+   */
+  issueUrl: string;
 };
 
 /**
@@ -5105,7 +5112,7 @@ export declare const PullRequestService: GenService<{
  */
 export declare const SystemService: GenService<{
   /**
-   * GetStatus returns the status found at startup.
+   * GetStatus returns the status found at startup and the settings given by the flags.
    *
    * @generated from rpc mono.codexel.SystemService.GetStatus
    */

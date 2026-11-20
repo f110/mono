@@ -1,8 +1,8 @@
 import { useQuery } from '@connectrpc/connect-query'
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz'
-import { Alert, Box, Chip, Divider, IconButton, Stack, Typography } from '@mui/material'
+import { Alert, Box, Chip, Divider, IconButton, Link, Stack, Typography } from '@mui/material'
 import { useNavigate } from '@tanstack/react-router'
-import { RepositoryService, type Commit, type Review } from '../connect/codexel_pb.js'
+import { RepositoryService, SystemService, type Commit, type Review } from '../connect/codexel_pb.js'
 import { stateChip } from '../lib/review.ts'
 import { ChangedFiles } from './ChangedFiles.tsx'
 import { FileDiffView } from './FileDiffView.tsx'
@@ -26,6 +26,34 @@ const Reviews = ({ reviews }: { reviews: Review[] }) => {
         />
       ))}
     </Stack>
+  )
+}
+
+// linkIssues returns text with #N linked to the ticket N of the Issue tracker.
+const linkIssues = (text: string, issueUrl: string) =>
+  text.split(/(#\d+\b)/).map((s, i) =>
+    i % 2 === 1 ? (
+      <Link key={i} href={`${issueUrl}/${s.slice(1)}`} target="_blank" rel="noreferrer">
+        {s}
+      </Link>
+    ) : (
+      s
+    ),
+  )
+
+// Description shows the description of the commit. If issueUrl is not empty, #N in the trailers is linked to the ticket.
+// The trailers are the last paragraph like jj.
+const Description = ({ description, hasTrailers, issueUrl }: { description: string; hasTrailers: boolean; issueUrl: string }) => {
+  const text = description.trimEnd()
+  const i = text.lastIndexOf('\n\n')
+  if (!issueUrl || !hasTrailers || i === -1) {
+    return description
+  }
+  return (
+    <>
+      {text.slice(0, i + 2)}
+      {linkIssues(text.slice(i + 2), issueUrl)}
+    </>
   )
 }
 
@@ -57,6 +85,7 @@ export const RevisionDetail = ({
   onMenu?: (anchor: HTMLElement) => void
 }) => {
   const { data, error } = useQuery(RepositoryService.method.getRevision, { path, revision: commit.commitId }, { staleTime: Infinity })
+  const { data: status } = useQuery(SystemService.method.getStatus, {})
 
   return (
     <Box sx={{ p: 2 }}>
@@ -89,7 +118,11 @@ export const RevisionDetail = ({
       {reviews && reviews.length > 0 && <Reviews reviews={reviews} />}
       {error && <Alert severity="error">{error.message}</Alert>}
       <Box component="pre" sx={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: 13, my: 1 }}>
-        {data?.description || '(no description set)'}
+        {data?.description ? (
+          <Description description={data.description} hasTrailers={commit.trailers.length > 0} issueUrl={status?.issueUrl ?? ''} />
+        ) : (
+          '(no description set)'
+        )}
       </Box>
       <Divider sx={{ mb: 2 }} />
       {data?.files.length === 0 && data.conflicts.length === 0 && <Typography color="text.secondary">No changes</Typography>}

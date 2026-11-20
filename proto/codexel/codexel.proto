@@ -179,7 +179,7 @@ service PullRequestService {
 
 // SystemService provides the status of Codexel itself.
 service SystemService {
-  // GetStatus returns the status found at startup.
+  // GetStatus returns the status found at startup and the settings given by the flags.
   rpc GetStatus(RequestGetStatus) returns (ResponseGetStatus);
 }
 
@@ -1179,6 +1179,8 @@ message RequestGetStatus {}
 message ResponseGetStatus {
   // missing_binaries are the binaries Codexel depends on and not found in PATH.
   repeated string missing_binaries = 1;
+  // issue_url is the URL of the Web UI of the Issue tracker. The ticket N is issue_url/N. It is empty if not specified.
+  string issue_url = 2;
 }
 
 message RequestListPullRequestTemplates {

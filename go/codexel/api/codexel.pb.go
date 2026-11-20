@@ -18481,6 +18481,9 @@ func (b0 RequestGetStatus_builder) Build() *RequestGetStatus {
 type ResponseGetStatus struct {
 	state                      protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_MissingBinaries []string               `protobuf:"bytes,1,rep,name=missing_binaries,json=missingBinaries"`
+	xxx_hidden_IssueUrl        *string                `protobuf:"bytes,2,opt,name=issue_url,json=issueUrl"`
+	XXX_raceDetectHookData     protoimpl.RaceDetectHookData
+	XXX_presence               [1]uint32
 	unknownFields              protoimpl.UnknownFields
 	sizeCache                  protoimpl.SizeCache
 }
@@ -18517,14 +18520,42 @@ func (x *ResponseGetStatus) GetMissingBinaries() []string {
 	return nil
 }
 
+func (x *ResponseGetStatus) GetIssueUrl() string {
+	if x != nil {
+		if x.xxx_hidden_IssueUrl != nil {
+			return *x.xxx_hidden_IssueUrl
+		}
+		return ""
+	}
+	return ""
+}
+
 func (x *ResponseGetStatus) SetMissingBinaries(v []string) {
 	x.xxx_hidden_MissingBinaries = v
+}
+
+func (x *ResponseGetStatus) SetIssueUrl(v string) {
+	x.xxx_hidden_IssueUrl = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
+}
+
+func (x *ResponseGetStatus) HasIssueUrl() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *ResponseGetStatus) ClearIssueUrl() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_IssueUrl = nil
 }
 
 type ResponseGetStatus_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
 	MissingBinaries []string
+	IssueUrl        *string
 }
 
 func (b0 ResponseGetStatus_builder) Build() *ResponseGetStatus {
@@ -18532,6 +18563,10 @@ func (b0 ResponseGetStatus_builder) Build() *ResponseGetStatus {
 	b, x := &b0, m0
 	_, _ = b, x
 	x.xxx_hidden_MissingBinaries = b.MissingBinaries
+	if b.IssueUrl != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		x.xxx_hidden_IssueUrl = b.IssueUrl
+	}
 	return m0
 }
 
@@ -20057,9 +20092,10 @@ const file_proto_codexel_codexel_proto_rawDesc = "" +
 	"\x06viewed\x18\x04 \x01(\bR\x06viewed\"A\n" +
 	"\x11ResponseSetViewed\x12,\n" +
 	"\x06review\x18\x01 \x01(\v2\x14.mono.codexel.ReviewR\x06review\"\x12\n" +
-	"\x10RequestGetStatus\">\n" +
+	"\x10RequestGetStatus\"[\n" +
 	"\x11ResponseGetStatus\x12)\n" +
-	"\x10missing_binaries\x18\x01 \x03(\tR\x0fmissingBinaries\"5\n" +
+	"\x10missing_binaries\x18\x01 \x03(\tR\x0fmissingBinaries\x12\x1b\n" +
+	"\tissue_url\x18\x02 \x01(\tR\bissueUrl\"5\n" +
 	"\x1fRequestListPullRequestTemplates\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\"@\n" +
 	" ResponseListPullRequestTemplates\x12\x1c\n" +
