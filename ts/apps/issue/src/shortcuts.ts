@@ -36,16 +36,18 @@ export const inputShortcuts: ShortcutHelp[] = [
   { label: 'Esc', description: '入力欄からフォーカスを外す' },
 ]
 
-// ignoreKey reports whether the shortcut key should be ignored: the key for the input, the key handled by the focused
-// element, the key with the modifier and the key while any dialog or menu is open.
+// ignoreKey reports whether the shortcut key should be ignored: the key while the IME is composing, the key already
+// handled, the key for the input, the key handled by the focused element, the key with the modifier and the key while any
+// dialog, menu or listbox is open. See docs/ui-conventions.md.
 export const ignoreKey = (e: KeyboardEvent): boolean => {
   const target = e.target as HTMLElement | null
   const editing =
     target !== null && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)
   const activating = e.key === 'Enter' && target !== document.body
   return (
-    e.defaultPrevented ||
     e.isComposing ||
+    e.keyCode === 229 ||
+    e.defaultPrevented ||
     editing ||
     activating ||
     e.metaKey ||
