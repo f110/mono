@@ -18,7 +18,6 @@ import {
 } from '@mui/material'
 import EditIcon from '@mui/icons-material/Edit'
 import {
-  type AgentSession,
   type Backlink,
   type Activity,
   type Comment,
@@ -42,7 +41,6 @@ import { MarkdownEditor } from '../components/MarkdownEditor.tsx'
 import { useMasters } from '../hooks/useMasters.ts'
 import {
   activityLabels,
-  codingAgentLabels,
   priorities,
   priorityLabels,
   relationLabels,
@@ -237,8 +235,6 @@ export const TicketPage = () => {
           <Commits commits={data.commits} />
           <Divider />
           <PullRequests pullRequests={data.pullRequests} />
-          <Divider />
-          <AgentSessions sessions={data.agentSessions} />
         </Stack>
       </Box>
     </Stack>
@@ -459,27 +455,6 @@ const PullRequests = ({ pullRequests }: { pullRequests: PullRequestLink[] }) => 
       <Typography key={p.url === '' ? p.number : p.url} variant="body2" noWrap>
         <ExternalLink url={p.url}>#{p.number}</ExternalLink> {p.title}
       </Typography>
-    ))}
-  </Stack>
-)
-
-const AgentSessions = ({ sessions }: { sessions: AgentSession[] }) => (
-  <Stack spacing={1}>
-    <Typography variant="subtitle2">Agent sessions</Typography>
-    {sessions.length === 0 && (
-      <Typography variant="body2" color="text.secondary">
-        なし
-      </Typography>
-    )}
-    {sessions.map((s) => (
-      <Box key={`${s.hostname}/${s.sessionId}`}>
-        <Typography variant="body2" noWrap>
-          {codingAgentLabels[s.agent]} on {s.hostname}
-        </Typography>
-        <Typography variant="body2" color="text.secondary" noWrap sx={{ fontFamily: 'monospace' }}>
-          {s.sessionId}
-        </Typography>
-      </Box>
     ))}
   </Stack>
 )

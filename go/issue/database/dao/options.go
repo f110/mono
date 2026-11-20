@@ -17,7 +17,6 @@ type Options struct {
 	Activity           ActivityInterface
 	CommitLink         CommitLinkInterface
 	PullRequestLink    PullRequestLinkInterface
-	AgentSession       AgentSessionInterface
 	GithubEvent        GithubEventInterface
 
 	RawConnection *sql.DB
@@ -37,7 +36,6 @@ func NewOptions(conn *sql.DB) Options {
 		Activity:           NewActivity(conn),
 		CommitLink:         NewCommitLink(conn),
 		PullRequestLink:    NewPullRequestLink(conn),
-		AgentSession:       NewAgentSession(conn),
 		GithubEvent:        NewGithubEvent(conn),
 		RawConnection:      conn,
 	}

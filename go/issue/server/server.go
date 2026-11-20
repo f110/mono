@@ -134,10 +134,6 @@ func (h *IssueHandler) GetTicket(ctx context.Context, req *connect.Request[api.R
 	if err != nil {
 		return nil, toConnectError(err)
 	}
-	sessions, err := ticket.AgentSessions(ctx)
-	if err != nil {
-		return nil, toConnectError(err)
-	}
 	var repositoryIDs []int32
 	for _, v := range commits {
 		repositoryIDs = append(repositoryIDs, v.RepositoryId)
@@ -160,7 +156,6 @@ func (h *IssueHandler) GetTicket(ctx context.Context, req *connect.Request[api.R
 		PullRequests: enumerable.Map(pullRequests, func(p *database.PullRequestLink) *api.PullRequestLink {
 			return toPullRequestLink(p, urls[p.RepositoryId])
 		}),
-		AgentSessions: enumerable.Map(sessions, toAgentSession),
 	}.Build()), nil
 }
 
@@ -264,21 +259,6 @@ func (h *IssueHandler) RemoveRelation(ctx context.Context, req *connect.Request[
 		return nil, toConnectError(err)
 	}
 	return connect.NewResponse(&api.ResponseRemoveRelation{}), nil
-}
-
-func (h *IssueHandler) AddAgentSession(ctx context.Context, req *connect.Request[api.RequestAddAgentSession]) (*connect.Response[api.ResponseAddAgentSession], error) {
-	agent, err := toDBCodingAgent(req.Msg.GetAgent())
-	if err != nil {
-		return nil, err
-	}
-	ticket, err := h.tracker.Ticket(ctx, req.Msg.GetTicket())
-	if err != nil {
-		return nil, toConnectError(err)
-	}
-	if err := ticket.AddAgentSession(ctx, agent, req.Msg.GetHostname(), req.Msg.GetSessionId()); err != nil {
-		return nil, toConnectError(err)
-	}
-	return connect.NewResponse(&api.ResponseAddAgentSession{}), nil
 }
 
 func (h *IssueHandler) AddComment(ctx context.Context, req *connect.Request[api.RequestAddComment]) (*connect.Response[api.ResponseAddComment], error) {
@@ -443,13 +423,6 @@ func toDBRelationType(t api.RelationType) (database.RelationType, error) {
 	return database.RelationType(t - 1), nil
 }
 
-func toDBCodingAgent(a api.CodingAgent) (database.CodingAgent, error) {
-	if _, ok := api.CodingAgent_name[int32(a)]; !ok || a == api.CodingAgent_CODING_AGENT_UNSPECIFIED {
-		return 0, connect.NewError(connect.CodeInvalidArgument, errors.New("unknown coding agent"))
-	}
-	return database.CodingAgent(a - 1), nil
-}
-
 // toTicket converts the ticket. url is the URL of the Web UI, and the ticket has no URL if it is empty.
 func toTicket(t *issue.Ticket, url string) *api.Ticket {
 	b := api.Ticket_builder{
@@ -562,15 +535,6 @@ func toPullRequestLink(p *database.PullRequestLink, repositoryURL string) *api.P
 		b.Url = new(fmt.Sprintf("%s/pull/%d", repositoryURL, p.Number))
 	}
 	return b.Build()
-}
-
-func toAgentSession(s *database.AgentSession) *api.AgentSession {
-	return api.AgentSession_builder{
-		Agent:     new(api.CodingAgent(s.Agent + 1)),
-		Hostname:  new(s.Hostname),
-		SessionId: new(s.SessionId),
-		CreatedAt: timestamppb.New(s.CreatedAt),
-	}.Build()
 }
 
 func toComment(c *issue.Comment) *api.Comment {
