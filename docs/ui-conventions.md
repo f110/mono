@@ -42,3 +42,25 @@ if (e.isComposing || e.keyCode === 229) {
 - [UI Events - KeyboardEvent.isComposing](https://w3c.github.io/uievents/#dom-keyboardevent-iscomposing)
 - [UI Events - How to determine keyCode for keydown and keyup events](https://w3c.github.io/uievents/#determine-keydown-keyup-keyCode)
 - [MDN - Element: keydown event](https://developer.mozilla.org/en-US/docs/Web/API/Element/keydown_event#keydown_events_with_ime)
+
+## キーボードショートカット
+
+画面の操作は修飾キーを使わない単キーのショートカットで行えるようにする。キーは vim の慣習に合わせる。
+
+| キー    | 動作               |
+|-------|------------------|
+| ?     | ショートカットのヘルプを表示する |
+| j / ↓ | カーソルを次の項目に移動する   |
+| k / ↑ | カーソルを前の項目に移動する   |
+| Esc   | 入力欄からフォーカスを外す    |
+
+- 上下の移動は `j`/`k` とカーソルキーの両方を受け付ける
+- ヘルプはキーと説明の表をダイアログで表示する。キーを忘れても辿れるように、ヘッダーなどにヘルプを開くボタンも置く
+
+### 単キーを無視する条件
+
+次の場合は単キーのショートカットを処理しない。
+
+- 入力欄（`input`, `textarea`, contenteditable な要素）にフォーカスがある
+- 修飾キー（`metaKey`, `ctrlKey`, `altKey`）が押されている
+- ダイアログやメニュー（`role="dialog"`, `role="menu"`）が開いている
