@@ -1086,7 +1086,6 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
             { label: 'Toggle the preview of Markdown', shortcut: 'm', run: () => pressKey('m') },
             { label: 'Next hunk', shortcut: ']', run: () => pressKey(']') },
             { label: 'Previous hunk', shortcut: '[', run: () => pressKey('[') },
-            { label: 'Toggle the theme', shortcut: 't', run: () => pressKey('t') },
             ...(aliasData?.aliases ?? []).map((a) => ({
               label: `Run alias: ${a.name} (jj ${a.args.join(' ')})`,
               run: () => run(() => repositoryClient.runAlias({ path, name: a.name }), false),
