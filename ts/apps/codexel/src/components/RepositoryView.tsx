@@ -351,7 +351,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   }, [])
   const startRebase = useCallback(() => {
     if (targets().length > 0) {
-      setMode({ kind: 'rebase', sources: targets(), source: RebaseSource.REVISIONS, target: RebaseTarget.ONTO })
+      setMode({ kind: 'rebase', sources: targets(), source: RebaseSource.DESCENDANTS, target: RebaseTarget.ONTO })
     }
   }, [targets])
   const startSquash = useCallback(() => {
