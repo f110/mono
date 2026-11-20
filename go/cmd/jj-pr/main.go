@@ -41,6 +41,7 @@ func submitFlags(fs *flag.FlagSet, c *jujutsu.PullRequestSubmitter) {
 	fs.Bool("dry-run", "Not impact on remote").Var(&c.DryRun)
 	fs.Bool("force", "Push commits when there are more than 10 commits in the stack").Var(&c.Force)
 	fs.Bool("single-pr", "Make the PR in multiple commits").Var(&c.SinglePR)
+	fs.Bool("comment-on-update", "Comment the link to the changes on the updated PRs except the drafts").Var(&c.CommentOnUpdate)
 	fs.String("revision", "Revision to create PR from. If not specified, use current revision").Shorthand("r").Var(&c.Revision)
 }
 

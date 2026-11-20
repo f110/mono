@@ -59,6 +59,9 @@ type PullRequestSubmitter struct {
 	Force bool
 	// SinglePR makes the pull request of the newest commit which contains the whole stack.
 	SinglePR bool
+	// CommentOnUpdate makes the comment of the link to the changes on the pull requests whose commits are updated. The
+	// comment is not made on the draft pull requests.
+	CommentOnUpdate bool
 	// Revision is the change ID of the newest commit of the stack. It is the working copy if it is empty.
 	Revision string
 	RootDir  string
@@ -309,7 +312,7 @@ func (c *PullRequestSubmitter) pushCommit(ctx context.Context) (fsm.State, error
 		c.stack = stack
 
 		// Comment PR
-		if !c.DryRun {
+		if c.CommentOnUpdate && !c.DryRun {
 			for _, pr := range changedPR {
 				if pr.pullRequest == nil {
 					continue

@@ -2,6 +2,7 @@ package jujutsu
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/go-github/v85/github"
 	"github.com/stretchr/testify/assert"
@@ -449,7 +451,7 @@ func TestPullRequestSubmitterSubmit(t *testing.T) {
 
 	t.Run("Stack", func(t *testing.T) {
 		repo, remote, changes := newStackRepository(t)
-		ghMock, ghClient := newGitHubMock(t)
+		ghMock, ghClient := newGitHubMock(t, remote)
 
 		c := NewPullRequestSubmitter()
 		c.Dir, c.Repository, c.DefaultBranch, c.Revision = repo, "f110/mono", "master", changes[1]
@@ -480,7 +482,7 @@ func TestPullRequestSubmitterSubmit(t *testing.T) {
 
 	t.Run("SinglePR", func(t *testing.T) {
 		repo, remote, changes := newStackRepository(t)
-		ghMock, ghClient := newGitHubMock(t)
+		ghMock, ghClient := newGitHubMock(t, remote)
 
 		c := NewPullRequestSubmitter()
 		c.Dir, c.Repository, c.DefaultBranch, c.Revision, c.SinglePR = repo, "f110/mono", "master", changes[1], true
@@ -500,11 +502,11 @@ func TestPullRequestSubmitterSubmit(t *testing.T) {
 	})
 
 	t.Run("SelectTemplate", func(t *testing.T) {
-		repo, _, changes := newStackRepository(t)
+		repo, remote, changes := newStackRepository(t)
 		assertion.MustNoError(t, os.MkdirAll(filepath.Join(repo, ".github/PULL_REQUEST_TEMPLATE"), 0755))
 		assertion.MustNoError(t, os.WriteFile(filepath.Join(repo, ".github/PULL_REQUEST_TEMPLATE/bug.md"), []byte("bug template"), 0644))
 		assertion.MustNoError(t, os.WriteFile(filepath.Join(repo, ".github/PULL_REQUEST_TEMPLATE/feature.md"), []byte("feature template"), 0644))
-		ghMock, ghClient := newGitHubMock(t)
+		ghMock, ghClient := newGitHubMock(t, remote)
 
 		var candidates []string
 		c := NewPullRequestSubmitter()
@@ -531,7 +533,7 @@ func TestPullRequestSubmitterSubmit(t *testing.T) {
 	t.Run("SinglePRWithOnlyWIP", func(t *testing.T) {
 		repo, remote, changes := newStackRepository(t)
 		runCommand(t, repo, "jj", "describe", changes[0], changes[1], "--message=WIP: test")
-		ghMock, ghClient := newGitHubMock(t)
+		ghMock, ghClient := newGitHubMock(t, remote)
 
 		c := NewPullRequestSubmitter()
 		c.Dir, c.Repository, c.DefaultBranch, c.Revision, c.SinglePR = repo, "f110/mono", "master", changes[1], true
@@ -545,7 +547,7 @@ func TestPullRequestSubmitterSubmit(t *testing.T) {
 
 	t.Run("DryRun", func(t *testing.T) {
 		repo, remote, changes := newStackRepository(t)
-		ghMock, ghClient := newGitHubMock(t)
+		ghMock, ghClient := newGitHubMock(t, remote)
 
 		c := NewPullRequestSubmitter()
 		c.Dir, c.Repository, c.DefaultBranch, c.Revision, c.DryRun = repo, "f110/mono", "master", changes[1], true
@@ -563,7 +565,7 @@ func TestPullRequestSubmitterSubmit(t *testing.T) {
 
 	t.Run("DryRunSinglePR", func(t *testing.T) {
 		repo, remote, changes := newStackRepository(t)
-		ghMock, ghClient := newGitHubMock(t)
+		ghMock, ghClient := newGitHubMock(t, remote)
 
 		c := NewPullRequestSubmitter()
 		c.Dir, c.Repository, c.DefaultBranch, c.Revision, c.SinglePR, c.DryRun = repo, "f110/mono", "master", changes[1], true, true
@@ -576,6 +578,41 @@ func TestPullRequestSubmitterSubmit(t *testing.T) {
 		assertion.Equal(t, *res.PullRequests[0], SubmittedPullRequest{ChangeID: changes[1], Action: PullRequestCreated})
 		assertion.Len(t, ghMock.LookupRepository("f110/mono").GetPullRequests(), 0)
 		assertion.Equal(t, remoteBranches(t, remote), []string{"master"})
+	})
+
+	t.Run("Update", func(t *testing.T) {
+		for _, commentOnUpdate := range []bool{false, true} {
+			t.Run(fmt.Sprintf("CommentOnUpdate=%v", commentOnUpdate), func(t *testing.T) {
+				repo, remote, changes := newStackRepository(t)
+				ghMock, ghClient := newGitHubMock(t, remote)
+
+				c := NewPullRequestSubmitter()
+				c.Dir, c.Repository, c.DefaultBranch, c.Revision = repo, "f110/mono", "master", changes[1]
+				c.GitHubClient = ghClient
+				_, err := c.Submit(t.Context())
+				assertion.MustNoError(t, err)
+				// The mock doesn't set the state and the creation time of the created pull requests which are needed to
+				// list them.
+				for _, v := range ghMock.LookupRepository("f110/mono").GetPullRequests() {
+					v.State(githubmock.PullRequestStateOpen).CreatedAt(time.Now())
+				}
+				runCommand(t, repo, "jj", "describe", changes[1], "--message=b: Update")
+
+				recorder := &commentRecorder{RoundTripper: ghClient.Client().Transport}
+				c = NewPullRequestSubmitter()
+				c.Dir, c.Repository, c.DefaultBranch, c.Revision, c.CommentOnUpdate = repo, "f110/mono", "master", changes[1], commentOnUpdate
+				c.GitHubClient = github.NewClient(&http.Client{Transport: recorder})
+				res, err := c.Submit(t.Context())
+				assertion.MustNoError(t, err)
+
+				assertion.Equal(t, res.Pushed, []string{changes[1]})
+				if commentOnUpdate {
+					assertion.Equal(t, recorder.paths, []string{"/repos/f110/mono/issues/2/comments"})
+				} else {
+					assertion.Len(t, recorder.paths, 0)
+				}
+			})
+		}
 	})
 }
 
@@ -614,8 +651,8 @@ func newStackRepository(t *testing.T) (string, string, []string) {
 }
 
 // newGitHubMock returns the mock of GitHub which has f110/mono. The mock doesn't support listing the branches, so it
-// returns no branches.
-func newGitHubMock(t *testing.T) (*githubmock.Mock, *github.Client) {
+// returns the branches of the bare repository of remote.
+func newGitHubMock(t *testing.T, remote string) (*githubmock.Mock, *github.Client) {
 	t.Helper()
 
 	ghMock := githubmock.NewMock()
@@ -623,10 +660,37 @@ func newGitHubMock(t *testing.T) (*githubmock.Mock, *github.Client) {
 	mux := http.NewServeMux()
 	ghMock.RegisterHandler(mux)
 	mux.HandleFunc("GET /repos/{owner}/{repo}/branches", func(w http.ResponseWriter, _ *http.Request) {
+		cmd := exec.Command("git", "for-each-ref", "--format=%(refname:short) %(objectname)", "refs/heads")
+		cmd.Dir = remote
+		out, err := cmd.Output()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		branches := make([]*github.Branch, 0)
+		for v := range strings.Lines(string(out)) {
+			v = strings.TrimSpace(v)
+			if name, sha, ok := strings.Cut(v, " "); ok {
+				branches = append(branches, &github.Branch{Name: new(name), Commit: &github.RepositoryCommit{SHA: new(sha)}})
+			}
+		}
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte("[]"))
+		_ = json.NewEncoder(w).Encode(branches)
 	})
 	return ghMock, github.NewClient(&http.Client{Transport: handlerTransport{mux}})
+}
+
+// commentRecorder records the paths of the requests which create the comments.
+type commentRecorder struct {
+	http.RoundTripper
+	paths []string
+}
+
+func (r *commentRecorder) RoundTrip(req *http.Request) (*http.Response, error) {
+	if req.Method == http.MethodPost && strings.HasSuffix(req.URL.Path, "/comments") {
+		r.paths = append(r.paths, req.URL.Path)
+	}
+	return r.RoundTripper.RoundTrip(req)
 }
 
 func remoteBranches(t *testing.T, remote string) []string {
@@ -671,8 +735,8 @@ func TestDefaultBranch(t *testing.T) {
 		t.Skipf("Skip %s because -test.jj-binary is not set", t.Name())
 	}
 
-	repo, _, _ := newStackRepository(t)
-	ghMock, ghClient := newGitHubMock(t)
+	repo, remote, _ := newStackRepository(t)
+	ghMock, ghClient := newGitHubMock(t, remote)
 	ghMock.LookupRepository("f110/mono").DefaultBranch("main")
 
 	branch, err := DefaultBranch(t.Context(), ghClient, repo, "f110", "mono")

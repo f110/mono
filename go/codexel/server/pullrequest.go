@@ -79,11 +79,12 @@ func (h *PullRequestHandler) Validate(ctx context.Context, req *connect.Request[
 	if err != nil {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, err)
 	}
-	_, reason, err := submitRevision(ctx, repo, client, req.Msg.GetRevisions())
+	_, stack, reason, err := submitRevision(ctx, repo, client, req.Msg.GetRevisions())
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(api.ResponseValidatePullRequest_builder{Reason: new(reason)}.Build()), nil
+	pushed := slices.ContainsFunc(stack, func(c *jujutsu.StackCommit) bool { return !c.NoSend() && len(c.Bookmarks) > 0 })
+	return connect.NewResponse(api.ResponseValidatePullRequest_builder{Reason: new(reason), HasPushedCommits: new(pushed)}.Build()), nil
 }
 
 func (h *PullRequestHandler) Submit(ctx context.Context, req *connect.Request[api.RequestSubmitPullRequest]) (*connect.Response[api.ResponseSubmitPullRequest], error) {
@@ -95,7 +96,7 @@ func (h *PullRequestHandler) Submit(ctx context.Context, req *connect.Request[ap
 	if err != nil {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, err)
 	}
-	revision, reason, err := submitRevision(ctx, repo, client, req.Msg.GetRevisions())
+	revision, _, reason, err := submitRevision(ctx, repo, client, req.Msg.GetRevisions())
 	if err != nil {
 		return nil, err
 	}
@@ -105,6 +106,7 @@ func (h *PullRequestHandler) Submit(ctx context.Context, req *connect.Request[ap
 
 	s := jujutsu.NewPullRequestSubmitter()
 	s.Dir, s.RootDir, s.Revision, s.SinglePR = repo.Root(), repo.Root(), revision, len(req.Msg.GetRevisions()) > 1
+	s.CommentOnUpdate = req.Msg.GetCommentOnUpdate()
 	s.GitHubClient = client
 	s.SelectTemplate = func(_ []string) (string, error) {
 		if req.Msg.GetTemplate() == "" {
@@ -134,43 +136,43 @@ var pullRequestActions = map[jujutsu.PullRequestAction]api.PullRequestAction{
 	jujutsu.PullRequestExisting: api.PullRequestAction_PULL_REQUEST_ACTION_EXISTING,
 }
 
-// submitRevision returns the change ID which is submitted for the revisions. reason is not empty if the revisions can't
-// be submitted. Multiple revisions are submitted as one pull request of the newest one, so they must be the whole stack
-// of it.
-func submitRevision(ctx context.Context, repo *jujutsu.Repository, client *github.Client, revisions []string) (string, string, error) {
+// submitRevision returns the change ID which is submitted for the revisions and the stack of it. reason is not empty if
+// the revisions can't be submitted. Multiple revisions are submitted as one pull request of the newest one, so they must
+// be the whole stack of it.
+func submitRevision(ctx context.Context, repo *jujutsu.Repository, client *github.Client, revisions []string) (string, []*jujutsu.StackCommit, string, error) {
 	if len(revisions) == 0 {
-		return "", "", connect.NewError(connect.CodeInvalidArgument, errors.New("revisions are required"))
+		return "", nil, "", connect.NewError(connect.CodeInvalidArgument, errors.New("revisions are required"))
 	}
 	heads, err := repo.Log(ctx, "heads("+strings.Join(revisions, "|")+")", 0)
 	if err != nil {
-		return "", "", toJujutsuError(err)
+		return "", nil, "", toJujutsuError(err)
 	}
 	if len(heads) != 1 {
-		return "", "The revisions are not in a line", nil
+		return "", nil, "The revisions are not in a line", nil
 	}
 	top := heads[0].Commit.ChangeID
 	owner, name, err := jujutsu.GitHubRepository(ctx, repo.Root())
 	if err != nil {
-		return "", "", connect.NewError(connect.CodeFailedPrecondition, err)
+		return "", nil, "", connect.NewError(connect.CodeFailedPrecondition, err)
 	}
 	defaultBranch, err := jujutsu.DefaultBranch(ctx, client, repo.Root(), owner, name)
 	if err != nil {
-		return "", "", connect.NewError(connect.CodeInternal, err)
+		return "", nil, "", connect.NewError(connect.CodeInternal, err)
 	}
 	stack, err := jujutsu.Stack(ctx, false, repo.Root(), defaultBranch, top)
 	if err != nil {
-		return "", "", connect.NewError(connect.CodeInternal, err)
+		return "", nil, "", connect.NewError(connect.CodeInternal, err)
 	}
 	if len(stack) == 0 {
-		return "", fmt.Sprintf("There are no commits to submit between %s@origin and the revision", defaultBranch), nil
+		return "", nil, fmt.Sprintf("There are no commits to submit between %s@origin and the revision", defaultBranch), nil
 	}
 	if len(revisions) > 1 && !isWholeStack(stack, revisions) {
-		return "", fmt.Sprintf("The revisions must be all commits between %s@origin and the newest revision (%d commits)", defaultBranch, len(stack)), nil
+		return "", nil, fmt.Sprintf("The revisions must be all commits between %s@origin and the newest revision (%d commits)", defaultBranch, len(stack)), nil
 	}
 	if !slices.ContainsFunc(stack, func(c *jujutsu.StackCommit) bool { return !c.NoSend() }) {
-		return "", fmt.Sprintf(`There are no commits to submit between %s@origin and the revision. The commits whose description starts with "no-send:" or "WIP:" are excluded`, defaultBranch), nil
+		return "", nil, fmt.Sprintf(`There are no commits to submit between %s@origin and the revision. The commits whose description starts with "no-send:" or "WIP:" are excluded`, defaultBranch), nil
 	}
-	return top, "", nil
+	return top, stack, "", nil
 }
 
 func newGitHubClient(ctx context.Context) (*github.Client, error) {

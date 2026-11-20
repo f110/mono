@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQuery } from '@connectrpc/connect-query'
-import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Link, MenuItem, Stack, TextField, Typography } from '@mui/material'
+import { Alert, Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Link, MenuItem, Stack, TextField, Typography } from '@mui/material'
 import { PullRequestAction, PullRequestService, type Commit } from '../connect/codexel_pb.js'
 
 const actionLabel: Record<PullRequestAction, string> = {
@@ -32,14 +32,21 @@ export const PullRequestDialog = ({
   const { data: templateData } = useQuery(PullRequestService.method.listTemplates, { path: repoPath }, { gcTime: 0 })
   const submit = useMutation(PullRequestService.method.submit)
   const [template, setTemplate] = useState<string>()
+  const [commentOnUpdate, setCommentOnUpdate] = useState(false)
   const templates = templateData?.templates ?? []
   const reason = validation.data?.reason
+  const hasPushedCommits = validation.data?.hasPushedCommits ?? false
   const needsTemplate = templates.length > 1 && template === undefined
   const ready = validation.isSuccess && reason === '' && templateData !== undefined && !needsTemplate
 
   const run = () => {
     submit.mutate(
-      { path: repoPath, revisions, template: template === undefined || template === noTemplate ? '' : template },
+      {
+        path: repoPath,
+        revisions,
+        template: template === undefined || template === noTemplate ? '' : template,
+        commentOnUpdate: hasPushedCommits && commentOnUpdate,
+      },
       { onSuccess: () => onSubmitted() },
     )
   }
@@ -81,6 +88,17 @@ export const PullRequestDialog = ({
               <MenuItem value={noTemplate}>Don't use</MenuItem>
             </TextField>
           )}
+          <FormControlLabel
+            control={
+              <Checkbox
+                size="small"
+                checked={hasPushedCommits && commentOnUpdate}
+                onChange={(e) => setCommentOnUpdate(e.target.checked)}
+                disabled={!hasPushedCommits || submit.isPending || submit.isSuccess}
+              />
+            }
+            label={<Typography variant="body2">Comment the link to the changes on the updated pull requests except drafts</Typography>}
+          />
           {submit.error && <Alert severity="error" sx={{ whiteSpace: 'pre-wrap' }}>{submit.error.message}</Alert>}
           {submit.data && (
             <Box>

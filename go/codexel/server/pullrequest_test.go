@@ -67,14 +67,15 @@ func TestSubmitPullRequest(t *testing.T) {
 	h := NewPullRequestHandler(newConfig(t, repo), pullrequest.NewFile(filepath.Join(t.TempDir(), "pullrequests.json")))
 	h.newGitHubClient = func(context.Context) (*github.Client, error) { return client, nil }
 
-	validate := func(revisions ...string) string {
+	validate := func(revisions ...string) *api.ResponseValidatePullRequest {
 		res, err := h.Validate(t.Context(), connect.NewRequest(api.RequestValidatePullRequest_builder{Path: new(repo), Revisions: revisions}.Build()))
 		assertion.MustNoError(t, err)
-		return res.Msg.GetReason()
+		return res.Msg
 	}
-	assertion.Equal(t, validate(commits[1]), "")
-	assertion.Equal(t, validate(commits[2], commits[1], commits[0]), "")
-	assertion.Equal(t, validate(commits[2], commits[1]), "The revisions must be all commits between master@origin and the newest revision (3 commits)")
+	assertion.Equal(t, validate(commits[1]).GetReason(), "")
+	assertion.False(t, validate(commits[1]).GetHasPushedCommits())
+	assertion.Equal(t, validate(commits[2], commits[1], commits[0]).GetReason(), "")
+	assertion.Equal(t, validate(commits[2], commits[1]).GetReason(), "The revisions must be all commits between master@origin and the newest revision (3 commits)")
 
 	_, err := h.Submit(t.Context(), connect.NewRequest(api.RequestSubmitPullRequest_builder{Path: new(repo), Revisions: []string{commits[2], commits[1]}}.Build()))
 	assertion.MustError(t, err)
@@ -98,6 +99,7 @@ func TestSubmitPullRequest(t *testing.T) {
 	assertion.MustLen(t, list.Msg.GetPullRequests(), 1)
 	assertion.Equal(t, list.Msg.GetPullRequests()[0].GetChangeId(), res.Msg.GetPushed()[0])
 	assertion.Equal(t, list.Msg.GetPullRequests()[0].GetUrl(), res.Msg.GetPullRequests()[0].GetUrl())
+	assertion.True(t, validate(commits[2], commits[1], commits[0]).GetHasPushedCommits())
 }
 
 func TestSubmitPullRequestWithOnlyNoSend(t *testing.T) {

@@ -1163,6 +1163,9 @@ message RequestValidatePullRequest {
 message ResponseValidatePullRequest {
   // reason is why the revisions can't be submitted. It is empty if they can be submitted.
   string reason = 1;
+  // has_pushed_commits reports whether some of the commits to submit have the bookmarks, that is, they have been pushed
+  // and the pull requests of them may be updated. jj pr also pushes the commits without the bookmarks as new branches.
+  bool has_pushed_commits = 2;
 }
 
 message RequestSubmitPullRequest {
@@ -1171,6 +1174,8 @@ message RequestSubmitPullRequest {
   repeated string revisions = 2;
   // template is one of the templates returned by ListTemplates. The template is not used if it is empty.
   string template = 3;
+  // comment_on_update is the same as jj pr submit --comment-on-update.
+  bool comment_on_update = 4;
 }
 
 enum PullRequestAction {

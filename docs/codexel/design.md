@@ -321,6 +321,11 @@ trunk から連続したスタック (`ancestors(latest(<default>@origin) & remo
 - スタックのコミットがすべて `WIP:` / `no-send:` で始まる場合も、PR にするコミットがないので許可しない (jj-pr はこれらを除外する)
 - テンプレートが複数あるときは jj-pr と同じく選択を必須にする (「使わない」も選べる)。1 つならそれを使う
 - 結果として push した change ID と、PR ごとの操作と URL をダイアログに表示する
+- PR の更新時にコメント (push 前の head からの compare の URL) を付けるかをチェックボックスで選ぶ。`jj pr submit --comment-on-update` と同じで、
+  デフォルトは付けない (#158)
+  - 送信するコミットにブックマークがない (初めて push する) 場合は、更新する PR がないのでチェックボックスを disabled にする。
+    判定は `PullRequestService.Validate` で行う
+  - PR の状態 (open / draft) は Codexel では取得しない。draft の PR にはチェックが入っていても `PullRequestSubmitter` がコメントを付けない
 
 ### 7.3 PR の保存 (#159)
 

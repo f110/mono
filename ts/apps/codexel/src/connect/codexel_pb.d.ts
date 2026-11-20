@@ -3754,6 +3754,14 @@ export declare type ResponseValidatePullRequest = Message<"mono.codexel.Response
    * @generated from field: string reason = 1;
    */
   reason: string;
+
+  /**
+   * has_pushed_commits reports whether some of the commits to submit have the bookmarks, that is, they have been pushed
+   * and the pull requests of them may be updated. jj pr also pushes the commits without the bookmarks as new branches.
+   *
+   * @generated from field: bool has_pushed_commits = 2;
+   */
+  hasPushedCommits: boolean;
 };
 
 /**
@@ -3784,6 +3792,13 @@ export declare type RequestSubmitPullRequest = Message<"mono.codexel.RequestSubm
    * @generated from field: string template = 3;
    */
   template: string;
+
+  /**
+   * comment_on_update is the same as jj pr submit --comment-on-update.
+   *
+   * @generated from field: bool comment_on_update = 4;
+   */
+  commentOnUpdate: boolean;
 };
 
 /**

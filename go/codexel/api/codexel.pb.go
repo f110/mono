@@ -18288,12 +18288,13 @@ func (b0 RequestValidatePullRequest_builder) Build() *RequestValidatePullRequest
 }
 
 type ResponseValidatePullRequest struct {
-	state                  protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Reason      *string                `protobuf:"bytes,1,opt,name=reason"`
-	XXX_raceDetectHookData protoimpl.RaceDetectHookData
-	XXX_presence           [1]uint32
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
+	state                       protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Reason           *string                `protobuf:"bytes,1,opt,name=reason"`
+	xxx_hidden_HasPushedCommits bool                   `protobuf:"varint,2,opt,name=has_pushed_commits,json=hasPushedCommits"`
+	XXX_raceDetectHookData      protoimpl.RaceDetectHookData
+	XXX_presence                [1]uint32
+	unknownFields               protoimpl.UnknownFields
+	sizeCache                   protoimpl.SizeCache
 }
 
 func (x *ResponseValidatePullRequest) Reset() {
@@ -18331,9 +18332,21 @@ func (x *ResponseValidatePullRequest) GetReason() string {
 	return ""
 }
 
+func (x *ResponseValidatePullRequest) GetHasPushedCommits() bool {
+	if x != nil {
+		return x.xxx_hidden_HasPushedCommits
+	}
+	return false
+}
+
 func (x *ResponseValidatePullRequest) SetReason(v string) {
 	x.xxx_hidden_Reason = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 2)
+}
+
+func (x *ResponseValidatePullRequest) SetHasPushedCommits(v bool) {
+	x.xxx_hidden_HasPushedCommits = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
 }
 
 func (x *ResponseValidatePullRequest) HasReason() bool {
@@ -18343,15 +18356,28 @@ func (x *ResponseValidatePullRequest) HasReason() bool {
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
 }
 
+func (x *ResponseValidatePullRequest) HasHasPushedCommits() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
 func (x *ResponseValidatePullRequest) ClearReason() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
 	x.xxx_hidden_Reason = nil
 }
 
+func (x *ResponseValidatePullRequest) ClearHasPushedCommits() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_HasPushedCommits = false
+}
+
 type ResponseValidatePullRequest_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	Reason *string
+	Reason           *string
+	HasPushedCommits *bool
 }
 
 func (b0 ResponseValidatePullRequest_builder) Build() *ResponseValidatePullRequest {
@@ -18359,21 +18385,26 @@ func (b0 ResponseValidatePullRequest_builder) Build() *ResponseValidatePullReque
 	b, x := &b0, m0
 	_, _ = b, x
 	if b.Reason != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 2)
 		x.xxx_hidden_Reason = b.Reason
+	}
+	if b.HasPushedCommits != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		x.xxx_hidden_HasPushedCommits = *b.HasPushedCommits
 	}
 	return m0
 }
 
 type RequestSubmitPullRequest struct {
-	state                  protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
-	xxx_hidden_Revisions   []string               `protobuf:"bytes,2,rep,name=revisions"`
-	xxx_hidden_Template    *string                `protobuf:"bytes,3,opt,name=template"`
-	XXX_raceDetectHookData protoimpl.RaceDetectHookData
-	XXX_presence           [1]uint32
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
+	state                      protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Path            *string                `protobuf:"bytes,1,opt,name=path"`
+	xxx_hidden_Revisions       []string               `protobuf:"bytes,2,rep,name=revisions"`
+	xxx_hidden_Template        *string                `protobuf:"bytes,3,opt,name=template"`
+	xxx_hidden_CommentOnUpdate bool                   `protobuf:"varint,4,opt,name=comment_on_update,json=commentOnUpdate"`
+	XXX_raceDetectHookData     protoimpl.RaceDetectHookData
+	XXX_presence               [1]uint32
+	unknownFields              protoimpl.UnknownFields
+	sizeCache                  protoimpl.SizeCache
 }
 
 func (x *RequestSubmitPullRequest) Reset() {
@@ -18428,9 +18459,16 @@ func (x *RequestSubmitPullRequest) GetTemplate() string {
 	return ""
 }
 
+func (x *RequestSubmitPullRequest) GetCommentOnUpdate() bool {
+	if x != nil {
+		return x.xxx_hidden_CommentOnUpdate
+	}
+	return false
+}
+
 func (x *RequestSubmitPullRequest) SetPath(v string) {
 	x.xxx_hidden_Path = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 3)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 4)
 }
 
 func (x *RequestSubmitPullRequest) SetRevisions(v []string) {
@@ -18439,7 +18477,12 @@ func (x *RequestSubmitPullRequest) SetRevisions(v []string) {
 
 func (x *RequestSubmitPullRequest) SetTemplate(v string) {
 	x.xxx_hidden_Template = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 3)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 4)
+}
+
+func (x *RequestSubmitPullRequest) SetCommentOnUpdate(v bool) {
+	x.xxx_hidden_CommentOnUpdate = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 4)
 }
 
 func (x *RequestSubmitPullRequest) HasPath() bool {
@@ -18456,6 +18499,13 @@ func (x *RequestSubmitPullRequest) HasTemplate() bool {
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
 }
 
+func (x *RequestSubmitPullRequest) HasCommentOnUpdate() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
+}
+
 func (x *RequestSubmitPullRequest) ClearPath() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
 	x.xxx_hidden_Path = nil
@@ -18466,12 +18516,18 @@ func (x *RequestSubmitPullRequest) ClearTemplate() {
 	x.xxx_hidden_Template = nil
 }
 
+func (x *RequestSubmitPullRequest) ClearCommentOnUpdate() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	x.xxx_hidden_CommentOnUpdate = false
+}
+
 type RequestSubmitPullRequest_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	Path      *string
-	Revisions []string
-	Template  *string
+	Path            *string
+	Revisions       []string
+	Template        *string
+	CommentOnUpdate *bool
 }
 
 func (b0 RequestSubmitPullRequest_builder) Build() *RequestSubmitPullRequest {
@@ -18479,13 +18535,17 @@ func (b0 RequestSubmitPullRequest_builder) Build() *RequestSubmitPullRequest {
 	b, x := &b0, m0
 	_, _ = b, x
 	if b.Path != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 3)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 4)
 		x.xxx_hidden_Path = b.Path
 	}
 	x.xxx_hidden_Revisions = b.Revisions
 	if b.Template != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 3)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 4)
 		x.xxx_hidden_Template = b.Template
+	}
+	if b.CommentOnUpdate != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 4)
+		x.xxx_hidden_CommentOnUpdate = *b.CommentOnUpdate
 	}
 	return m0
 }
@@ -19518,13 +19578,15 @@ const file_proto_codexel_codexel_proto_rawDesc = "" +
 	"\ttemplates\x18\x01 \x03(\tR\ttemplates\"N\n" +
 	"\x1aRequestValidatePullRequest\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1c\n" +
-	"\trevisions\x18\x02 \x03(\tR\trevisions\"5\n" +
+	"\trevisions\x18\x02 \x03(\tR\trevisions\"c\n" +
 	"\x1bResponseValidatePullRequest\x12\x16\n" +
-	"\x06reason\x18\x01 \x01(\tR\x06reason\"h\n" +
+	"\x06reason\x18\x01 \x01(\tR\x06reason\x12,\n" +
+	"\x12has_pushed_commits\x18\x02 \x01(\bR\x10hasPushedCommits\"\x94\x01\n" +
 	"\x18RequestSubmitPullRequest\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1c\n" +
 	"\trevisions\x18\x02 \x03(\tR\trevisions\x12\x1a\n" +
-	"\btemplate\x18\x03 \x01(\tR\btemplate\"~\n" +
+	"\btemplate\x18\x03 \x01(\tR\btemplate\x12*\n" +
+	"\x11comment_on_update\x18\x04 \x01(\bR\x0fcommentOnUpdate\"~\n" +
 	"\x14SubmittedPullRequest\x12\x1b\n" +
 	"\tchange_id\x18\x01 \x01(\tR\bchangeId\x12\x10\n" +
 	"\x03url\x18\x02 \x01(\tR\x03url\x127\n" +
