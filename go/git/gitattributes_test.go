@@ -1,4 +1,4 @@
-package gitattributes
+package git
 
 import (
 	"testing"
@@ -6,8 +6,8 @@ import (
 	"go.f110.dev/mono/go/testing/assertion"
 )
 
-func TestGenerated(t *testing.T) {
-	f := Parse([]byte(`# comment
+func TestAttributesGenerated(t *testing.T) {
+	f := ParseAttributes([]byte(`# comment
 *.pb.go linguist-generated
 /vendor/** linguist-generated=true
 vendor/keep.go -linguist-generated
@@ -45,6 +45,6 @@ lock.json linguist-generated=false
 	}
 }
 
-func TestGeneratedEmpty(t *testing.T) {
-	assertion.False(t, Parse(nil).Generated("a.go"))
+func TestAttributesGeneratedEmpty(t *testing.T) {
+	assertion.False(t, ParseAttributes(nil).Generated("a.go"))
 }

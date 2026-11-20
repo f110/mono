@@ -13,7 +13,7 @@ import (
 	"go.f110.dev/mono/go/codexel/api"
 	"go.f110.dev/mono/go/codexel/config"
 	"go.f110.dev/mono/go/codexel/review"
-	"go.f110.dev/mono/go/gitattributes"
+	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/herdr"
 	"go.f110.dev/mono/go/jujutsu"
 )
@@ -341,7 +341,7 @@ func generatedFiles(ctx context.Context, repo *jujutsu.Repository, commit string
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
-	attrs := gitattributes.Parse(content)
+	attrs := git.ParseAttributes(content)
 	var generated []string
 	for _, v := range files {
 		if attrs.Generated(v.Path) {
