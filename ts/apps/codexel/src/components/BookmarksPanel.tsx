@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Box, Chip, Stack, Typography } from '@mui/material'
+import { Box, Button, Chip, Stack, Typography } from '@mui/material'
 import type { Bookmark } from '../connect/codexel_pb.js'
 
 // syncState describes the tracked remote bookmark relative to the local one. ahead is the commits only in the remote
@@ -16,8 +16,23 @@ const syncState = (b: Bookmark): { label: string; color: 'default' | 'success' |
 
 export const bookmarkLabel = (b: Bookmark) => (b.remote ? `${b.name}@${b.remote}` : b.name)
 
-// BookmarksPanel lists the local and the remote bookmarks. The keys are handled by the parent.
-export const BookmarksPanel = ({ bookmarks, selected, onSelect }: { bookmarks: Bookmark[]; selected: number; onSelect: (index: number) => void }) => {
+// BookmarksPanel lists the local and the remote bookmarks. The operations on the bookmark are shown in the selected row.
+// The keys are handled by the parent.
+export const BookmarksPanel = ({
+  bookmarks,
+  selected,
+  onSelect,
+  onDelete,
+  onForget,
+  onToggleTracking,
+}: {
+  bookmarks: Bookmark[]
+  selected: number
+  onSelect: (index: number) => void
+  onDelete: (b: Bookmark) => void
+  onForget: (b: Bookmark) => void
+  onToggleTracking: (b: Bookmark) => void
+}) => {
   const selectedRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -50,6 +65,21 @@ export const BookmarksPanel = ({ bookmarks, selected, onSelect }: { bookmarks: B
             <Typography variant="body2" noWrap sx={{ flex: 1, minWidth: 0 }}>
               {b.description}
             </Typography>
+            {i === selected &&
+              (b.remote === '' ? (
+                <>
+                  <Button size="small" color="error" title="d" sx={{ minWidth: 0, py: 0, flexShrink: 0 }} onClick={() => onDelete(b)}>
+                    Delete
+                  </Button>
+                  <Button size="small" color="warning" title="f" sx={{ minWidth: 0, py: 0, flexShrink: 0 }} onClick={() => onForget(b)}>
+                    Forget
+                  </Button>
+                </>
+              ) : (
+                <Button size="small" title="t" sx={{ minWidth: 0, py: 0, flexShrink: 0 }} onClick={() => onToggleTracking(b)}>
+                  {b.tracked ? 'Untrack' : 'Track'}
+                </Button>
+              ))}
           </Stack>
         )
       })}

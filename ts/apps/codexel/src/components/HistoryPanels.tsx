@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Box, Chip, Stack, Typography } from '@mui/material'
+import { Box, Button, Chip, Stack, Typography } from '@mui/material'
 import type { EvologEntry, Operation } from '../connect/codexel_pb.js'
 
 const formatTime = (unix: bigint) => new Date(Number(unix) * 1000).toLocaleString()
@@ -12,16 +12,21 @@ const useScrollToSelected = (selected: number) => {
   return ref
 }
 
-// OperationsPanel lists the operations from the newest. The keys are handled by the parent.
+// OperationsPanel lists the operations from the newest. The operations to revert and to restore are shown in the selected
+// row. The keys are handled by the parent.
 export const OperationsPanel = ({
   operations,
   selected,
   onSelect,
+  onRevert,
+  onRestore,
   onContextMenu,
 }: {
   operations: Operation[]
   selected: number
   onSelect: (index: number) => void
+  onRevert: (index: number) => void
+  onRestore: (index: number) => void
   onContextMenu: (index: number, x: number, y: number) => void
 }) => {
   const selectedRef = useScrollToSelected(selected)
@@ -53,6 +58,16 @@ export const OperationsPanel = ({
           <Typography variant="caption" color="text.secondary" noWrap sx={{ flexShrink: 0 }}>
             {formatTime(op.time)}
           </Typography>
+          {i === selected && (
+            <>
+              <Button size="small" sx={{ minWidth: 0, py: 0, flexShrink: 0 }} onClick={() => onRevert(i)}>
+                Revert
+              </Button>
+              <Button size="small" color="warning" sx={{ minWidth: 0, py: 0, flexShrink: 0 }} onClick={() => onRestore(i)}>
+                Restore…
+              </Button>
+            </>
+          )}
         </Stack>
       ))}
     </Box>

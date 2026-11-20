@@ -26,6 +26,7 @@ import {
   RebaseTarget,
   RepositoryService,
   ReviewService,
+  type Bookmark,
   type Commit,
 } from '../connect/codexel_pb.js'
 import { useAgents } from '../hooks/useAgents.ts'
@@ -276,6 +277,13 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
     [path, navigate],
   )
 
+  const deleteBookmark = useCallback((b: Bookmark) => run(() => repositoryClient.deleteBookmark({ path, name: b.name }), false), [path, run])
+  const forgetBookmark = useCallback((b: Bookmark) => run(() => repositoryClient.forgetBookmark({ path, name: b.name }), false), [path, run])
+  const toggleTracking = useCallback(
+    (b: Bookmark) => run(() => (b.tracked ? repositoryClient.untrackBookmark : repositoryClient.trackBookmark)({ path, name: b.name, remote: b.remote }), false),
+    [path, run],
+  )
+  const revertOperation = useCallback((id: string) => run(() => repositoryClient.revertOperation({ path, id }), false), [path, run])
   const gitFetch = useCallback(() => run(() => repositoryClient.fetch({ path }), false), [path, run])
   const jumpToWorkingCopy = useCallback(() => {
     selectIndex(commits.findIndex((c) => c.currentWorkingCopy))
@@ -404,17 +412,17 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
             break
           case 'd':
             if (b && b.remote === '') {
-              run(() => repositoryClient.deleteBookmark({ path, name: b.name }), false)
+              deleteBookmark(b)
             }
             break
           case 'f':
             if (b && b.remote === '') {
-              run(() => repositoryClient.forgetBookmark({ path, name: b.name }), false)
+              forgetBookmark(b)
             }
             break
           case 't':
             if (b && b.remote !== '') {
-              run(() => (b.tracked ? repositoryClient.untrackBookmark : repositoryClient.trackBookmark)({ path, name: b.name, remote: b.remote }), false)
+              toggleTracking(b)
             }
             break
           case 'u':
@@ -597,6 +605,9 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
     showView,
     gitFetch,
     jumpToWorkingCopy,
+    deleteBookmark,
+    forgetBookmark,
+    toggleTracking,
   ])
 
   const single = checked.size === 0
@@ -779,12 +790,23 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
             <Tab value="oplog" label="Operations" sx={{ minHeight: 36 }} />
           </Tabs>
           <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
-            {view === 'bookmarks' && <BookmarksPanel bookmarks={bookmarks} selected={bookmarkSelected} onSelect={setBookmarkSelected} />}
+            {view === 'bookmarks' && (
+              <BookmarksPanel
+                bookmarks={bookmarks}
+                selected={bookmarkSelected}
+                onSelect={setBookmarkSelected}
+                onDelete={deleteBookmark}
+                onForget={forgetBookmark}
+                onToggleTracking={toggleTracking}
+              />
+            )}
             {view === 'oplog' && (
               <OperationsPanel
                 operations={operations}
                 selected={opSelected}
                 onSelect={setOpSelected}
+                onRevert={(i) => revertOperation(operations[i].id)}
+                onRestore={(i) => setRestoring(operations[i].id)}
                 onContextMenu={(i, x, y) => {
                   setOpSelected(i)
                   setOpMenu({ x, y, id: operations[i].id })
@@ -874,7 +896,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           onClick={() => {
             const id = opMenu!.id
             setOpMenu(undefined)
-            run(() => repositoryClient.revertOperation({ path, id }), false)
+            revertOperation(id)
           }}
         >
           Revert this operation
