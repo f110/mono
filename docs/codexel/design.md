@@ -125,7 +125,8 @@ lightjj の機能を次のとおり分類する。キーバインドは lightjj 
 
 | 操作 | ボタンの配置 |
 |---|---|
-| 選択中のリビジョンの操作 (new / edit / describe / abandon / split / rebase / squash / slide / bookmark / evolog / ファイル / レビュー / PR 作成) と複数選択のチェック | 詳細パネルの change ID の下。チェックがある場合はチェックしたリビジョンが対象になる (キーと同じ)。グラフの行は狭く、行ごとに置くとグラフが読みにくくなるので行には置かない |
+| 選択中のリビジョンの操作 (new / edit / describe / abandon / split / rebase / squash / slide / bookmark / evolog / ファイル / レビュー / PR 作成) | 詳細パネルの change ID の行の右端の「⋯」ボタンで開くメニュー。右クリックのメニューと同じ項目にする。ボタンを横に並べると詳細パネルの主役である説明と差分より目立つため。チェックがある場合はチェックしたリビジョンが対象になる (キーと同じ) |
+| 複数選択のチェック | 左ペインのタブの右の Select ボタンで選択モードに入り、グラフの各行にチェックボックスを出す。普段はグラフを狭くしないようにチェックボックスを出さない。Cancel・操作の実行・Esc でチェックを外して選択モードを終える |
 | リポジトリ全体の操作 (commit / undo / fetch / push / workspace / alias / `@` への移動 / 再読み込み) | revset 入力の右 |
 | rebase / squash モード | モード中の警告バーにソース・ターゲット (squash は説明の結合) の切り替えと、実行・キャンセル。移動先は行のタップで選ぶ |
 | bookmark の delete / forget / track / untrack、op log の revert / restore | 一覧の選択中の行 |

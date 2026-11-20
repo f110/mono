@@ -1,5 +1,5 @@
 import { useEffect, useRef, type MouseEvent } from 'react'
-import { Box, Chip, Stack, Typography } from '@mui/material'
+import { Box, Checkbox, Chip, Stack, Typography } from '@mui/material'
 import { useNavigate } from '@tanstack/react-router'
 import { ReviewState, type Agent, type Commit, type LogRow, type Review } from '../connect/codexel_pb.js'
 import { stateChip } from '../lib/review.ts'
@@ -7,6 +7,7 @@ import { GraphGutter, cellWidth } from './GraphGutter.tsx'
 
 const nodeHeight = 28
 const connectorHeight = 14
+const checkboxWidth = 28
 
 const relativeTime = (unix: bigint): string => {
   const sec = Math.floor(Date.now() / 1000) - Number(unix)
@@ -158,7 +159,9 @@ export const RevisionGraph = ({
   reviews,
   pullRequests,
   agents,
+  selecting,
   onSelect,
+  onToggleChecked,
   onContextMenu,
 }: {
   rows: LogRow[]
@@ -175,7 +178,10 @@ export const RevisionGraph = ({
   pullRequests: Map<string, string>
   // agents is the agents running in herdr. They are linked from the commits created by them.
   agents: Agent[]
+  // selecting shows the checkboxes to check the revisions.
+  selecting: boolean
   onSelect: (index: number) => void
+  onToggleChecked: (index: number) => void
   onContextMenu: (index: number, x: number, y: number) => void
 }) => {
   const width = Math.max(0, ...rows.flatMap((r) => r.lines.map((l) => [...l.gutter].length))) * cellWidth
@@ -214,6 +220,19 @@ export const RevisionGraph = ({
               const height = line.node ? nodeHeight : connectorHeight
               return (
                 <Stack key={j} direction="row" spacing={1} sx={{ alignItems: 'center', height }}>
+                  {selecting && (
+                    <Box sx={{ width: checkboxWidth, flexShrink: 0 }}>
+                      {line.node && (
+                        <Checkbox
+                          size="small"
+                          sx={{ p: 0.25 }}
+                          checked={checked.has(commit.commitId)}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={() => onToggleChecked(i)}
+                        />
+                      )}
+                    </Box>
+                  )}
                   <GraphGutter
                     gutter={line.gutter}
                     above={lines[index - 1]}

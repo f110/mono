@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react'
 import { useQuery } from '@connectrpc/connect-query'
-import { Alert, Box, Chip, Divider, Stack, Typography } from '@mui/material'
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz'
+import { Alert, Box, Chip, Divider, IconButton, Stack, Typography } from '@mui/material'
 import { useNavigate } from '@tanstack/react-router'
 import { RepositoryService, type Commit, type Review } from '../connect/codexel_pb.js'
 import { stateChip } from '../lib/review.ts'
@@ -40,7 +40,7 @@ export const RevisionDetail = ({
   onHistory,
   onRestore,
   onResolveDivergence,
-  actions,
+  onMenu,
 }: {
   path: string
   commit: Commit
@@ -52,8 +52,9 @@ export const RevisionDetail = ({
   onHistory?: (file: string) => void
   onRestore?: (commit: Commit, file: string) => void
   onResolveDivergence?: (commit: Commit) => void
-  // actions is the buttons of the operations on the revision shown under the header.
-  actions?: ReactNode
+  // onMenu opens the menu of the operations on the revision anchored to the button. The button is not shown if it is
+  // undefined.
+  onMenu?: (anchor: HTMLElement) => void
 }) => {
   const { data, error } = useQuery(RepositoryService.method.getRevision, { path, revision: commit.commitId }, { staleTime: Infinity })
 
@@ -76,11 +77,15 @@ export const RevisionDetail = ({
             onClick={onResolveDivergence && (() => onResolveDivergence(commit))}
           />
         )}
+        {onMenu && (
+          <IconButton size="small" aria-label="Operations" sx={{ ml: 'auto !important' }} onClick={(e) => onMenu(e.currentTarget)}>
+            <MoreHorizIcon fontSize="small" />
+          </IconButton>
+        )}
       </Stack>
       <Typography variant="caption" color="text.secondary">
         {commit.author} &lt;{commit.email}&gt; · {new Date(Number(commit.timestamp) * 1000).toLocaleString()}
       </Typography>
-      {actions}
       {reviews && reviews.length > 0 && <Reviews reviews={reviews} />}
       {error && <Alert severity="error">{error.message}</Alert>}
       <Box component="pre" sx={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: 13, my: 1 }}>

@@ -19,6 +19,7 @@ import {
   Tabs,
   TextField,
   ToggleButton,
+  Typography,
   ToggleButtonGroup,
 } from '@mui/material'
 import {
@@ -145,7 +146,10 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   const [settingBookmark, setSettingBookmark] = useState<Commit>()
   const [pushing, setPushing] = useState(false)
   const [submittingPR, setSubmittingPR] = useState<Commit[]>()
-  const [menu, setMenu] = useState<{ x: number; y: number; commit: Commit }>()
+  // menu is the position of the menu of the operations on the selected revision opened by the right click, or the button
+  // which opens it.
+  const [menu, setMenu] = useState<{ x: number; y: number } | { anchor: HTMLElement }>()
+  const [selecting, setSelecting] = useState(false)
   const [opSelected, setOpSelected] = useState(0)
   const [opMenu, setOpMenu] = useState<{ x: number; y: number; id: string }>()
   const [restoring, setRestoring] = useState<string>()
@@ -223,13 +227,18 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
     }
   }, [commits])
 
+  const clearChecked = useCallback(() => {
+    setChecked(new Set())
+    setSelecting(false)
+  }, [])
+
   // run runs the operation and shows the message of jj. selectWorkingCopy moves the selection to the new working copy.
   const run = useCallback(
     async (fn: () => Promise<{ output: string }>, selectWorkingCopy: boolean) => {
       try {
         const res = await fn()
         setMessage({ text: res.output, error: false })
-        setChecked(new Set())
+        clearChecked()
         const log = await refetch()
         if (selectWorkingCopy) {
           const wc = log.data?.rows.find((r) => r.commit?.currentWorkingCopy)?.commit
@@ -241,7 +250,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
         setMessage({ text: e instanceof Error ? e.message : String(e), error: true })
       }
     },
-    [refetch],
+    [refetch, clearChecked],
   )
 
   // targets returns the checked revisions, or the selected one if nothing is checked.
@@ -561,7 +570,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           startReview(targets())
           break
         case 'Escape':
-          setChecked(new Set())
+          clearChecked()
           break
         default:
           return
@@ -600,6 +609,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
     executeMode,
     startReview,
     toggleChecked,
+    clearChecked,
     startRebase,
     startSquash,
     showEvolog,
@@ -613,74 +623,39 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   ])
 
   const single = checked.size === 0
-  const revisionActions = selectedCommit && !mode && (
-    <Stack
-      direction="row"
-      divider={<Divider orientation="vertical" flexItem />}
-      sx={{ flexWrap: 'wrap', alignItems: 'center', columnGap: 0.5, my: 0.5, '& .MuiButton-root': { minWidth: 0 } }}
+  const revisionMenuItem = (label: string, key: string | undefined, disabled: boolean, fn: () => void, color?: string) => (
+    <MenuItem
+      key={label}
+      disabled={disabled}
+      sx={{ color }}
+      onClick={() => {
+        setMenu(undefined)
+        fn()
+      }}
     >
-      <Box>
-        <Button size="small" title="n" onClick={() => newRevision(targets())}>
-          New
-        </Button>
-        <Button size="small" disabled={selectedCommit.immutable || !single} onClick={() => edit(selectedCommit)}>
-          Edit
-        </Button>
-        <Button size="small" title="e" disabled={selectedCommit.immutable || !single} onClick={() => startDescribe(selectedCommit)}>
-          Describe
-        </Button>
-        <Button size="small" color="error" disabled={targets().some((c) => c.immutable)} onClick={() => setAbandoning(targets())}>
-          Abandon
-        </Button>
-        <Button size="small" title="s" disabled={selectedCommit.immutable || !single} onClick={() => setSplitting(selectedCommit)}>
-          Split
-        </Button>
-      </Box>
-      <Box>
-        <Button size="small" title="R" onClick={startRebase}>
-          Rebase
-        </Button>
-        <Button size="small" title="S" onClick={startSquash}>
-          Squash
-        </Button>
-        <Button size="small" title="J" disabled={!single} onClick={() => slide('down')}>
-          Slide down
-        </Button>
-        <Button size="small" title="K" disabled={!single} onClick={() => slide('up')}>
-          Slide up
-        </Button>
-      </Box>
-      <Box>
-        <Button size="small" title="B" disabled={!single} onClick={() => setSettingBookmark(selectedCommit)}>
-          Bookmark
-        </Button>
-        <Button size="small" title="E" onClick={() => showEvolog(selectedCommit)}>
-          Evolog
-        </Button>
-        <Button size="small" title="F" onClick={() => browseFiles(selectedCommit)}>
-          Files
-        </Button>
-      </Box>
-      <Box>
-        <Button size="small" title="v" onClick={() => startReview(targets())}>
-          Review
-        </Button>
-        <Button size="small" title="P" onClick={() => setSubmittingPR(targets())}>
-          Pull request
-        </Button>
-      </Box>
-      <Box>
-        <Button size="small" title="Space" onClick={() => toggleChecked(selectedCommit)}>
-          {checked.has(selectedCommit.commitId) ? 'Uncheck' : 'Check'}
-        </Button>
-        {!single && (
-          <Button size="small" title="Esc" onClick={() => setChecked(new Set())}>
-            Clear {checked.size} checked
-          </Button>
-        )}
-      </Box>
-    </Stack>
+      {key ? `${label} (${key})` : label}
+    </MenuItem>
   )
+  const revisionMenuItems = (c: Commit) => [
+    revisionMenuItem('New', 'n', false, () => newRevision(targets())),
+    revisionMenuItem('Edit', undefined, c.immutable || !single, () => edit(c)),
+    revisionMenuItem('Describe', 'e', c.immutable || !single, () => startDescribe(c)),
+    revisionMenuItem('Split', 's', c.immutable || !single, () => setSplitting(c)),
+    <Divider key="d1" />,
+    revisionMenuItem('Rebase', 'R', false, startRebase),
+    revisionMenuItem('Squash', 'S', false, startSquash),
+    revisionMenuItem('Slide down', 'J', !single, () => slide('down')),
+    revisionMenuItem('Slide up', 'K', !single, () => slide('up')),
+    <Divider key="d2" />,
+    revisionMenuItem('Set the bookmark', 'B', !single, () => setSettingBookmark(c)),
+    revisionMenuItem('Show the evolog', 'E', false, () => showEvolog(c)),
+    revisionMenuItem('Browse the files', 'F', false, () => browseFiles(c)),
+    <Divider key="d3" />,
+    revisionMenuItem('Review', 'v', false, () => startReview(targets())),
+    revisionMenuItem('Create the pull request', 'P', false, () => setSubmittingPR(targets())),
+    <Divider key="d4" />,
+    revisionMenuItem('Abandon', undefined, targets().some((t) => t.immutable), () => setAbandoning(targets()), 'error.main'),
+  ]
 
   return (
     <Stack sx={{ height: '100%' }}>
@@ -780,17 +755,33 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
       )}
       <Stack direction="row" sx={{ flex: 1, minHeight: 0, display: view === 'files' ? 'none' : 'flex' }}>
         <Stack sx={{ width: '45%', flexShrink: 0, borderRight: 1, borderColor: 'divider' }}>
-          <Tabs
-            value={view === 'log' || view === 'bookmarks' || view === 'conflicts' || view === 'oplog' ? view : false}
-            onChange={(_, v) => showView(v)}
-            variant="scrollable"
-            sx={{ minHeight: 36, borderBottom: 1, borderColor: 'divider' }}
-          >
-            <Tab value="log" label="Revisions" sx={{ minHeight: 36 }} />
-            <Tab value="bookmarks" label="Bookmarks" sx={{ minHeight: 36 }} />
-            <Tab value="conflicts" label="Conflicts" sx={{ minHeight: 36 }} />
-            <Tab value="oplog" label="Operations" sx={{ minHeight: 36 }} />
-          </Tabs>
+          <Stack direction="row" sx={{ alignItems: 'center', borderBottom: 1, borderColor: 'divider' }}>
+            <Tabs
+              value={view === 'log' || view === 'bookmarks' || view === 'conflicts' || view === 'oplog' ? view : false}
+              onChange={(_, v) => showView(v)}
+              variant="scrollable"
+              sx={{ flex: 1, minWidth: 0, minHeight: 36 }}
+            >
+              <Tab value="log" label="Revisions" sx={{ minHeight: 36 }} />
+              <Tab value="bookmarks" label="Bookmarks" sx={{ minHeight: 36 }} />
+              <Tab value="conflicts" label="Conflicts" sx={{ minHeight: 36 }} />
+              <Tab value="oplog" label="Operations" sx={{ minHeight: 36 }} />
+            </Tabs>
+            {view === 'log' && selecting && (
+              <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
+                {checked.size} checked
+              </Typography>
+            )}
+            {view === 'log' && (
+              <Button
+                size="small"
+                sx={{ flexShrink: 0, mx: 0.5, textTransform: 'none' }}
+                onClick={() => (selecting ? clearChecked() : setSelecting(true))}
+              >
+                {selecting ? 'Cancel' : 'Select'}
+              </Button>
+            )}
+          </Stack>
           <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
             {view === 'bookmarks' && (
               <BookmarksPanel
@@ -827,10 +818,12 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
                 reviews={reviews}
                 pullRequests={pullRequests}
                 agents={agents ?? []}
+                selecting={selecting}
                 onSelect={selectIndex}
+                onToggleChecked={(i) => toggleChecked(commits[i])}
                 onContextMenu={(i, x, y) => {
                   selectIndex(i)
-                  setMenu({ x, y, commit: commits[i] })
+                  setMenu({ x, y })
                 }}
               />
             )}
@@ -888,7 +881,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
                 onHistory={showHistory}
                 onRestore={(commit, file) => setRestoringFile({ commit, file })}
                 onResolveDivergence={setDivergent}
-                actions={view === 'log' ? revisionActions : undefined}
+                onMenu={view === 'log' && !mode ? (anchor) => setMenu({ anchor }) : undefined}
               />
             )}
           </Box>
@@ -953,15 +946,14 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
         </DialogActions>
       </Dialog>
 
-      <Menu open={menu !== undefined} onClose={() => setMenu(undefined)} anchorReference="anchorPosition" anchorPosition={menu ? { top: menu.y, left: menu.x } : undefined}>
-        {menu && [
-          <MenuItem key="new" onClick={() => { setMenu(undefined); newRevision([menu.commit]) }}>New (n)</MenuItem>,
-          <MenuItem key="edit" disabled={menu.commit.immutable} onClick={() => { setMenu(undefined); edit(menu.commit) }}>Edit</MenuItem>,
-          <MenuItem key="describe" disabled={menu.commit.immutable} onClick={() => { setMenu(undefined); startDescribe(menu.commit) }}>Describe (e)</MenuItem>,
-          <MenuItem key="abandon" disabled={menu.commit.immutable} onClick={() => { setMenu(undefined); setAbandoning(checkedCommits.length > 0 ? checkedCommits : [menu.commit]) }}>Abandon</MenuItem>,
-          <MenuItem key="review" onClick={() => { setMenu(undefined); startReview(checkedCommits.length > 0 ? checkedCommits : [menu.commit]) }}>Review (v)</MenuItem>,
-          <MenuItem key="pr" onClick={() => { setMenu(undefined); setSubmittingPR(checkedCommits.length > 0 ? checkedCommits : [menu.commit]) }}>Create the pull request (P)</MenuItem>,
-        ]}
+      <Menu
+        open={menu !== undefined && selectedCommit !== undefined}
+        onClose={() => setMenu(undefined)}
+        anchorReference={menu && 'anchor' in menu ? 'anchorEl' : 'anchorPosition'}
+        anchorEl={menu && 'anchor' in menu ? menu.anchor : undefined}
+        anchorPosition={menu && 'x' in menu ? { top: menu.y, left: menu.x } : undefined}
+      >
+        {menu && selectedCommit && revisionMenuItems(selectedCommit)}
       </Menu>
 
       {editing && (
@@ -1150,7 +1142,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           repoPath={path}
           commits={submittingPR}
           onSubmitted={() => {
-            setChecked(new Set())
+            clearChecked()
             refetch()
             refetchBookmarks()
             refetchPullRequests()
