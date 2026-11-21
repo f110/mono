@@ -1007,6 +1007,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
                 onHistory={showHistory}
                 onRestore={(commit, file) => setRestoringFile({ commit, file })}
                 onResolveDivergence={setDivergent}
+                onReview={view === 'log' && !mode ? () => startReview(targets()) : undefined}
                 onMenu={view === 'log' && !mode ? setMenu : undefined}
               />
             )}

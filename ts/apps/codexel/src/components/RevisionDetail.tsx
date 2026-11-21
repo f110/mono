@@ -4,6 +4,7 @@ import CheckIcon from '@mui/icons-material/Check'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline'
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz'
+import RateReviewIcon from '@mui/icons-material/RateReview'
 import { Alert, Box, Chip, Divider, IconButton, Link, Stack, Tooltip, Typography } from '@mui/material'
 import { useNavigate } from '@tanstack/react-router'
 import { RepositoryService, SystemService, type Commit, type Review } from '../connect/codexel_pb.js'
@@ -99,6 +100,7 @@ export const RevisionDetail = ({
   onHistory,
   onRestore,
   onResolveDivergence,
+  onReview,
   onMenu,
 }: {
   path: string
@@ -111,6 +113,8 @@ export const RevisionDetail = ({
   onHistory?: (file: string) => void
   onRestore?: (commit: Commit, file: string) => void
   onResolveDivergence?: (commit: Commit) => void
+  // onReview starts the review. The button is not shown if it is undefined.
+  onReview?: () => void
   // onMenu opens the menu of the operations on the revision anchored to the button. The button is not shown if it is
   // undefined.
   onMenu?: (anchor: HTMLElement) => void
@@ -138,10 +142,21 @@ export const RevisionDetail = ({
             onClick={onResolveDivergence && (() => onResolveDivergence(commit))}
           />
         )}
-        {onMenu && (
-          <IconButton size="small" aria-label="Operations" sx={{ ml: 'auto !important' }} onClick={(e) => onMenu(e.currentTarget)}>
-            <MoreHorizIcon fontSize="small" />
-          </IconButton>
+        {(onReview || onMenu) && (
+          <Stack direction="row" sx={{ ml: 'auto !important' }}>
+            {onReview && (
+              <Tooltip title="Review (v)">
+                <IconButton size="small" aria-label="Review" onClick={onReview}>
+                  <RateReviewIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+            {onMenu && (
+              <IconButton size="small" aria-label="Operations" onClick={(e) => onMenu(e.currentTarget)}>
+                <MoreHorizIcon fontSize="small" />
+              </IconButton>
+            )}
+          </Stack>
         )}
       </Stack>
       <Typography variant="caption" color="text.secondary">
