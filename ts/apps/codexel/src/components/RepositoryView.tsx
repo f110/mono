@@ -117,9 +117,9 @@ const rebaseTargets: [string, RebaseTarget][] = [
 const modeDescription = (mode: Mode): string =>
   mode.kind === 'rebase'
     ? `Rebase ${mode.sources.length} revision(s) [${sourceLabel[mode.source]}] ${targetLabel[mode.target]} the cursor. ` +
-      'j/k: move, r/s/b: source, o/a/i: onto/after/before, Enter: rebase, Esc: cancel'
+      'j/k or ↓/↑: move, r/s/b: source, o/a/i: onto/after/before, Enter: rebase, Esc: cancel'
     : `Squash ${mode.sources.length} revision(s) into the cursor [${mode.combine ? 'combine the descriptions' : 'keep the description of the destination'}]. ` +
-      'j/k: move, c: toggle the description, Enter: squash, Esc: cancel'
+      'j/k or ↓/↑: move, c: toggle the description, Enter: squash, Esc: cancel'
 
 // RepositoryView shows the repository. onOpenRepository is called after the other repository (e.g. the workspace) is
 // opened.
@@ -423,9 +423,11 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
         const setIndex = { oplog: setOpSelected, evolog: setEvologSelected }[view]
         switch (e.key) {
           case 'j':
+          case 'ArrowDown':
             setIndex((i) => Math.min(i + 1, length - 1))
             break
           case 'k':
+          case 'ArrowUp':
             setIndex((i) => Math.max(i - 1, 0))
             break
           case '1':
@@ -442,9 +444,11 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
         const b = bookmarks[bookmarkSelected]
         switch (e.key) {
           case 'j':
+          case 'ArrowDown':
             setBookmarkSelected((i) => Math.min(i + 1, bookmarks.length - 1))
             break
           case 'k':
+          case 'ArrowUp':
             setBookmarkSelected((i) => Math.max(i - 1, 0))
             break
           case '1':
@@ -479,9 +483,11 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
         const other = w !== undefined && w.root !== path
         switch (e.key) {
           case 'j':
+          case 'ArrowDown':
             setWorkspaceSelected((i) => Math.min(i + 1, workspaces.length - 1))
             break
           case 'k':
+          case 'ArrowUp':
             setWorkspaceSelected((i) => Math.max(i - 1, 0))
             break
           case '1':
@@ -512,9 +518,11 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
       if (mode) {
         switch (e.key) {
           case 'j':
+          case 'ArrowDown':
             selectIndex(selected + 1)
             break
           case 'k':
+          case 'ArrowUp':
             selectIndex(selected - 1)
             break
           case 'Enter':
@@ -594,9 +602,11 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           slide('up')
           break
         case 'j':
+        case 'ArrowDown':
           selectIndex(selected + 1)
           break
         case 'k':
+        case 'ArrowUp':
           selectIndex(selected - 1)
           break
         case '@':
@@ -753,9 +763,6 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
             if (e.key === 'Enter') {
               setRevset(revsetInput)
               setSelectedKey(undefined)
-              revsetRef.current?.blur()
-            } else if (e.key === 'Escape') {
-              setRevsetInput(revset)
               revsetRef.current?.blur()
             }
           }}

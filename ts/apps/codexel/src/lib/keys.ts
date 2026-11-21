@@ -8,6 +8,10 @@ export const pressKey = (key: string) => {
   window.dispatchEvent(e)
 }
 
+// isInput reports whether the element is the input: input, textarea, select or the contenteditable element.
+export const isInput = (target: EventTarget | null): target is HTMLElement =>
+  target instanceof HTMLElement && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)
+
 // ignoreKey reports whether the shortcut key should be ignored: the key while the IME is composing, the key already
 // handled, the key for the input, the key handled by the focused element, the key with the modifier and the key while any
 // dialog, menu or listbox is open. See docs/ui-conventions.md.
@@ -15,15 +19,12 @@ export const ignoreKey = (e: KeyboardEvent): boolean => {
   if (fromPaletteKey in e) {
     return false
   }
-  const target = e.target as HTMLElement | null
-  const editing =
-    target !== null && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)
-  const activating = e.key === 'Enter' && target !== document.body
+  const activating = e.key === 'Enter' && e.target !== document.body
   return (
     e.isComposing ||
     e.keyCode === 229 ||
     e.defaultPrevented ||
-    editing ||
+    isInput(e.target) ||
     activating ||
     e.metaKey ||
     e.ctrlKey ||

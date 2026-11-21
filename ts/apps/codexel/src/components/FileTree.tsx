@@ -76,13 +76,13 @@ export const FileTreePanel = ({
           value={filter}
           onChange={(e) => onFilterChange(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Escape' || e.key === 'Enter') {
+            if (e.key === 'Enter') {
               filterRef.current?.blur()
             }
           }}
         />
         <Typography variant="caption" color="text.secondary">
-          j/k: move, h/l: fold/unfold, Enter: open, H/L: previous/next tab, x: close the tab, m: preview, /: filter, 1 or Esc: log
+          j/k or ↓/↑: move, h/l: fold/unfold, Enter: open, H/L: previous/next tab, x: close the tab, m: preview, /: filter, 1 or Esc: log
         </Typography>
       </Box>
       {nodes.map((n, i) => (
@@ -393,9 +393,11 @@ export const FileBrowser = ({
       const tab = active ? tabs.indexOf(active.file) : -1
       switch (e.key) {
         case 'j':
+        case 'ArrowDown':
           setSelectedPath(nodes[Math.min(selected + 1, nodes.length - 1)]?.path)
           break
         case 'k':
+        case 'ArrowUp':
           setSelectedPath(nodes[Math.max(selected - 1, 0)]?.path)
           break
         case 'l':

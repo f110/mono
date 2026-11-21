@@ -35,7 +35,7 @@ export const WorkspacesPanel = ({
     <Box sx={{ py: 0.5 }}>
       <Stack direction="row" sx={{ px: 1, alignItems: 'center' }}>
         <Typography variant="caption" color="text.secondary" sx={{ flex: 1 }}>
-          j/k: move, o: open, d: remove, f: forget, 1: log
+          j/k or ↓/↑: move, o: open, d: remove, f: forget, 1: log
         </Typography>
         <Button size="small" sx={{ textTransform: 'none' }} onClick={onRename}>
           Rename the current

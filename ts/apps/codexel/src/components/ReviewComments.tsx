@@ -10,7 +10,7 @@ const CommentBody = ({ text }: { text: string }) => (
   </Box>
 )
 
-// CommentComposer is the input of the comment. Cmd/Ctrl+Enter submits and Escape cancels. onSubmit reports its error,
+// CommentComposer is the input of the comment. Cmd/Ctrl+Enter submits and Cancel discards it. onSubmit reports its error,
 // and the body is kept to retry if it fails.
 export const CommentComposer = ({
   initial = '',
@@ -50,9 +50,6 @@ export const CommentComposer = ({
           if (isSubmitKey(e.nativeEvent)) {
             e.preventDefault()
             submit()
-          } else if (e.key === 'Escape' && onCancel) {
-            e.preventDefault()
-            onCancel()
           }
         }}
       />

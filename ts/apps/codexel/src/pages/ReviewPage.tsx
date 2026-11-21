@@ -17,10 +17,6 @@ import {
   MenuItem,
   Snackbar,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
   TextField,
   ToggleButton,
   Typography,
@@ -44,20 +40,6 @@ const client = createClient(ReviewService, transport)
 const reviewRefreshInterval = 5000
 
 const sides: Record<LineSide, DiffSide> = { old: DiffSide.OLD, new: DiffSide.NEW }
-
-const shortcuts: [string, string][] = [
-  ['j / k', 'Move the cursor to the next / previous line'],
-  ['c', 'Comment on the line of the cursor'],
-  ['a', 'Toggle viewed on the file of the cursor'],
-  ['Shift+F', 'Finish the review (approve if all comments are resolved)'],
-  ['] / [', 'Next / previous hunk'],
-  ['|', 'Toggle the split view'],
-  ['m', 'Toggle the preview of Markdown'],
-  ['Click / Shift+Click', 'Select the line / the range to comment'],
-  ['Cmd/Ctrl+Enter', 'Submit the comment'],
-  ['Esc', 'Cancel the comment / clear the cursor'],
-  ['?', 'Show this help'],
-]
 
 // LinePosition is the line in the file of the change.
 type LinePosition = { changeId: string; path: string; side: LineSide; line: number }
@@ -301,7 +283,6 @@ export const ReviewPage = () => {
   const [composing, setComposing] = useState(false)
   const [selection, setSelection] = useState<Selection>()
   const [focus, setFocus] = useState<LinePosition>()
-  const [helpOpen, setHelpOpen] = useState(false)
   const [discardOpen, setDiscardOpen] = useState(false)
   // waitingClosedRound is the round in which the dialog waiting for the agent is closed. The dialog is shown again when
   // the review is finished in the next round.
@@ -376,12 +357,14 @@ export const ReviewPage = () => {
       }
       switch (e.key) {
         case 'j':
-        case 'k': {
+        case 'ArrowDown':
+        case 'k':
+        case 'ArrowUp': {
           const lines = [...(ref.current?.querySelectorAll<HTMLElement>('[data-line]') ?? [])]
           const positions = lines.map(positionOf)
           const current = positions.findIndex((p) => samePosition(p, focus))
-          const step = e.key === 'j' ? 1 : -1
-          let i = current < 0 ? (e.key === 'j' ? 0 : lines.length - 1) : current + step
+          const step = e.key === 'j' || e.key === 'ArrowDown' ? 1 : -1
+          let i = current < 0 ? (step === 1 ? 0 : lines.length - 1) : current + step
           // The same line appears on both sides of the split view.
           while (i >= 0 && i < lines.length && (positions[i] === undefined || samePosition(positions[i], focus))) {
             i += step
@@ -406,9 +389,6 @@ export const ReviewPage = () => {
           if (review.state === ReviewState.OPEN) {
             finish()
           }
-          break
-        case '?':
-          setHelpOpen(true)
           break
         case 'Escape':
           if (selection) setSelection(undefined)
@@ -483,9 +463,6 @@ export const ReviewPage = () => {
         <Button variant="outlined" color="error" disabled={ended} onClick={() => setDiscardOpen(true)}>
           Discard
         </Button>
-        <Button size="small" onClick={() => setHelpOpen(true)} title="?">
-          Keys
-        </Button>
       </Stack>
       <Box ref={ref} sx={{ flex: 1, minHeight: 0, overflow: 'auto', px: 2, pt: 1 }}>
         {review.state === ReviewState.FINISHED && (
@@ -540,22 +517,6 @@ export const ReviewPage = () => {
           ),
         )}
       </Box>
-
-      <Dialog open={helpOpen} onClose={() => setHelpOpen(false)}>
-        <DialogTitle>Keys</DialogTitle>
-        <DialogContent>
-          <Table size="small">
-            <TableBody>
-              {shortcuts.map(([key, action]) => (
-                <TableRow key={key}>
-                  <TableCell sx={{ fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{key}</TableCell>
-                  <TableCell>{action}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={discardOpen} onClose={() => setDiscardOpen(false)}>
         <DialogTitle>Discard the review?</DialogTitle>

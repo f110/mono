@@ -42,7 +42,7 @@ export const BookmarksPanel = ({
   return (
     <Box sx={{ py: 0.5 }}>
       <Typography variant="caption" color="text.secondary" sx={{ px: 1 }}>
-        j/k: move, d: delete, f: forget, t: track/untrack, 1: log
+        j/k or ↓/↑: move, d: delete, f: forget, t: track/untrack, 1: log
       </Typography>
       {bookmarks.map((b, i) => {
         const state = syncState(b)

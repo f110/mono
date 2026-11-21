@@ -31,7 +31,7 @@ export const OperationsPanel = ({
   return (
     <Box sx={{ py: 0.5 }}>
       <Typography variant="caption" color="text.secondary" sx={{ px: 1 }}>
-        j/k: move, 1 or Esc: log
+        j/k or ↓/↑: move, 1 or Esc: log
       </Typography>
       {operations.map((op, i) => (
         <Stack
@@ -74,7 +74,7 @@ export const EvologPanel = ({ entries, selected, onSelect }: { entries: EvologEn
   return (
     <Box sx={{ py: 0.5 }}>
       <Typography variant="caption" color="text.secondary" sx={{ px: 1 }}>
-        j/k: move, 1 or Esc: log
+        j/k or ↓/↑: move, 1 or Esc: log
       </Typography>
       {entries.map((e, i) => (
         <Stack
