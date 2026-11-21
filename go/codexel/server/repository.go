@@ -163,23 +163,44 @@ func (h *RepositoryHandler) ListAgentCommits(ctx context.Context, req *connect.R
 	if req.Msg.GetCwd() == "" || req.Msg.GetKind() == "" || req.Msg.GetSessionId() == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("cwd, kind and session_id are required"))
 	}
-	root, err := jujutsu.WorkspaceRoot(ctx, req.Msg.GetCwd())
+	c, err := h.config.Load()
 	if err != nil {
-		return nil, connect.NewError(connect.CodeNotFound, err)
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
-	repo, err := openedRepository(h.config, root)
-	if err != nil {
-		return nil, err
+	var cwdRepository *api.Repository
+	var paths []string
+	// The agent may work in the directory which is not the repository of jj.
+	if root, err := jujutsu.WorkspaceRoot(ctx, req.Msg.GetCwd()); err == nil && isOpened(c, root) {
+		cwdRepository = toRepository(root)
+		paths = append(paths, root)
 	}
-	commits, err := repo.AgentCommits(ctx, req.Msg.GetKind(), req.Msg.GetSessionId())
-	if err != nil {
-		return nil, toJujutsuError(err)
+	for _, v := range c.Repositories {
+		if !slices.Contains(paths, v.Path) {
+			paths = append(paths, v.Path)
+		}
 	}
-	res := make([]*api.Commit, 0, len(commits))
-	for _, v := range commits {
-		res = append(res, toCommit(v))
+
+	// The workspaces of the same repository find the same commits.
+	found := make(map[string]struct{})
+	var repos []*api.AgentCommitsOfRepository
+	for _, path := range paths {
+		commits, err := jujutsu.NewRepository(path).AgentCommits(ctx, req.Msg.GetKind(), req.Msg.GetSessionId())
+		if err != nil {
+			return nil, toJujutsuError(err)
+		}
+		var res []*api.Commit
+		for _, v := range commits {
+			if _, ok := found[v.CommitID]; ok {
+				continue
+			}
+			found[v.CommitID] = struct{}{}
+			res = append(res, toCommit(v))
+		}
+		if len(res) > 0 {
+			repos = append(repos, api.AgentCommitsOfRepository_builder{Repository: toRepository(path), Commits: res}.Build())
+		}
 	}
-	return connect.NewResponse(api.ResponseListAgentCommits_builder{Repository: toRepository(root), Commits: res}.Build()), nil
+	return connect.NewResponse(api.ResponseListAgentCommits_builder{Repository: cwdRepository, Repositories: repos}.Build()), nil
 }
 
 func (h *RepositoryHandler) GetRevision(ctx context.Context, req *connect.Request[api.RequestGetRevision]) (*connect.Response[api.ResponseGetRevision], error) {

@@ -28,7 +28,7 @@ import { ApprovedBadge } from '../components/ApprovedBadge.tsx'
 import { RevisionDetail } from '../components/RevisionDetail.tsx'
 import { StartAgentDialog } from '../components/StartAgentDialog.tsx'
 import { TranscriptTimeline } from '../components/TranscriptTimeline.tsx'
-import { AgentService, AgentStatus, RepositoryService, ReviewService, type Agent } from '../connect/codexel_pb.js'
+import { AgentService, AgentStatus, RepositoryService, ReviewService, type Agent, type AgentCommitsOfRepository } from '../connect/codexel_pb.js'
 import { useAgents } from '../hooks/useAgents.ts'
 import { useApprovedCommits } from '../hooks/useApprovedCommits.ts'
 import { useDiffNavigation } from '../hooks/useDiffNavigation.ts'
@@ -77,43 +77,43 @@ const groupByStatus = (agents: Agent[]): [AgentStatus, Agent[]][] => {
   return statusOrder.map((s): [AgentStatus, Agent[]] => [s, agents.filter((a) => normalize(a.status) === s)]).filter(([, list]) => list.length > 0)
 }
 
-// AgentCommits lists the commits created by the session of the agent and shows the description and the diff of the
-// selected one. The list is read again every time the repository changes.
-const AgentCommits = ({ agent }: { agent: Agent }) => {
-  const { data, error, refetch } = useQuery(RepositoryService.method.listAgentCommits, {
-    cwd: agent.cwd,
-    kind: agent.kind,
-    sessionId: agent.sessionId,
-  })
-  const path = data?.repository?.path
+// RefetchOnChange reads the list again every time the repository changes.
+const RefetchOnChange = ({ path, refetch }: { path: string; refetch: () => void }) => {
+  const operation = useOperation(path)
+  useEffect(() => {
+    refetch()
+  }, [operation, refetch])
+  return null
+}
+
+type SelectedCommit = { path: string; changeId: string }
+
+// RepositoryAgentCommits lists the commits of the agent in the repository. The list is read again every time the
+// repository changes.
+const RepositoryAgentCommits = ({
+  group,
+  selected,
+  onSelect,
+  refetch,
+}: {
+  group: AgentCommitsOfRepository
+  selected?: SelectedCommit
+  onSelect: (s: SelectedCommit) => void
+  refetch: () => void
+}) => {
+  const path = group.repository?.path ?? ''
   const operation = useOperation(path)
   const approved = useApprovedCommits(path, operation)
   useEffect(() => {
     refetch()
   }, [operation, refetch])
-  const [selectedChange, setSelectedChange] = useState<string>()
-  const detailRef = useRef<HTMLDivElement>(null)
-  const { split, preview } = useDiffNavigation(detailRef)
-  const commits = data?.commits ?? []
-  const selected = commits.find((c) => c.changeId === selectedChange) ?? commits[0]
   const navigate = useNavigate()
   const [reviewError, setReviewError] = useState<string>()
 
-  if (error) {
-    return <Alert severity="error">{error.message}</Alert>
-  }
-  if (data && commits.length === 0) {
-    return (
-      <Typography color="text.secondary" sx={{ p: 2 }}>
-        No commits of this session in {path}
-      </Typography>
-    )
-  }
   // startReview starts the review of all commits in order from the oldest because the list shows the newest first.
   const startReview = async () => {
-    if (!path) return
     try {
-      const res = await reviewClient.start({ path, changeIds: commits.map((c) => c.changeId).reverse() })
+      const res = await reviewClient.start({ path, changeIds: group.commits.map((c) => c.changeId).reverse() })
       navigate({ to: '/reviews/$reviewId', params: { reviewId: res.review!.id } })
     } catch (e) {
       setReviewError(e instanceof Error ? e.message : String(e))
@@ -121,37 +121,93 @@ const AgentCommits = ({ agent }: { agent: Agent }) => {
   }
 
   return (
+    <List dense subheader={<ListSubheader title={path}>{group.repository?.name}</ListSubheader>}>
+      <Box sx={{ px: 1, pb: 1 }}>
+        <Button size="small" variant="outlined" fullWidth onClick={startReview}>
+          Review these commits
+        </Button>
+        {reviewError && (
+          <Alert severity="error" onClose={() => setReviewError(undefined)} sx={{ mt: 1 }}>
+            {reviewError}
+          </Alert>
+        )}
+      </Box>
+      {group.commits.map((c) => (
+        <ListItemButton
+          key={c.commitId}
+          selected={selected?.path === path && selected.changeId === c.changeId}
+          onClick={() => onSelect({ path, changeId: c.changeId })}
+        >
+          <ListItemText
+            primary={
+              <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0 }}>
+                {approved.has(c.commitId) && <ApprovedBadge />}
+                <Typography variant="body2" noWrap>
+                  {c.description || '(no description set)'}
+                </Typography>
+              </Stack>
+            }
+            secondary={`${c.changeId.slice(0, 8)} · ${new Date(Number(c.timestamp) * 1000).toLocaleString()}`}
+            slotProps={{ primary: { component: 'div' }, secondary: { sx: { fontFamily: 'monospace' } } }}
+          />
+        </ListItemButton>
+      ))}
+    </List>
+  )
+}
+
+// AgentCommits lists the commits created by the session of the agent in all opened repositories and shows the
+// description and the diff of the selected one. The repository of the working directory of the agent is watched even if
+// it has no commits of the agent yet.
+const AgentCommits = ({ agent }: { agent: Agent }) => {
+  const { data, error, refetch } = useQuery(RepositoryService.method.listAgentCommits, {
+    cwd: agent.cwd,
+    kind: agent.kind,
+    sessionId: agent.sessionId,
+  })
+  const [selectedCommit, setSelectedCommit] = useState<SelectedCommit>()
+  const detailRef = useRef<HTMLDivElement>(null)
+  const { split, preview } = useDiffNavigation(detailRef)
+  const groups = data?.repositories ?? []
+  const cwdPath = data?.repository?.path
+  const watchCwd = !!cwdPath && !groups.some((g) => g.repository?.path === cwdPath)
+  const selectedGroup = groups.find((g) => g.repository?.path === selectedCommit?.path)
+  const selectedInGroup = selectedGroup?.commits.find((c) => c.changeId === selectedCommit?.changeId)
+  const selectedPath = selectedInGroup ? selectedGroup?.repository?.path : groups[0]?.repository?.path
+  const selected = selectedInGroup ?? groups[0]?.commits[0]
+
+  if (error) {
+    return <Alert severity="error">{error.message}</Alert>
+  }
+  if (data && groups.length === 0) {
+    return (
+      <>
+        {watchCwd && <RefetchOnChange path={cwdPath} refetch={refetch} />}
+        <Typography color="text.secondary" sx={{ p: 2 }}>
+          No commits of this session in the opened repositories
+        </Typography>
+      </>
+    )
+  }
+
+  return (
     <Stack direction="row" sx={{ height: '100%' }}>
-      <List dense sx={{ width: 360, flexShrink: 0, overflow: 'auto', borderRight: 1, borderColor: 'divider' }}>
-        <Box sx={{ px: 1, pb: 1 }}>
-          <Button size="small" variant="outlined" fullWidth disabled={!path || commits.length === 0} onClick={startReview}>
-            Review these commits
-          </Button>
-          {reviewError && (
-            <Alert severity="error" onClose={() => setReviewError(undefined)} sx={{ mt: 1 }}>
-              {reviewError}
-            </Alert>
-          )}
-        </Box>
-        {commits.map((c) => (
-          <ListItemButton key={c.commitId} selected={c === selected} onClick={() => setSelectedChange(c.changeId)}>
-            <ListItemText
-              primary={
-                <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0 }}>
-                  {approved.has(c.commitId) && <ApprovedBadge />}
-                  <Typography variant="body2" noWrap>
-                    {c.description || '(no description set)'}
-                  </Typography>
-                </Stack>
-              }
-              secondary={`${c.changeId.slice(0, 8)} · ${new Date(Number(c.timestamp) * 1000).toLocaleString()}`}
-              slotProps={{ primary: { component: 'div' }, secondary: { sx: { fontFamily: 'monospace' } } }}
-            />
-          </ListItemButton>
+      {watchCwd && <RefetchOnChange path={cwdPath} refetch={refetch} />}
+      <Box sx={{ width: 360, flexShrink: 0, overflow: 'auto', borderRight: 1, borderColor: 'divider' }}>
+        {groups.map((g) => (
+          <RepositoryAgentCommits
+            key={g.repository?.path}
+            group={g}
+            selected={selected && selectedPath ? { path: selectedPath, changeId: selected.changeId } : undefined}
+            onSelect={setSelectedCommit}
+            refetch={refetch}
+          />
         ))}
-      </List>
+      </Box>
       <Box ref={detailRef} sx={{ flex: 1, minWidth: 0, overflow: 'auto' }}>
-        {path && selected && <RevisionDetail key={selected.commitId} path={path} commit={selected} split={split} preview={preview} />}
+        {selectedPath && selected && (
+          <RevisionDetail key={`${selectedPath}/${selected.commitId}`} path={selectedPath} commit={selected} split={split} preview={preview} />
+        )}
       </Box>
     </Stack>
   )

@@ -111,6 +111,38 @@ func TestListAgentCommitsRequiresAgent(t *testing.T) {
 	assertion.Equal(t, connectErr.Code(), connect.CodeInvalidArgument)
 }
 
+func TestListAgentCommitsSearchesAllRepositories(t *testing.T) {
+	if *jjBinaryPath == "" {
+		t.Skipf("Skip %s because -test.jj-binary is not set", t.Name())
+	}
+
+	mono, _ := newStackRepository(t)
+	workspace := mono + "-x"
+	runCommand(t, mono, "jj", "workspace", "add", "--name=x", workspace)
+	ops := filepath.Join(filepath.Dir(mono), "ops")
+	runCommand(t, filepath.Dir(mono), "jj", "git", "init", ops)
+	runCommand(t, mono, "jj", "commit", "--message=mono: Change\n\nAgent: claude\nAgent-Session: s1\n")
+	runCommand(t, ops, "jj", "commit", "--message=ops: Change\n\nAgent: claude\nAgent-Session: s1\n")
+	runCommand(t, ops, "jj", "commit", "--message=ops: Other\n\nAgent: claude\nAgent-Session: s2\n")
+	h := NewRepositoryHandler(newConfig(t, ops, workspace, mono))
+
+	res, err := h.ListAgentCommits(t.Context(), connect.NewRequest(api.RequestListAgentCommits_builder{
+		Cwd:       new(mono),
+		Kind:      new("claude"),
+		SessionId: new("s1"),
+	}.Build()))
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, res.Msg.GetRepository().GetPath(), mono)
+	repos := res.Msg.GetRepositories()
+	assertion.MustLen(t, repos, 2)
+	assertion.Equal(t, repos[0].GetRepository().GetPath(), mono)
+	assertion.MustLen(t, repos[0].GetCommits(), 1)
+	assertion.Equal(t, repos[0].GetCommits()[0].GetDescription(), "mono: Change")
+	assertion.Equal(t, repos[1].GetRepository().GetPath(), ops)
+	assertion.MustLen(t, repos[1].GetCommits(), 1)
+	assertion.Equal(t, repos[1].GetCommits()[0].GetDescription(), "ops: Change")
+}
+
 func TestOpenAgentRepositories(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)

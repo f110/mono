@@ -2480,6 +2480,32 @@ export declare const RequestListAgentCommitsSchema: GenMessage<RequestListAgentC
  */
 export declare type ResponseListAgentCommits = Message<"mono.codexel.ResponseListAgentCommits"> & {
   /**
+   * repository is the repository of the working directory of the agent. It is empty if the working directory is not in
+   * the opened repository.
+   *
+   * @generated from field: mono.codexel.Repository repository = 1;
+   */
+  repository?: Repository;
+
+  /**
+   * repositories are the opened repositories which have the commits of the agent.
+   *
+   * @generated from field: repeated mono.codexel.AgentCommitsOfRepository repositories = 3;
+   */
+  repositories: AgentCommitsOfRepository[];
+};
+
+/**
+ * Describes the message mono.codexel.ResponseListAgentCommits.
+ * Use `create(ResponseListAgentCommitsSchema)` to create a new message.
+ */
+export declare const ResponseListAgentCommitsSchema: GenMessage<ResponseListAgentCommits>;
+
+/**
+ * @generated from message mono.codexel.AgentCommitsOfRepository
+ */
+export declare type AgentCommitsOfRepository = Message<"mono.codexel.AgentCommitsOfRepository"> & {
+  /**
    * @generated from field: mono.codexel.Repository repository = 1;
    */
   repository?: Repository;
@@ -2491,10 +2517,10 @@ export declare type ResponseListAgentCommits = Message<"mono.codexel.ResponseLis
 };
 
 /**
- * Describes the message mono.codexel.ResponseListAgentCommits.
- * Use `create(ResponseListAgentCommitsSchema)` to create a new message.
+ * Describes the message mono.codexel.AgentCommitsOfRepository.
+ * Use `create(AgentCommitsOfRepositorySchema)` to create a new message.
  */
-export declare const ResponseListAgentCommitsSchema: GenMessage<ResponseListAgentCommits>;
+export declare const AgentCommitsOfRepositorySchema: GenMessage<AgentCommitsOfRepository>;
 
 /**
  * @generated from message mono.codexel.Alias
@@ -4425,8 +4451,9 @@ export declare const RepositoryService: GenService<{
     output: typeof ResponseDiffRangeSchema;
   },
   /**
-   * ListAgentCommits returns the commits which have the Agent and the Agent-Session trailers of the agent in the
-   * repository of the working directory of the agent. The repository must be opened.
+   * ListAgentCommits returns the commits which have the Agent and the Agent-Session trailers of the agent in all opened
+   * repositories. The repository of the working directory of the agent is searched first, and the commit found in the
+   * multiple repositories (e.g. the workspaces of the same repository) is returned only in the first one.
    *
    * @generated from rpc mono.codexel.RepositoryService.ListAgentCommits
    */

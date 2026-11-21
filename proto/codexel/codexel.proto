@@ -66,8 +66,9 @@ service RepositoryService {
   rpc Restore(RequestRestore) returns (ResponseRestore);
   // DiffRange returns the diff between two revisions.
   rpc DiffRange(RequestDiffRange) returns (ResponseDiffRange);
-  // ListAgentCommits returns the commits which have the Agent and the Agent-Session trailers of the agent in the
-  // repository of the working directory of the agent. The repository must be opened.
+  // ListAgentCommits returns the commits which have the Agent and the Agent-Session trailers of the agent in all opened
+  // repositories. The repository of the working directory of the agent is searched first, and the commit found in the
+  // multiple repositories (e.g. the workspaces of the same repository) is returned only in the first one.
   rpc ListAgentCommits(RequestListAgentCommits) returns (ResponseListAgentCommits);
 
   rpc ListBookmarks(RequestListBookmarks) returns (ResponseListBookmarks);
@@ -817,6 +818,15 @@ message RequestListAgentCommits {
 }
 
 message ResponseListAgentCommits {
+  // repository is the repository of the working directory of the agent. It is empty if the working directory is not in
+  // the opened repository.
+  Repository repository = 1;
+  reserved 2;
+  // repositories are the opened repositories which have the commits of the agent.
+  repeated AgentCommitsOfRepository repositories = 3;
+}
+
+message AgentCommitsOfRepository {
   Repository      repository = 1;
   repeated Commit commits    = 2;
 }
