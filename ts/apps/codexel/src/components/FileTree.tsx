@@ -44,12 +44,14 @@ import { isMarkdown } from './FileDiffView.tsx'
 import { Markdown } from './Markdown.tsx'
 
 // FileTreePanel shows the files of the revision. The keys are handled by the parent. filter shows the matching files
-// flatly instead of the tree.
+// flatly instead of the tree. help is the description of the keys shown under the filter.
 export const FileTreePanel = ({
   nodes,
   selected,
   filter,
   filterRef,
+  placeholder,
+  help,
   onFilterChange,
   onSelect,
 }: {
@@ -57,6 +59,8 @@ export const FileTreePanel = ({
   selected: number
   filter: string
   filterRef: React.RefObject<HTMLInputElement | null>
+  placeholder: string
+  help?: string
   onFilterChange: (filter: string) => void
   onSelect: (index: number) => void
 }) => {
@@ -72,7 +76,7 @@ export const FileTreePanel = ({
           inputRef={filterRef}
           size="small"
           fullWidth
-          placeholder="Filter (/ to focus)"
+          placeholder={placeholder}
           value={filter}
           onChange={(e) => onFilterChange(e.target.value)}
           onKeyDown={(e) => {
@@ -81,9 +85,11 @@ export const FileTreePanel = ({
             }
           }}
         />
-        <Typography variant="caption" color="text.secondary">
-          j/k or ↓/↑: move, h/l: fold/unfold, Enter: open, H/L: previous/next tab, x: close the tab, m: preview, /: filter, 1 or Esc: log
-        </Typography>
+        {help && (
+          <Typography variant="caption" color="text.secondary">
+            {help}
+          </Typography>
+        )}
       </Box>
       {nodes.map((n, i) => (
         <Box
@@ -259,18 +265,51 @@ export const FileView = ({
   )
 }
 
+// useFileTree returns the visible nodes of the file tree of the revision. filter shows the matching files flatly instead
+// of the tree. toggle expands the directory if open is true, collapses it if false and flips it if undefined.
+const useFileTree = (repoPath: string, commitId: string, initialExpanded: string[]) => {
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set(initialExpanded))
+  const [filter, setFilter] = useState('')
+  const { data } = useQuery(RepositoryService.method.listFiles, { path: repoPath, revision: commitId }, { staleTime: Infinity })
+  const nodes = useMemo(() => {
+    const files = data?.files ?? []
+    if (filter) {
+      const f = filter.toLowerCase()
+      return files.filter((p) => p.toLowerCase().includes(f)).map((p) => ({ path: p, name: p, depth: 0, dir: false, expanded: false }))
+    }
+    return visibleNodes(files, expanded)
+  }, [data, filter, expanded])
+  const toggle = useCallback(
+    (path: string, open?: boolean) =>
+      setExpanded((s) => {
+        const next = new Set(s)
+        if (open ?? !next.has(path)) next.add(path)
+        else next.delete(path)
+        return next
+      }),
+    [],
+  )
+  const expand = useCallback((paths: string[]) => setExpanded((s) => new Set([...s, ...paths])), [])
+  return { nodes, filter, setFilter, toggle, expand }
+}
+
 // ActiveFile is the file shown in the file browser. seq changes every time the file is shown to restore scrollTop.
 type ActiveFile = { file: string; scrollTop: number; seq: number }
+
+// OpenRequest asks the file browser to open the file. seq changes every time the file is requested.
+export type OpenRequest = { file: string; seq: number }
 
 // FileBrowser shows the file tree of the revision and the opened files in the tabs. Opening the file pushes the position
 // to the history, so the browser back returns to the file and the scroll position opened before. onRestore is called
 // with the revision of the position restored by the browser back and forward. The keys are handled only while it is
 // not hidden, and the tabs are kept while it is hidden. preview is shared with the diff because m toggles it in both.
+// request opens the file every time its seq changes.
 export const FileBrowser = ({
   repoPath,
   revision,
   hidden,
   preview,
+  request,
   onTogglePreview,
   onRestore,
   onClose,
@@ -280,6 +319,7 @@ export const FileBrowser = ({
   revision: FileRevision
   hidden: boolean
   preview: boolean
+  request?: OpenRequest
   onTogglePreview: () => void
   onRestore: (revision: FileRevision) => void
   onClose: () => void
@@ -289,31 +329,25 @@ export const FileBrowser = ({
   const initial = useMemo(() => fileLocation(history.location.state, repoPath), [history, repoPath])
   const [tabs, setTabs] = useState<string[]>(() => (initial ? [initial.file] : []))
   const [active, setActive] = useState<ActiveFile | undefined>(() => (initial ? { file: initial.file, scrollTop: initial.scrollTop, seq: 0 } : undefined))
-  const [expanded, setExpanded] = useState<Set<string>>(() => new Set(initial ? parentDirs(initial.file) : []))
   const [selectedPath, setSelectedPath] = useState<string | undefined>(initial?.file)
-  const [filter, setFilter] = useState('')
+  const { nodes, filter, setFilter, toggle, expand } = useFileTree(repoPath, revision.commitId, initial ? parentDirs(initial.file) : [])
   const filterRef = useRef<HTMLInputElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const scrolls = useRef(new Map<string, number>())
   const seq = useRef(1)
-  const { data } = useQuery(RepositoryService.method.listFiles, { path: repoPath, revision: revision.commitId }, { staleTime: Infinity })
-  const nodes = useMemo(() => {
-    const files = data?.files ?? []
-    if (filter) {
-      const f = filter.toLowerCase()
-      return files.filter((p) => p.toLowerCase().includes(f)).map((p) => ({ path: p, name: p, depth: 0, dir: false, expanded: false }))
-    }
-    return visibleNodes(files, expanded)
-  }, [data, filter, expanded])
+  const requested = useRef<number>(undefined)
   const selected = Math.max(0, nodes.findIndex((n) => n.path === selectedPath))
 
   // show shows the file in the tab and the tree, and scrolls to scrollTop.
-  const show = useCallback((file: string, scrollTop: number) => {
-    setTabs((t) => (t.includes(file) ? t : [...t, file]))
-    setExpanded((s) => new Set([...s, ...parentDirs(file)]))
-    setSelectedPath(file)
-    setActive({ file, scrollTop, seq: seq.current++ })
-  }, [])
+  const show = useCallback(
+    (file: string, scrollTop: number) => {
+      setTabs((t) => (t.includes(file) ? t : [...t, file]))
+      expand(parentDirs(file))
+      setSelectedPath(file)
+      setActive({ file, scrollTop, seq: seq.current++ })
+    },
+    [expand],
+  )
 
   // open shows the file and pushes the position to the history. The position of the file shown before is kept in the
   // current entry of the history.
@@ -353,6 +387,13 @@ export const FileBrowser = ({
     [tabs, active, open],
   )
 
+  useEffect(() => {
+    if (request && request.seq !== requested.current) {
+      requested.current = request.seq
+      open(request.file)
+    }
+  }, [request, open])
+
   useEffect(
     () =>
       history.subscribe(({ location, action }) => {
@@ -383,13 +424,6 @@ export const FileBrowser = ({
         return
       }
       const node = nodes[selected]
-      const toggle = (path: string, open: boolean) =>
-        setExpanded((s) => {
-          const next = new Set(s)
-          if (open) next.add(path)
-          else next.delete(path)
-          return next
-        })
       const tab = active ? tabs.indexOf(active.file) : -1
       switch (e.key) {
         case 'j':
@@ -407,7 +441,7 @@ export const FileBrowser = ({
           if (node?.dir) toggle(node.path, false)
           break
         case 'Enter':
-          if (node?.dir) toggle(node.path, !expanded.has(node.path))
+          if (node?.dir) toggle(node.path)
           else if (node) open(node.path)
           break
         case 'H':
@@ -433,7 +467,7 @@ export const FileBrowser = ({
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [hidden, nodes, selected, expanded, tabs, active, open, close, onClose])
+  }, [hidden, nodes, selected, toggle, tabs, active, open, close, onClose])
 
   return (
     <Stack direction="row" sx={{ flex: 1, minHeight: 0, display: hidden ? 'none' : 'flex' }}>
@@ -454,6 +488,8 @@ export const FileBrowser = ({
           selected={selected}
           filter={filter}
           filterRef={filterRef}
+          placeholder="Filter (/ to focus)"
+          help="j/k or ↓/↑: move, h/l: fold/unfold, Enter: open, H/L: previous/next tab, x: close the tab, m: preview, /: filter, 1 or Esc: log"
           onFilterChange={(f) => {
             setFilter(f)
             setSelectedPath(undefined)
@@ -462,11 +498,7 @@ export const FileBrowser = ({
             const n = nodes[i]
             setSelectedPath(n.path)
             if (n.dir) {
-              setExpanded((s) => {
-                const next = new Set(s)
-                if (!next.delete(n.path)) next.add(n.path)
-                return next
-              })
+              toggle(n.path)
             } else {
               open(n.path)
             }
@@ -530,5 +562,39 @@ export const FileBrowser = ({
         </Box>
       </Stack>
     </Stack>
+  )
+}
+
+// FileSidebar shows the file tree of the revision beside the log. onOpen is called with the file selected in the tree to
+// open it in the file browser.
+export const FileSidebar = ({ repoPath, revision, onOpen }: { repoPath: string; revision: FileRevision; onOpen: (file: string) => void }) => {
+  const { nodes, filter, setFilter, toggle } = useFileTree(repoPath, revision.commitId, [])
+  const filterRef = useRef<HTMLInputElement>(null)
+
+  return (
+    <Box sx={{ width: 280, flexShrink: 0, overflow: 'auto', borderRight: 1, borderColor: 'divider' }}>
+      <Typography variant="body2" color="text.secondary" sx={{ px: 1, pt: 1 }}>
+        Files at{' '}
+        <Box component="span" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+          {revision.changeId.slice(0, 8)}
+        </Box>
+      </Typography>
+      <FileTreePanel
+        nodes={nodes}
+        selected={-1}
+        filter={filter}
+        filterRef={filterRef}
+        placeholder="Filter"
+        onFilterChange={setFilter}
+        onSelect={(i) => {
+          const n = nodes[i]
+          if (n.dir) {
+            toggle(n.path)
+          } else {
+            onOpen(n.path)
+          }
+        }}
+      />
+    </Box>
   )
 }

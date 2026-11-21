@@ -23,6 +23,7 @@ import {
   Typography,
   ToggleButtonGroup,
 } from '@mui/material'
+import FolderOpenIcon from '@mui/icons-material/FolderOpen'
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz'
 import {
   RebaseSource,
@@ -50,7 +51,7 @@ import { DescriptionDialog } from './DescriptionDialog.tsx'
 import { DiffControls } from './DiffControls.tsx'
 import { DivergenceDialog } from './DivergenceDialog.tsx'
 import { FileDiffView } from './FileDiffView.tsx'
-import { FileBrowser } from './FileTree.tsx'
+import { FileBrowser, FileSidebar, type OpenRequest } from './FileTree.tsx'
 import { EvologPanel, OperationsPanel } from './HistoryPanels.tsx'
 import { PullRequestDialog } from './PullRequestDialog.tsx'
 import { RevisionDetail } from './RevisionDetail.tsx'
@@ -67,6 +68,9 @@ const reviewClient = createClient(ReviewService, transport)
 
 // operationLimit is the number of the operations shown in the operation log.
 const operationLimit = 200
+
+// sidebarKey is the key of the local storage which keeps whether the sidebar of the files is open.
+const sidebarKey = 'codexel.files.sidebar'
 
 type View = 'log' | 'bookmarks' | 'oplog' | 'evolog' | 'files' | 'workspaces'
 
@@ -183,6 +187,10 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
     { enabled: view === 'workspaces' },
   )
   const workspaces = workspaceData?.workspaces ?? []
+  const [sidebar, setSidebar] = useState(() => localStorage.getItem(sidebarKey) === 'true')
+  const [fileRequest, setFileRequest] = useState<OpenRequest>()
+  const { data: workingCopyData, refetch: refetchWorkingCopy } = useQuery(RepositoryService.method.log, { path, revset: '@' }, { enabled: sidebar })
+  const workingCopy = workingCopyData?.rows[0]?.commit
   const restoreFiles = useCallback((r: FileRevision) => {
     setTreeTarget(r)
     setView('files')
@@ -223,8 +231,11 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
       if (view === 'workspaces') {
         refetchWorkspaces()
       }
+      if (sidebar) {
+        refetchWorkingCopy()
+      }
     }
-  }, [operation, view, refetch, refetchBookmarks, refetchOperations, refetchWorkspaces])
+  }, [operation, view, sidebar, refetch, refetchBookmarks, refetchOperations, refetchWorkspaces, refetchWorkingCopy])
 
   const selectIndex = useCallback((i: number) => {
     const c = commits[Math.max(0, Math.min(i, commits.length - 1))]
@@ -365,6 +376,25 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
     setTreeTarget({ commitId: c.commitId, changeId: c.changeId })
     setView('files')
   }, [])
+  const toggleSidebar = useCallback(
+    () =>
+      setSidebar((s) => {
+        localStorage.setItem(sidebarKey, String(!s))
+        return !s
+      }),
+    [],
+  )
+  // openSidebarFile opens the file selected in the sidebar in the file browser of the working copy.
+  const openSidebarFile = useCallback(
+    (file: string) => {
+      if (!workingCopy) {
+        return
+      }
+      browseFiles(workingCopy)
+      setFileRequest((r) => ({ file, seq: (r?.seq ?? 0) + 1 }))
+    },
+    [workingCopy, browseFiles],
+  )
 
   const slide = useCallback(
     (direction: 'down' | 'up') => {
@@ -555,6 +585,9 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
             browseFiles(selectedCommit)
           }
           break
+        case 'T':
+          toggleSidebar()
+          break
         case '4':
         case 'O':
           showView('oplog')
@@ -693,6 +726,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
     startSquash,
     showEvolog,
     browseFiles,
+    toggleSidebar,
     showView,
     gitFetch,
     jumpToWorkingCopy,
@@ -752,6 +786,9 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   return (
     <Stack sx={{ height: '100%' }}>
       <Stack direction="row" spacing={1} sx={{ p: 1, alignItems: 'center' }}>
+        <ToggleButton size="small" value="files" selected={sidebar} onChange={toggleSidebar} title="T" aria-label="Files of the working copy">
+          <FolderOpenIcon fontSize="small" />
+        </ToggleButton>
         <TextField
           inputRef={revsetRef}
           size="small"
@@ -820,6 +857,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
         </Alert>
       )}
       <Stack direction="row" sx={{ flex: 1, minHeight: 0, display: view === 'files' ? 'none' : 'flex' }}>
+        {sidebar && workingCopy && <FileSidebar repoPath={path} revision={workingCopy} onOpen={openSidebarFile} />}
         <Stack sx={{ width: '45%', flexShrink: 0, borderRight: 1, borderColor: 'divider' }}>
           <Stack direction="row" sx={{ alignItems: 'center', borderBottom: 1, borderColor: 'divider' }}>
             <Tabs
@@ -941,6 +979,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
         <FileBrowser
           repoPath={path}
           revision={treeTarget}
+          request={fileRequest}
           hidden={view !== 'files'}
           preview={preview}
           onTogglePreview={diffNavigation.togglePreview}
@@ -1125,6 +1164,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
             { label: 'Show the operation log', shortcut: '4', run: () => setView('oplog') },
             { label: 'Show the workspaces', shortcut: 'w', run: () => showView('workspaces') },
             { label: 'Jump to the working copy', shortcut: '@', run: jumpToWorkingCopy },
+            { label: 'Toggle the files of the working copy', shortcut: 'T', run: toggleSidebar },
             { label: 'Refresh', shortcut: 'r', run: () => refetch() },
             { label: 'Focus the revset', shortcut: '/', run: () => setTimeout(() => revsetRef.current?.focus(), 0) },
             { label: 'Toggle the split view', shortcut: '|', run: () => pressKey('|') },

@@ -107,7 +107,7 @@ lightjj の機能を次のとおり分類する。キーバインドは lightjj 
 |---|---|---|
 | リビジョングラフ | revset 入力、SVG の DAG、`@`/immutable/conflict/divergent の表示、各 workspace の working copy (`<name>@`)・bookmark・PR バッジ (§7.3)、`?change=` 等のリンク | `j`/`k`, `/`, `@`, `r` |
 | 差分 | unified/split、シンタックスハイライト、単語単位の差分、コンテキスト展開、hunk 移動、Markdown プレビュー、画像差分、エディタで開く | `]`/`[`, `\|`, `m`, `f` |
-| ファイル | リビジョン時点の全ファイルツリー、パス検索、ファイル履歴と 2 点比較 | `F` |
+| ファイル | リビジョン時点の全ファイルツリー、パス検索、ファイル履歴と 2 点比較、working copy のファイルツリーのサイドバー (§4.5) | `F`, `T` |
 | 変更操作 | new / edit / abandon / describe / commit / restore / squash / split (ファイル・hunk) / slide / undo | `n`, `e`, `c`, `s`, `S`, `J`/`K`, `u` |
 | rebase | インライン rebase (`-r`/`-s`/`-b` × onto/after/before)、複数選択、megamerge | `R`, `M`, `Space` |
 | bookmark | 一覧と同期状態 (ahead/behind/diverged/conflict)、set/move/advance/delete/forget/track/untrack | `2`, `b`, `B` |
@@ -144,6 +144,7 @@ lightjj にはコピーのキーがないので vim の yank に合わせる (`d
 | bookmark の delete / forget / track / untrack、op log の revert / restore、workspace の open / remove / forget | 一覧の選択中の行 |
 | 開いている workspace の rename / stale の復旧 | workspace 一覧の上部 |
 | ファイルブラウザからログに戻る | ファイルツリーの上部 |
+| working copy のファイルツリーのサイドバーの開閉 | revset 入力の左のトグルボタン。サイドバーを出す左端に置く |
 | 差分の split 表示・Markdown プレビュー・hunk 移動 | 右ペインの上部 (スクロールしない位置) |
 
 ### 4.3 再実装しない機能
@@ -182,6 +183,19 @@ lightjj と同じく jj の operation ID で変更を検知する。
 - Markdown のファイルは GFM としてプレビューできる (#181)。切り替えは差分の Markdown プレビューと同じ `m` とファイル名の横の Preview ボタンで、
   状態も差分と共有する。デフォルトはソース表示
 - キー: `j`/`k`, `h`/`l` (ツリー), `Enter` (開く), `H`/`L` (前後のタブ), `x` (タブを閉じる), `m` (Markdown のプレビュー), `/` (パスの絞り込み)
+
+#### サイドバー (#182)
+
+リビジョンを選ばずに working copy のファイルを開けるように、リポジトリ画面の左端に `@` のファイルツリーのサイドバーを出す。
+多くの場合に見たいのは `@` のファイルなため。
+
+- 表示するのは常に `@` のファイル。選択中のリビジョンには追従しない。選択中のリビジョンのファイルは `F` で開く
+- サイドバーはファイルブラウザへの入口にする。ツリーでファイルを選ぶと、その時点の `@` の commit ID でファイルブラウザを開いてそのファイルを開く。
+  ファイルの表示・タブ・履歴はファイルブラウザのものを使い、ファイルを表示する場所を 2 つにしない
+- ツリーの表示と絞り込みはファイルブラウザのツリーと同じ部品を使う。キーはリビジョングラフが使うので、ツリーの操作はタップ (クリック) で行う
+- `@` の commit ID は op ID が変わるたびに取り直す (§4.4)。working copy の変更は自動で反映される
+- 開閉は `T` と revset 入力の左のトグルボタンで行い、開閉の状態は差分の split 表示と同じくローカルストレージに保存する。
+  キーは表示を切り替える他のキー (`F`, `O`, `E`) と同じく大文字にし、Tree の頭文字にする
 
 ## 5. コードレビュー (#126, #128)
 

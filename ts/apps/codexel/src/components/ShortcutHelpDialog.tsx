@@ -56,6 +56,7 @@ const screens: { routeId: string; sections: Section[] }[] = [
           ['f', 'Git fetch'],
           ['p', 'Git push'],
           ['F', 'Browse the files'],
+          ['T', 'Toggle the files of the working copy'],
           ['2', 'Show the bookmarks'],
           ['4 / O', 'Show the operation log'],
           ['5 / E', 'Show the evolog'],
