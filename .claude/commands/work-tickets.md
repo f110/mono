@@ -12,7 +12,7 @@ Components: `$ARGUMENTS`. If empty, use `Issue` and `Codexel`.
 
 # Hard rules
 
-- No interaction with external services: no push, no PR, nothing on github.com, no cluster operations, no changes to other repositories (e.g. ops). Record such work as remaining tasks in the ticket instead.
+- No interaction with external services: no push, no PR, nothing on github.com, no cluster operations. Record such work as remaining tasks in the ticket instead.
 - Scope is the given components only. Do not start tickets of other components. The only exception is an agent-assigned ticket that blocks a ticket this sweep is actually working on (not one that blocks a human-assigned or idle ticket).
 - One subagent per ticket. Parallel subagents each get their own jj workspace in a sibling directory. Never edit files in the default workspace.
 - Never rewrite commits that are in review, run a revert, abandon changes, or forget workspaces you did not create in this session without asking the human.
@@ -60,12 +60,5 @@ Rules:
 
 # 4. Wrap-up
 
-1. Check whether commits made in parallel conflict with each other, especially when they touch the same files:
-   ```
-   jj new --no-edit <change A> <change B> -m tmp-merge-check
-   jj resolve --list -r 'description(exact:"tmp-merge-check\n")'
-   jj abandon 'description(exact:"tmp-merge-check\n")'
-   ```
-   Also look for cross-ticket gaps (e.g. a key added by one ticket missing from a help dialog added by another).
-   Report conflicts and gaps and ask before rebasing or amending commits under review. If the human approves, let the subagent that owns the later ticket rebase and resolve, keeping its message and trailers.
+1. Look for cross-ticket gaps (e.g. a key added by one ticket missing from a help dialog added by another) and report them.
 2. Report a final table: ticket, result (committed / handed back / skipped), change ID, workspace, what the human needs to check. Also list leftover workspaces and changes.
