@@ -1,4 +1,5 @@
-load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+load("@rules_go//go:def.bzl", "go_binary", "go_cross_binary", "go_library", "go_test")
+load("//build/rules/artifact:def.bzl", "cd_artifact")
 
 go_library(
     name = "codexel_lib",
@@ -24,6 +25,18 @@ go_binary(
     name = "codexel",
     embed = [":codexel_lib"],
     visibility = ["//visibility:public"],
+)
+
+go_cross_binary(
+    name = "darwin_arm64",
+    platform = "@rules_go//go/toolchain:darwin_arm64",
+    target = ":codexel",
+)
+
+cd_artifact(
+    name = "delivery",
+    files = [":darwin_arm64"],
+    repository = "repo.center.x.f110.dev/codexel/codexel",
 )
 
 go_test(
