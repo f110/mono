@@ -188,7 +188,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   const { data: workspaceData, refetch: refetchWorkspaces } = useQuery(
     RepositoryService.method.listWorkspaces,
     { path },
-    { enabled: view === 'workspaces' },
+    { enabled: view === 'workspaces' || menu !== undefined },
   )
   const workspaces = workspaceData?.workspaces ?? []
   const [sidebar, setSidebar] = useState(() => localStorage.getItem(sidebarKey) === 'true')
@@ -809,6 +809,16 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
     revisionMenuItem('Review', 'v', false, () => startReview(targets())),
     revisionMenuItem('Create the pull request', 'P', false, () => setSubmittingPR(targets())),
     <Divider key="d4" />,
+    ...c.workingCopies.map((name) => {
+      const w = workspaces.find((w) => w.name === name)
+      return revisionMenuItem(
+        `Remove the workspace ${name}`,
+        undefined,
+        !single || w === undefined || w.root === path,
+        () => setRemovingWorkspace(w),
+        'error.main',
+      )
+    }),
     revisionMenuItem(
       'Abandon',
       undefined,
