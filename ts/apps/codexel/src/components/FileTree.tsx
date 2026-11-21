@@ -302,15 +302,13 @@ export type OpenRequest = { file: string; seq: number }
 // FileBrowser shows the file tree of the revision and the opened files in the tabs. Opening the file pushes the position
 // to the history, so the browser back returns to the file and the scroll position opened before. onRestore is called
 // with the revision of the position restored by the browser back and forward. The keys are handled only while it is
-// not hidden, and the tabs are kept while it is hidden. preview is shared with the diff because m toggles it in both.
-// request opens the file every time its seq changes.
+// not hidden, and the tabs and the preview of Markdown are kept while it is hidden. Markdown is previewed by default, and m
+// toggles it to the source. request opens the file every time its seq changes.
 export const FileBrowser = ({
   repoPath,
   revision,
   hidden,
-  preview,
   request,
-  onTogglePreview,
   onRestore,
   onClose,
   onHistory,
@@ -318,9 +316,7 @@ export const FileBrowser = ({
   repoPath: string
   revision: FileRevision
   hidden: boolean
-  preview: boolean
   request?: OpenRequest
-  onTogglePreview: () => void
   onRestore: (revision: FileRevision) => void
   onClose: () => void
   onHistory: (file: string) => void
@@ -332,6 +328,7 @@ export const FileBrowser = ({
     initial ? { file: initial.file, scrollTop: initial.scrollTop, seq: 0 } : undefined,
   )
   const [selectedPath, setSelectedPath] = useState<string | undefined>(initial?.file)
+  const [preview, setPreview] = useState(true)
   const { nodes, filter, setFilter, toggle, expand } = useFileTree(repoPath, revision.commitId, initial ? parentDirs(initial.file) : [])
   const filterRef = useRef<HTMLInputElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
@@ -458,6 +455,9 @@ export const FileBrowser = ({
         case 'x':
           if (active) close(active.file)
           break
+        case 'm':
+          setPreview((p) => !p)
+          break
         case '/':
           filterRef.current?.focus()
           break
@@ -561,7 +561,7 @@ export const FileBrowser = ({
               scrollRef={contentRef}
               scrollTop={active.scrollTop}
               preview={preview}
-              onTogglePreview={onTogglePreview}
+              onTogglePreview={() => setPreview((p) => !p)}
               onHistory={() => onHistory(active.file)}
             />
           ) : (

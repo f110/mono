@@ -13,8 +13,9 @@ export type DiffNavigation = {
 }
 
 // useDiffNavigation handles the keys of the diff in the container: | toggles the split view, m toggles the preview of
-// Markdown and ] / [ move to the next / previous hunk. The setting of the split view is kept in the local storage.
-export const useDiffNavigation = (container: RefObject<HTMLElement | null>): DiffNavigation => {
+// Markdown and ] / [ move to the next / previous hunk. The keys are handled only while enabled. The setting of the split view
+// is kept in the local storage.
+export const useDiffNavigation = (container: RefObject<HTMLElement | null>, enabled = true): DiffNavigation => {
   const [split, setSplit] = useState(() => localStorage.getItem(splitKey) === 'true')
   const [preview, setPreview] = useState(false)
 
@@ -46,6 +47,9 @@ export const useDiffNavigation = (container: RefObject<HTMLElement | null>): Dif
   )
 
   useEffect(() => {
+    if (!enabled) {
+      return
+    }
     const onKeyDown = (e: KeyboardEvent) => {
       if (ignoreKey(e)) {
         return
@@ -63,7 +67,7 @@ export const useDiffNavigation = (container: RefObject<HTMLElement | null>): Dif
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [toggleSplit, togglePreview, moveHunk])
+  }, [enabled, toggleSplit, togglePreview, moveHunk])
 
   return { split, preview, toggleSplit, togglePreview, moveHunk }
 }

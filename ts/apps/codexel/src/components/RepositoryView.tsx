@@ -163,7 +163,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   const [evologSelected, setEvologSelected] = useState(0)
   const revsetRef = useRef<HTMLInputElement>(null)
   const detailRef = useRef<HTMLDivElement>(null)
-  const diffNavigation = useDiffNavigation(detailRef)
+  const diffNavigation = useDiffNavigation(detailRef, view !== 'files')
   const { split, preview } = diffNavigation
   const operation = useOperation(path)
   const { agents } = useAgents()
@@ -1019,8 +1019,6 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           revision={treeTarget}
           request={fileRequest}
           hidden={view !== 'files'}
-          preview={preview}
-          onTogglePreview={diffNavigation.togglePreview}
           onRestore={restoreFiles}
           onClose={closeFiles}
           onHistory={showHistory}
