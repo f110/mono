@@ -20,7 +20,8 @@ service AgentService {
   rpc Focus(RequestFocusAgent) returns (ResponseFocusAgent);
   rpc ListWorkspaces(RequestListWorkspaces) returns (ResponseListWorkspaces);
   // Start creates a new tab in the workspace and starts the agent in it. If workspace_id is empty, it creates a new
-  // workspace and starts the agent in it. The server of herdr is started if it is not running.
+  // workspace and starts the agent in it. The server of herdr is started if it is not running. If review_id is given,
+  // the agent reviews the review.
   rpc Start(RequestStartAgent) returns (ResponseStartAgent);
   // Stop closes the pane of the agent to terminate it. herdr closes the tab and the workspace which become empty.
   rpc Stop(RequestStopAgent) returns (ResponseStopAgent);
@@ -260,6 +261,10 @@ message RequestStartAgent {
   string          kind = 3;
   string          name = 4;
   repeated string args = 5;
+  // review_id is the open review which the agent reviews and comments on by MCP. The agent is prompted by
+  // .codexel/review.md at trunk() of the repository and works at the root of the workspace of the repository, so cwd
+  // must be empty.
+  string review_id = 6;
 }
 
 message ResponseStartAgent {

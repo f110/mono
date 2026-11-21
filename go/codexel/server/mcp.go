@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"connectrpc.com/connect"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -21,6 +22,16 @@ type listReviewsInput struct {
 type listReviewCommentsInput struct {
 	ReviewID        string `json:"review_id" jsonschema:"ID of the review"`
 	IncludeResolved bool   `json:"include_resolved,omitempty" jsonschema:"Include the resolved comments"`
+}
+
+type addCommentInput struct {
+	ReviewID  string `json:"review_id" jsonschema:"ID of the review"`
+	ChangeID  string `json:"change_id,omitempty" jsonschema:"Change ID of the target. Omit to comment on the whole review"`
+	Path      string `json:"path,omitempty" jsonschema:"Path of the file. Omit to comment on the commit message of the change"`
+	Side      string `json:"side,omitempty" jsonschema:"NEW for the lines of the file at the commit of the change, OLD for the lines of the file at its parent. Required if start_line is not 0"`
+	StartLine int32  `json:"start_line,omitempty" jsonschema:"First line of the target (1-origin). Omit to comment on the whole file or commit message"`
+	EndLine   int32  `json:"end_line,omitempty" jsonschema:"Last line of the target"`
+	Body      string `json:"body" jsonschema:"Body of the comment written in Markdown"`
 }
 
 type replyInput struct {
@@ -50,6 +61,20 @@ func NewMCPHandler(h *ReviewHandler) http.Handler {
 		"(side OLD) in the latest round. anchor is the content of the lines when the comment was written. "+
 		"drifted is true if the anchor is not found", h.listComments, func(in listReviewCommentsInput) (*listCommentsRequest, error) {
 		return &listCommentsRequest{reviewID: in.ReviewID, includeResolved: in.IncludeResolved}, nil
+	})
+	addTool(s, "add_review_comment", "Comment on the change of the code review. The lines are the lines in the latest round. "+
+		"The comment is passed to the agent which created the changes only if the user decides so", h.AddComment, func(in addCommentInput) (*api.RequestAddComment, error) {
+		side := api.DiffSide_DIFF_SIDE_UNSPECIFIED
+		if in.Side != "" {
+			v, ok := api.DiffSide_value["DIFF_SIDE_"+strings.ToUpper(in.Side)]
+			if !ok {
+				return nil, xerrors.Newf("side must be NEW or OLD: %s", in.Side)
+			}
+			side = api.DiffSide(v)
+		}
+		return api.RequestAddComment_builder{
+			ReviewId: &in.ReviewID, ChangeId: &in.ChangeID, Path: &in.Path, Side: &side, StartLine: &in.StartLine, EndLine: &in.EndLine, Body: &in.Body,
+		}.Build(), nil
 	})
 	addTool(s, "reply_review_comment", "Reply to the comment of the code review", h.Reply, func(in replyInput) (*api.RequestReply, error) {
 		return api.RequestReply_builder{ReviewId: &in.ReviewID, CommentId: &in.CommentID, Body: &in.Body}.Build(), nil

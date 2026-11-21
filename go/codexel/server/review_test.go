@@ -133,6 +133,15 @@ func TestReviewMCP(t *testing.T) {
 	assertion.MustNoError(t, protojson.Unmarshal([]byte(text), replied))
 	assertion.Equal(t, replied.GetComment().GetReplies()[0].GetAuthor(), review.AuthorAgent)
 
+	text, isError = call("add_review_comment", map[string]any{"review_id": "01", "change_id": "kkkk", "path": "a.go", "body": "file"})
+	assertion.False(t, isError)
+	added := &api.ResponseAddComment{}
+	assertion.MustNoError(t, protojson.Unmarshal([]byte(text), added))
+	assertion.Equal(t, added.GetComment().GetAuthor(), review.AuthorAgent)
+	assertion.Equal(t, added.GetComment().GetPath(), "a.go")
+	_, isError = call("resolve_review_comment", map[string]any{"review_id": "01", "comment_id": added.GetComment().GetId()})
+	assertion.False(t, isError)
+
 	_, isError = call("resolve_review_comment", map[string]any{"review_id": "01", "comment_id": "a"})
 	assertion.False(t, isError)
 	text, _ = call("list_review_comments", map[string]any{"review_id": "01"})
@@ -172,4 +181,63 @@ func TestGeneratedFiles(t *testing.T) {
 	generated, err := generatedFiles(t.Context(), repo, commit, diff)
 	assertion.MustNoError(t, err)
 	assertion.Equal(t, generated, []string{"Cargo.lock", "api.pb.go", "marked.txt", "package-lock.json"})
+}
+
+func TestStartReviewAgent(t *testing.T) {
+	if *jjBinaryPath == "" {
+		t.Skipf("Skip %s because -test.jj-binary is not set", t.Name())
+	}
+
+	repo, _ := newStackRepository(t, "a")
+	change := runCommand(t, repo, "jj", "log", "--no-graph", "--revisions=@-", "--template=change_id.short()")
+	workspaceCreated := `"result":{"type":"workspace_created","workspace":{"workspace_id":"w2"},"tab":{"tab_id":"w2:t1"},"root_pane":{"pane_id":"w2:p1","tab_id":"w2:t1","workspace_id":"w2"}}`
+	agentStarted := `"result":{"type":"agent_started","argv":["claude"],"agent":{"agent":"claude","agent_status":"idle","pane_id":"w2:p1","tab_id":"w2:t1","workspace_id":"w2"}}`
+	workspaces := `"result":{"type":"workspace_list","workspaces":[{"workspace_id":"w2","label":"repo"}]}`
+	c, received := startHerdrWithSequence(t, map[string][]string{
+		"workspace.create": {workspaceCreated},
+		"agent.start":      {agentStarted},
+		"agent.prompt":     {`"result":{"type":"ok"}`},
+		"workspace.list":   {workspaces},
+	})
+	conf := newConfig(t, repo)
+	store := review.NewStore(t.TempDir())
+	h := NewReviewHandler(conf, store, c)
+	agents := NewAgentHandler(c, conf, store, "")
+	started, err := h.Start(t.Context(), connect.NewRequest(api.RequestStartReview_builder{Path: new(repo), ChangeIds: []string{change}}.Build()))
+	assertion.MustNoError(t, err)
+	r := started.Msg.GetReview()
+	startAgent := func() (*connect.Response[api.ResponseStartAgent], error) {
+		return agents.Start(t.Context(), connect.NewRequest(api.RequestStartAgent_builder{ReviewId: new(r.GetId()), Kind: new("claude")}.Build()))
+	}
+
+	_, err = agents.Start(t.Context(), connect.NewRequest(api.RequestStartAgent_builder{ReviewId: new(r.GetId()), Kind: new("claude"), Cwd: new(repo)}.Build()))
+	assertion.Equal(t, connect.CodeOf(err), connect.CodeInvalidArgument)
+
+	// The prompt must be at trunk().
+	assertion.MustNoError(t, os.MkdirAll(filepath.Join(repo, ".codexel"), 0755))
+	assertion.MustNoError(t, os.WriteFile(filepath.Join(repo, ".codexel/review.md"), []byte("Check the error handling.\n"), 0644))
+	_, err = startAgent()
+	assertion.Equal(t, connect.CodeOf(err), connect.CodeFailedPrecondition)
+	assertion.Len(t, received(), 0)
+
+	runCommand(t, repo, "jj", "commit", "--message=prompt")
+	runCommand(t, repo, "jj", "bookmark", "set", "master", "--revision=@-")
+	runCommand(t, repo, "jj", "git", "push", "--bookmark=master")
+	assertion.MustNoError(t, os.WriteFile(filepath.Join(repo, ".codexel/review.md"), []byte("Not committed\n"), 0644))
+	res, err := startAgent()
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, res.Msg.GetAgent().GetPaneId(), "w2:p1")
+	reqs := received()
+	assertion.Equal(t, methods(reqs), []string{"workspace.create", "agent.start", "agent.prompt", "workspace.list"})
+	assertion.Equal(t, reqs[0].Params["cwd"], any(repo))
+	prompt := reqs[2].Params["text"].(string)
+	assertion.Contains(t, prompt, "Check the error handling.")
+	assertion.NotContains(t, prompt, "Not committed")
+	assertion.Contains(t, prompt, r.GetId())
+	assertion.Contains(t, prompt, "add_review_comment")
+
+	_, err = h.Discard(t.Context(), connect.NewRequest(api.RequestDiscard_builder{ReviewId: new(r.GetId())}.Build()))
+	assertion.MustNoError(t, err)
+	_, err = startAgent()
+	assertion.Equal(t, connect.CodeOf(err), connect.CodeFailedPrecondition)
 }

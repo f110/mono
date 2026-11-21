@@ -33,7 +33,7 @@ func New(herdrClient *herdr.Client, conf *config.File, reviews *review.Store, pu
 	reviewHandler := NewReviewHandler(conf, reviews, herdrClient)
 	mux.Handle(api.NewReviewServiceHandler(reviewHandler))
 	mux.Handle("/mcp", NewMCPHandler(reviewHandler))
-	mux.Handle(api.NewAgentServiceHandler(NewAgentHandler(herdrClient, conf, claudeProjectsDir)))
+	mux.Handle(api.NewAgentServiceHandler(NewAgentHandler(herdrClient, conf, reviews, claudeProjectsDir)))
 	mux.Handle(api.NewRepositoryServiceHandler(NewRepositoryHandler(conf)))
 	mux.Handle(api.NewPullRequestServiceHandler(NewPullRequestHandler(conf, pullRequests)))
 	mux.Handle(api.NewSystemServiceHandler(NewSystemHandler(missingBinaries, issueURL)))
@@ -60,14 +60,16 @@ func newFrontendHandler(frontend fs.FS) http.Handler {
 type AgentHandler struct {
 	herdr       *herdr.Client
 	config      *config.File
+	reviews     *review.Store
 	projectsDir string
 }
 
 var _ api.AgentServiceHandler = (*AgentHandler)(nil)
 
-// NewAgentHandler returns the handler of the agents. projectsDir is the directory of the transcripts of Claude Code.
-func NewAgentHandler(c *herdr.Client, conf *config.File, projectsDir string) *AgentHandler {
-	return &AgentHandler{herdr: c, config: conf, projectsDir: projectsDir}
+// NewAgentHandler returns the handler of the agents. reviews is used to start the agent which reviews the review.
+// projectsDir is the directory of the transcripts of Claude Code.
+func NewAgentHandler(c *herdr.Client, conf *config.File, reviews *review.Store, projectsDir string) *AgentHandler {
+	return &AgentHandler{herdr: c, config: conf, reviews: reviews, projectsDir: projectsDir}
 }
 
 func (h *AgentHandler) List(ctx context.Context, _ *connect.Request[api.RequestListAgents]) (*connect.Response[api.ResponseListAgents], error) {
@@ -176,17 +178,31 @@ func (h *AgentHandler) Start(ctx context.Context, req *connect.Request[api.Reque
 	if req.Msg.GetKind() == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("kind is required"))
 	}
-	// The name of the agent must be unique in herdr.
 	name := req.Msg.GetName()
 	if name == "" {
-		name = req.Msg.GetKind() + "-" + strconv.FormatInt(time.Now().UnixNano(), 36)
+		name = agentName(req.Msg.GetKind())
+	}
+	cwd := req.Msg.GetCwd()
+	var prompt string
+	if req.Msg.GetReviewId() != "" {
+		if cwd != "" {
+			return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("cwd can't be given with review_id"))
+		}
+		var err error
+		cwd, prompt, err = reviewAgent(ctx, h.config, h.reviews, req.Msg.GetReviewId())
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	pane, cleanup, err := h.createPane(ctx, req.Msg.GetWorkspaceId(), req.Msg.GetCwd())
+	pane, cleanup, err := createPane(ctx, h.herdr, req.Msg.GetWorkspaceId(), cwd)
 	if err != nil {
 		return nil, toConnectError(err)
 	}
-	agent, err := h.startAgent(ctx, name, req.Msg.GetKind(), pane.PaneID, req.Msg.GetArgs())
+	agent, err := startAgent(ctx, h.herdr, name, req.Msg.GetKind(), pane.PaneID, req.Msg.GetArgs())
+	if err == nil && prompt != "" {
+		err = h.herdr.PromptAgent(ctx, agent.PaneID, prompt)
+	}
 	if err != nil {
 		if closeErr := cleanup(context.WithoutCancel(ctx)); closeErr != nil {
 			logger.Log.Info("Failed to close the pane", slog.String("pane_id", pane.PaneID), logger.E(closeErr))
@@ -269,26 +285,26 @@ func (h *AgentHandler) WatchTranscript(ctx context.Context, req *connect.Request
 
 // createPane creates the tab in the workspace, or the new workspace if workspaceID is empty. The server of herdr is
 // started if it is not running when the workspace is created. It returns the function to close what it created.
-func (h *AgentHandler) createPane(ctx context.Context, workspaceID, cwd string) (*herdr.Pane, func(context.Context) error, error) {
+func createPane(ctx context.Context, c *herdr.Client, workspaceID, cwd string) (*herdr.Pane, func(context.Context) error, error) {
 	if workspaceID != "" {
-		pane, err := h.herdr.CreateTab(ctx, workspaceID, cwd)
+		pane, err := c.CreateTab(ctx, workspaceID, cwd)
 		if err != nil {
 			return nil, nil, err
 		}
-		return pane, func(ctx context.Context) error { return h.herdr.CloseTab(ctx, pane.TabID) }, nil
+		return pane, func(ctx context.Context) error { return c.CloseTab(ctx, pane.TabID) }, nil
 	}
 
-	pane, err := h.herdr.CreateWorkspace(ctx, cwd)
+	pane, err := c.CreateWorkspace(ctx, cwd)
 	if herdr.IsUnavailable(err) {
-		if err := h.herdr.StartServer(ctx); err != nil {
+		if err := c.StartServer(ctx); err != nil {
 			return nil, nil, err
 		}
-		pane, err = h.herdr.CreateWorkspace(ctx, cwd)
+		pane, err = c.CreateWorkspace(ctx, cwd)
 	}
 	if err != nil {
 		return nil, nil, err
 	}
-	return pane, func(ctx context.Context) error { return h.herdr.CloseWorkspace(ctx, pane.WorkspaceID) }, nil
+	return pane, func(ctx context.Context) error { return c.CloseWorkspace(ctx, pane.WorkspaceID) }, nil
 }
 
 const (
@@ -299,10 +315,10 @@ const (
 
 // startAgent starts the agent in the pane. The shell of the new pane is not available for a while after the pane is
 // created, so it retries while herdr returns agent_pane_busy.
-func (h *AgentHandler) startAgent(ctx context.Context, name, kind, paneID string, args []string) (*herdr.Agent, error) {
+func startAgent(ctx context.Context, c *herdr.Client, name, kind, paneID string, args []string) (*herdr.Agent, error) {
 	deadline := time.Now().Add(startAgentRetryTimeout)
 	for {
-		agent, err := h.herdr.StartAgent(ctx, name, kind, paneID, args)
+		agent, err := c.StartAgent(ctx, name, kind, paneID, args)
 		if err == nil {
 			return agent, nil
 		}
@@ -315,6 +331,11 @@ func (h *AgentHandler) startAgent(ctx context.Context, name, kind, paneID string
 			return nil, xerrors.WithStack(ctx.Err())
 		}
 	}
+}
+
+// agentName returns the name of the new agent. The name of the agent must be unique in herdr.
+func agentName(kind string) string {
+	return kind + "-" + strconv.FormatInt(time.Now().UnixNano(), 36)
 }
 
 // listAgents returns the agents and the panes of them.

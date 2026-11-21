@@ -19,6 +19,12 @@ import (
 	"go.f110.dev/mono/go/jujutsu"
 )
 
+const (
+	// reviewPromptPath is the path of the prompt of the agent which reviews the changes. It is read at reviewPromptRevision.
+	reviewPromptPath     = ".codexel/review.md"
+	reviewPromptRevision = "trunk()"
+)
+
 type ReviewHandler struct {
 	config    *config.File
 	store     *review.Store
@@ -270,6 +276,47 @@ func (h *ReviewHandler) StartNextRound(ctx context.Context, req *connect.Request
 		return nil, toReviewError(err)
 	}
 	return connect.NewResponse(api.ResponseStartNextRound_builder{Review: toReview(r)}.Build()), nil
+}
+
+// reviewAgent returns the working directory and the prompt of the agent which reviews the open review and comments on
+// it by MCP. The prompt is read from trunk() so that the changes under review don't change it.
+func reviewAgent(ctx context.Context, conf *config.File, store *review.Store, reviewID string) (string, string, error) {
+	r, err := store.Get(reviewID)
+	if err != nil {
+		return "", "", toReviewError(err)
+	}
+	if r.State != review.StateOpen {
+		return "", "", toReviewError(xerrors.WithMessagef(review.ErrInvalidState, "the review is %s", r.State))
+	}
+	repo, err := openedRepository(conf, r.Repository)
+	if err != nil {
+		return "", "", err
+	}
+	instructions, err := repo.File(ctx, reviewPromptRevision, reviewPromptPath)
+	if jjErr, ok := errors.AsType[*jujutsu.Error](err); ok {
+		return "", "", connect.NewError(connect.CodeFailedPrecondition, xerrors.Newf("failed to read %s at %s: %s", reviewPromptPath, reviewPromptRevision, jjErr.Error()))
+	} else if err != nil {
+		return "", "", connect.NewError(connect.CodeInternal, err)
+	}
+	return r.Repository, reviewerPrompt(r, string(instructions)), nil
+}
+
+// reviewerPrompt is the prompt to the agent which reviews the changes of the latest round. instructions are the
+// instructions of the repository.
+func reviewerPrompt(r *review.Review, instructions string) string {
+	var b strings.Builder
+	b.WriteString("You are the reviewer of the code review " + r.ID + " in Codexel. Review the changes below and comment on them by the " +
+		"add_review_comment tool of the codexel MCP server. Don't change the files and the commits. Don't reply to or resolve the comments, " +
+		"and don't start the next round. The user decides which comments are passed to the agent which created the changes.\n\n")
+	b.WriteString("The changes (change ID: commit ID):\n")
+	for _, v := range r.Changes {
+		if commit, ok := r.Commit(r.LatestRound(), v); ok {
+			b.WriteString("- " + v + ": " + commit + "\n")
+		}
+	}
+	b.WriteString("\nReview them by the following instructions.\n\n")
+	b.WriteString(instructions)
+	return b.String()
 }
 
 func (h *ReviewHandler) SetViewed(_ context.Context, req *connect.Request[api.RequestSetViewed]) (*connect.Response[api.ResponseSetViewed], error) {

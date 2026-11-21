@@ -348,6 +348,15 @@ export declare type RequestStartAgent = Message<"mono.codexel.RequestStartAgent"
    * @generated from field: repeated string args = 5;
    */
   args: string[];
+
+  /**
+   * review_id is the open review which the agent reviews and comments on by MCP. The agent is prompted by
+   * .codexel/review.md at trunk() of the repository and works at the root of the workspace of the repository, so cwd
+   * must be empty.
+   *
+   * @generated from field: string review_id = 6;
+   */
+  reviewId: string;
 };
 
 /**
@@ -4205,7 +4214,8 @@ export declare const AgentService: GenService<{
   },
   /**
    * Start creates a new tab in the workspace and starts the agent in it. If workspace_id is empty, it creates a new
-   * workspace and starts the agent in it. The server of herdr is started if it is not running.
+   * workspace and starts the agent in it. The server of herdr is started if it is not running. If review_id is given,
+   * the agent reviews the review.
    *
    * @generated from rpc mono.codexel.AgentService.Start
    */

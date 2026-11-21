@@ -26,6 +26,7 @@ import { ChangedFiles } from '../components/ChangedFiles.tsx'
 import { DiffControls } from '../components/DiffControls.tsx'
 import { FileDiffView, type LineAnnotation } from '../components/FileDiffView.tsx'
 import { CommentComposer, CommentThread } from '../components/ReviewComments.tsx'
+import { StartAgentDialog } from '../components/StartAgentDialog.tsx'
 import { DiffSide, ReviewService, ReviewState, type Review, type ReviewComment } from '../connect/codexel_pb.js'
 import { useDiffNavigation } from '../hooks/useDiffNavigation.ts'
 import { lineSide, type LineSide } from '../lib/diffLines.ts'
@@ -289,6 +290,7 @@ export const ReviewPage = () => {
   const [selection, setSelection] = useState<Selection>()
   const [focus, setFocus] = useState<LinePosition>()
   const [discardOpen, setDiscardOpen] = useState(false)
+  const [agentOpen, setAgentOpen] = useState(false)
   // waitingClosedRound is the round in which the dialog waiting for the agent is closed. The dialog is shown again when
   // the review is finished in the next round.
   const [waitingClosedRound, setWaitingClosedRound] = useState<number>()
@@ -456,6 +458,9 @@ export const ReviewPage = () => {
           ))}
         </TextField>
         <DiffControls navigation={diffNavigation} />
+        <Button variant="outlined" disabled={review.state !== ReviewState.OPEN} onClick={() => setAgentOpen(true)}>
+          Start review agent
+        </Button>
         {/* Finish approves the review if all comments are resolved. */}
         <Button
           variant="contained"
@@ -523,6 +528,13 @@ export const ReviewPage = () => {
           ),
         )}
       </Box>
+
+      <StartAgentDialog
+        open={agentOpen}
+        onClose={() => setAgentOpen(false)}
+        onStarted={(a) => setMessage({ text: `Started ${a.kind} (${a.workspaceLabel || a.paneId}) to review the changes`, error: false })}
+        reviewId={reviewId}
+      />
 
       <Dialog open={discardOpen} onClose={() => setDiscardOpen(false)}>
         <DialogTitle>Discard the review?</DialogTitle>

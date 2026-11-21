@@ -1850,6 +1850,7 @@ type RequestStartAgent struct {
 	xxx_hidden_Kind        *string                `protobuf:"bytes,3,opt,name=kind"`
 	xxx_hidden_Name        *string                `protobuf:"bytes,4,opt,name=name"`
 	xxx_hidden_Args        []string               `protobuf:"bytes,5,rep,name=args"`
+	xxx_hidden_ReviewId    *string                `protobuf:"bytes,6,opt,name=review_id,json=reviewId"`
 	XXX_raceDetectHookData protoimpl.RaceDetectHookData
 	XXX_presence           [1]uint32
 	unknownFields          protoimpl.UnknownFields
@@ -1928,28 +1929,43 @@ func (x *RequestStartAgent) GetArgs() []string {
 	return nil
 }
 
+func (x *RequestStartAgent) GetReviewId() string {
+	if x != nil {
+		if x.xxx_hidden_ReviewId != nil {
+			return *x.xxx_hidden_ReviewId
+		}
+		return ""
+	}
+	return ""
+}
+
 func (x *RequestStartAgent) SetWorkspaceId(v string) {
 	x.xxx_hidden_WorkspaceId = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 5)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 6)
 }
 
 func (x *RequestStartAgent) SetCwd(v string) {
 	x.xxx_hidden_Cwd = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 5)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 6)
 }
 
 func (x *RequestStartAgent) SetKind(v string) {
 	x.xxx_hidden_Kind = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 5)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 6)
 }
 
 func (x *RequestStartAgent) SetName(v string) {
 	x.xxx_hidden_Name = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 5)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 6)
 }
 
 func (x *RequestStartAgent) SetArgs(v []string) {
 	x.xxx_hidden_Args = v
+}
+
+func (x *RequestStartAgent) SetReviewId(v string) {
+	x.xxx_hidden_ReviewId = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 6)
 }
 
 func (x *RequestStartAgent) HasWorkspaceId() bool {
@@ -1980,6 +1996,13 @@ func (x *RequestStartAgent) HasName() bool {
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
 }
 
+func (x *RequestStartAgent) HasReviewId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 5)
+}
+
 func (x *RequestStartAgent) ClearWorkspaceId() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
 	x.xxx_hidden_WorkspaceId = nil
@@ -2000,6 +2023,11 @@ func (x *RequestStartAgent) ClearName() {
 	x.xxx_hidden_Name = nil
 }
 
+func (x *RequestStartAgent) ClearReviewId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 5)
+	x.xxx_hidden_ReviewId = nil
+}
+
 type RequestStartAgent_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
@@ -2008,6 +2036,7 @@ type RequestStartAgent_builder struct {
 	Kind        *string
 	Name        *string
 	Args        []string
+	ReviewId    *string
 }
 
 func (b0 RequestStartAgent_builder) Build() *RequestStartAgent {
@@ -2015,22 +2044,26 @@ func (b0 RequestStartAgent_builder) Build() *RequestStartAgent {
 	b, x := &b0, m0
 	_, _ = b, x
 	if b.WorkspaceId != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 5)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 6)
 		x.xxx_hidden_WorkspaceId = b.WorkspaceId
 	}
 	if b.Cwd != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 5)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 6)
 		x.xxx_hidden_Cwd = b.Cwd
 	}
 	if b.Kind != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 5)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 6)
 		x.xxx_hidden_Kind = b.Kind
 	}
 	if b.Name != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 5)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 6)
 		x.xxx_hidden_Name = b.Name
 	}
 	x.xxx_hidden_Args = b.Args
+	if b.ReviewId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 6)
+		x.xxx_hidden_ReviewId = b.ReviewId
+	}
 	return m0
 }
 
@@ -18537,13 +18570,14 @@ const file_proto_codexel_codexel_proto_rawDesc = "" +
 	"\x16ResponseListWorkspaces\x127\n" +
 	"\n" +
 	"workspaces\x18\x01 \x03(\v2\x17.mono.codexel.WorkspaceR\n" +
-	"workspaces\"\x84\x01\n" +
+	"workspaces\"\xa1\x01\n" +
 	"\x11RequestStartAgent\x12!\n" +
 	"\fworkspace_id\x18\x01 \x01(\tR\vworkspaceId\x12\x10\n" +
 	"\x03cwd\x18\x02 \x01(\tR\x03cwd\x12\x12\n" +
 	"\x04kind\x18\x03 \x01(\tR\x04kind\x12\x12\n" +
 	"\x04name\x18\x04 \x01(\tR\x04name\x12\x12\n" +
-	"\x04args\x18\x05 \x03(\tR\x04args\"?\n" +
+	"\x04args\x18\x05 \x03(\tR\x04args\x12\x1b\n" +
+	"\treview_id\x18\x06 \x01(\tR\breviewId\"?\n" +
 	"\x12ResponseStartAgent\x12)\n" +
 	"\x05agent\x18\x01 \x01(\v2\x13.mono.codexel.AgentR\x05agent\"+\n" +
 	"\x10RequestStopAgent\x12\x17\n" +
