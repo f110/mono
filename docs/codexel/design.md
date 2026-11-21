@@ -77,6 +77,9 @@ herdr はソケット (`$HERDR_SOCKET_PATH`、既定 `~/.config/herdr/herdr.sock
 - `agent_session.agent` / `agent_session.value`: エージェントの種類とセッション ID。`Agent` / `Agent-Session` Trailer と突き合わせるキー (§6)
 - `agent_status` (idle / working / blocked / done / unknown), `cwd`, `pane_id`, `workspace_id`, `tab_id`, `terminal_title_stripped`
 
+エージェント画面の起動ダイアログでは、作業ディレクトリの候補として Codexel で開いているリポジトリ (§4.1) のパスを表示する (#200)。
+候補にないディレクトリも入力でき、空なら herdr の既定になる。
+
 ### 3.2 リポジトリとの対応
 
 エージェントの `cwd` から `jj workspace root` を引き、開いているリポジトリと対応付ける。リポジトリ画面にはそのリポジトリで動いている

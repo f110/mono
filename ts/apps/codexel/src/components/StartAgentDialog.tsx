@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQuery } from '@connectrpc/connect-query'
-import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Stack, TextField } from '@mui/material'
-import { AgentService, type Agent } from '../connect/codexel_pb.js'
+import { Alert, Autocomplete, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Stack, TextField } from '@mui/material'
+import { AgentService, RepositoryService, type Agent } from '../connect/codexel_pb.js'
 
 // StartAgentDialog starts the agent. If reviewId is given, the agent reviews the review by the prompt in the repository,
 // so the working directory is not asked.
@@ -17,6 +17,7 @@ export const StartAgentDialog = ({
   reviewId?: string
 }) => {
   const { data } = useQuery(AgentService.method.listWorkspaces, {}, { enabled: open })
+  const repositories = useQuery(RepositoryService.method.list, {}, { enabled: open && reviewId === undefined })
   const start = useMutation(AgentService.method.start)
   const [workspaceId, setWorkspaceId] = useState('')
   const [kind, setKind] = useState('claude')
@@ -71,7 +72,15 @@ export const StartAgentDialog = ({
             helperText="The kind of the agent supported by herdr (e.g. claude, codex)"
           />
           {reviewId === undefined && (
-            <TextField label="Working directory" value={cwd} onChange={(e) => setCwd(e.target.value)} helperText="The default of herdr if empty" />
+            <Autocomplete
+              freeSolo
+              options={repositories.data?.repositories.map((r) => r.path) ?? []}
+              inputValue={cwd}
+              onInputChange={(_, v) => setCwd(v)}
+              renderInput={(params) => (
+                <TextField {...params} label="Working directory" helperText="The opened repositories are suggested. The default of herdr if empty" />
+              )}
+            />
           )}
         </Stack>
       </DialogContent>
