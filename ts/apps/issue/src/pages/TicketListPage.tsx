@@ -2,11 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { timestampDate } from '@bufbuild/protobuf/wkt'
 import { useQuery } from '@connectrpc/connect-query'
 import { skipToken } from '@tanstack/react-query'
-import {
-  Link as RouterLink,
-  useNavigate,
-  useSearch,
-} from '@tanstack/react-router'
+import { Link as RouterLink, useNavigate, useSearch } from '@tanstack/react-router'
 import {
   Alert,
   Box,
@@ -36,7 +32,9 @@ import { useMasters } from '../hooks/useMasters.ts'
 import { priorityLabels, statusColors, statusLabels, statuses, typeLabels } from '../labels.ts'
 import { listShortcuts, useShortcuts } from '../shortcuts.ts'
 
-const defaultStatuses = [TicketStatus.OPEN, TicketStatus.NEED_INVESTIGATION, TicketStatus.IN_PROGRESS, TicketStatus.IN_REVIEW].map((s) => TicketStatus[s])
+const defaultStatuses = [TicketStatus.OPEN, TicketStatus.NEED_INVESTIGATION, TicketStatus.IN_PROGRESS, TicketStatus.IN_REVIEW].map(
+  (s) => TicketStatus[s],
+)
 const statusLabelByName = Object.fromEntries(statuses.map((s) => [TicketStatus[s], statusLabels[s]]))
 const defaultOrder = 'last_activity_at desc'
 const pageSize = 100
@@ -91,8 +89,7 @@ export const TicketListPage = () => {
   )
 
   const sortBy = (field: string) => {
-    const direction =
-      field === orderField && orderDirection !== 'desc' ? ' desc' : ''
+    const direction = field === orderField && orderDirection !== 'desc' ? ' desc' : ''
     void navigate({
       search: (prev) => ({ ...prev, order_by: field + direction, pages: undefined }),
     })
@@ -138,12 +135,7 @@ export const TicketListPage = () => {
 
   return (
     <Stack spacing={2}>
-      <Stack
-        direction="row"
-        spacing={2}
-        useFlexGap
-        sx={{ alignItems: 'center', flexWrap: 'wrap' }}
-      >
+      <Stack direction="row" spacing={2} useFlexGap sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
         <TextField
           select
           size="small"
@@ -186,9 +178,7 @@ export const TicketListPage = () => {
               multiple: true,
               displayEmpty: true,
               renderValue: (selected) =>
-                (selected as string[]).length === 0
-                  ? 'すべて'
-                  : (selected as string[]).map((s) => statusLabelByName[s]).join(', '),
+                (selected as string[]).length === 0 ? 'すべて' : (selected as string[]).map((s) => statusLabelByName[s]).join(', '),
             },
             inputLabel: { shrink: true },
           }}
@@ -228,9 +218,7 @@ export const TicketListPage = () => {
         </Stack>
       )}
       <TicketTable tickets={data?.tickets ?? []} cursor={cursor} orderField={orderField} orderDirection={orderDirection} onSort={sortBy} />
-      {data && data.tickets.length === 0 && (
-        <Typography color="text.secondary">チケットはありません</Typography>
-      )}
+      {data && data.tickets.length === 0 && <Typography color="text.secondary">チケットはありません</Typography>}
       <TablePagination
         component="div"
         count={data && !data.nextPageToken ? pages.length * pageSize + data.tickets.length : -1}
@@ -310,9 +298,7 @@ const TicketTable = ({
               <TableCell sx={wideOnlySx}>{t.type ? typeLabels[t.type] : ''}</TableCell>
               <TableCell sx={wideOnlySx}>{t.priority ? priorityLabels[t.priority] : ''}</TableCell>
               <TableCell sx={wideOnlySx}>{t.assigneeId ? actorName(t.assigneeId) : ''}</TableCell>
-              <TableCell sx={wideOnlySx}>
-                {t.createdAt && dayjs(timestampDate(t.createdAt)).format('YYYY-MM-DD')}
-              </TableCell>
+              <TableCell sx={wideOnlySx}>{t.createdAt && dayjs(timestampDate(t.createdAt)).format('YYYY-MM-DD')}</TableCell>
               <TableCell sx={wideOnlySx}>
                 <RelativeTime time={t.lastActivityAt} />
               </TableCell>

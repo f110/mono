@@ -3,10 +3,7 @@ import { useQuery } from '@connectrpc/connect-query'
 import { BFF, type GitDataRepository } from '../connect/bff_pb'
 
 export function useListGitData(): GitDataRepository[] {
-  const res = useQuery(
-    BFF.method.listGitData,
-    create(BFF.method.listGitData.input),
-  )
+  const res = useQuery(BFF.method.listGitData, create(BFF.method.listGitData.input))
   if (!res.data) {
     return []
   }

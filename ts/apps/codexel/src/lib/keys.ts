@@ -10,7 +10,8 @@ export const pressKey = (key: string) => {
 
 // isInput reports whether the element is the input: input, textarea, select or the contenteditable element.
 export const isInput = (target: EventTarget | null): target is HTMLElement =>
-  target instanceof HTMLElement && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)
+  target instanceof HTMLElement &&
+  (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)
 
 // ignoreKey reports whether the shortcut key should be ignored: the key while the IME is composing, the key already
 // handled, the key for the input, the key handled by the focused element, the key with the modifier and the key while any

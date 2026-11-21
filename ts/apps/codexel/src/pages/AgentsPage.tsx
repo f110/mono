@@ -74,15 +74,17 @@ const StatusChip = ({ status }: { status: AgentStatus }) => (
 
 const groupByStatus = (agents: Agent[]): [AgentStatus, Agent[]][] => {
   const normalize = (s: AgentStatus) => (statusOrder.includes(s) ? s : AgentStatus.UNKNOWN)
-  return statusOrder
-    .map((s): [AgentStatus, Agent[]] => [s, agents.filter((a) => normalize(a.status) === s)])
-    .filter(([, list]) => list.length > 0)
+  return statusOrder.map((s): [AgentStatus, Agent[]] => [s, agents.filter((a) => normalize(a.status) === s)]).filter(([, list]) => list.length > 0)
 }
 
 // AgentCommits lists the commits created by the session of the agent and shows the description and the diff of the
 // selected one. The list is read again every time the repository changes.
 const AgentCommits = ({ agent }: { agent: Agent }) => {
-  const { data, error, refetch } = useQuery(RepositoryService.method.listAgentCommits, { cwd: agent.cwd, kind: agent.kind, sessionId: agent.sessionId })
+  const { data, error, refetch } = useQuery(RepositoryService.method.listAgentCommits, {
+    cwd: agent.cwd,
+    kind: agent.kind,
+    sessionId: agent.sessionId,
+  })
   const path = data?.repository?.path
   const operation = useOperation(path)
   const approved = useApprovedCommits(path, operation)

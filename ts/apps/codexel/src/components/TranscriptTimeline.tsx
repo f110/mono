@@ -124,8 +124,7 @@ const callsSummary = (recs: Rec[]) => {
   return [...counts].map(([name, n]) => (n > 1 ? `${name} ×${n}` : name)).join(', ')
 }
 
-const Fold = ({ open }: { open: boolean }) =>
-  open ? <ExpandMoreIcon sx={{ fontSize: 16 }} /> : <ChevronRightIcon sx={{ fontSize: 16 }} />
+const Fold = ({ open }: { open: boolean }) => (open ? <ExpandMoreIcon sx={{ fontSize: 16 }} /> : <ChevronRightIcon sx={{ fontSize: 16 }} />)
 
 const Overview = ({ recs, selected, onSelect }: { recs: Rec[]; selected?: number; onSelect: (rec: Rec) => void }) => {
   if (recs.length === 0) {
@@ -223,7 +222,15 @@ const Section = ({ title, children }: { title: string; children: ReactNode }) =>
 const Pre = ({ text, error }: { text: string; error?: boolean }) => (
   <Box
     component="pre"
-    sx={{ m: 0, p: 1, fontSize: 12, whiteSpace: 'pre-wrap', wordBreak: 'break-all', bgcolor: 'action.hover', color: error ? 'error.main' : undefined }}
+    sx={{
+      m: 0,
+      p: 1,
+      fontSize: 12,
+      whiteSpace: 'pre-wrap',
+      wordBreak: 'break-all',
+      bgcolor: 'action.hover',
+      color: error ? 'error.main' : undefined,
+    }}
   >
     {text}
   </Box>
@@ -331,7 +338,9 @@ export const TranscriptTimeline = ({ entries }: { entries: TranscriptEntry[] }) 
 
   const selectFromOverview = (rec: Rec) => {
     setSelected(rec.key)
-    const turn = turns.find((t) => t.prompt?.key === rec.key || t.items.some((i) => (i.type === 'record' ? i.rec.key === rec.key : i.recs.includes(rec))))
+    const turn = turns.find(
+      (t) => t.prompt?.key === rec.key || t.items.some((i) => (i.type === 'record' ? i.rec.key === rec.key : i.recs.includes(rec))),
+    )
     if (turn) {
       setFoldedTurns((s) => (s.has(turn.index) ? toggle(s, turn.index) : s))
       const group = turn.items.find((i) => i.type === 'calls' && i.recs.includes(rec))

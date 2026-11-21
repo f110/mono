@@ -22,8 +22,7 @@ import type { GithubEvent } from '../../model/msg_pb'
 import { useListGithubEvents } from '../../hooks/useListGithubEvents'
 import { stateColor } from './stateColor'
 
-const formatTime = (ts?: GithubEvent['createdAt']): string =>
-  ts ? dayjs(timestampDate(ts)).format('YYYY-MM-DD HH:mm:ss') : ''
+const formatTime = (ts?: GithubEvent['createdAt']): string => (ts ? dayjs(timestampDate(ts)).format('YYYY-MM-DD HH:mm:ss') : '')
 
 export const EventsPage: React.FC = () => {
   const events = useListGithubEvents()
@@ -56,22 +55,14 @@ export const EventsPage: React.FC = () => {
                   {events.map((ev) => (
                     <StyledTableRow key={ev.id}>
                       <StyledTableCell>
-                        <Link
-                          to="/events/$eventId"
-                          params={{ eventId: String(ev.id) }}
-                        >
+                        <Link to="/events/$eventId" params={{ eventId: String(ev.id) }}>
                           {ev.id}
                         </Link>
                       </StyledTableCell>
                       <StyledTableCell>
                         {ev.repository ? (
                           ev.repositoryUrl ? (
-                            <MuiLink
-                              href={ev.repositoryUrl}
-                              target="_blank"
-                              rel="noopener"
-                              underline="hover"
-                            >
+                            <MuiLink href={ev.repositoryUrl} target="_blank" rel="noopener" underline="hover">
                               {ev.repository}
                             </MuiLink>
                           ) : (
@@ -85,11 +76,7 @@ export const EventsPage: React.FC = () => {
                       <StyledTableCell>{ev.action || '—'}</StyledTableCell>
                       <StyledTableCell>
                         <Tooltip title={ev.lastError || ''} placement="top" arrow>
-                          <Chip
-                            label={ev.state}
-                            size="small"
-                            color={stateColor[ev.state] ?? 'default'}
-                          />
+                          <Chip label={ev.state} size="small" color={stateColor[ev.state] ?? 'default'} />
                         </Tooltip>
                       </StyledTableCell>
                       <StyledTableCell>

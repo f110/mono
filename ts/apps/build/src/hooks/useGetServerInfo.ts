@@ -34,10 +34,7 @@ export interface ServerInfo {
 }
 
 export function useGetServerInfo(): ServerInfo {
-  const res = useQuery(
-    BFF.method.getServerInfo,
-    create(BFF.method.getServerInfo.input),
-  )
+  const res = useQuery(BFF.method.getServerInfo, create(BFF.method.getServerInfo.input))
   if (!res.data) {
     return { supportedBazelVersions: [], schemaVersion: '', commitSha: '' }
   }
@@ -46,9 +43,7 @@ export function useGetServerInfo(): ServerInfo {
     supportedBazelVersions: res.data.supportedBazelVersions,
     schemaVersion: res.data.schemaVersion,
     commitSha: res.data.commitSha,
-    commitTime: res.data.commitTime
-      ? timestampDate(res.data.commitTime)
-      : undefined,
+    commitTime: res.data.commitTime ? timestampDate(res.data.commitTime) : undefined,
     config: c
       ? {
           dev: c.dev,

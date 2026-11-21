@@ -54,7 +54,14 @@ export const EditHistory = ({
 
   return (
     <>
-      <Link component="button" variant="body2" color="inherit" underline="hover" sx={{ verticalAlign: 'baseline' }} onClick={(e) => setAnchor(e.currentTarget)}>
+      <Link
+        component="button"
+        variant="body2"
+        color="inherit"
+        underline="hover"
+        sx={{ verticalAlign: 'baseline' }}
+        onClick={(e) => setAnchor(e.currentTarget)}
+      >
         （編集済み）
       </Link>
       <Menu anchorEl={anchor} open={anchor !== null} onClose={() => setAnchor(null)}>

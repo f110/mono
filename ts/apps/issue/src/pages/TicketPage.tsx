@@ -2,20 +2,7 @@ import { type ReactNode, type Ref, useRef, useState } from 'react'
 import { useMutation, useQuery } from '@connectrpc/connect-query'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link as RouterLink, useNavigate, useParams } from '@tanstack/react-router'
-import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  Divider,
-  IconButton,
-  Link,
-  MenuItem,
-  Stack,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@mui/material'
+import { Alert, Box, Button, Chip, Divider, IconButton, Link, MenuItem, Stack, TextField, Tooltip, Typography } from '@mui/material'
 import EditIcon from '@mui/icons-material/Edit'
 import {
   type Backlink,
@@ -138,7 +125,10 @@ export const TicketPage = () => {
         <Stack direction="row" spacing={1} useFlexGap sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
           <Chip label={statusLabels[ticket.status]} sx={statusColors[ticket.status]} />
           <Typography variant="h5">
-            {ticket.title} <Typography component="span" variant="h5" color="text.secondary">#{ticket.number}</Typography>
+            {ticket.title}{' '}
+            <Typography component="span" variant="h5" color="text.secondary">
+              #{ticket.number}
+            </Typography>
           </Typography>
           <CopyTicketNumberButton number={ticket.number} />
           <CopyTicketURLButton number={ticket.number} />
@@ -349,8 +339,7 @@ const Relations = ({ number, relations }: { number: number; relations: RelatedTi
         return (
           <Stack key={`${r.from}-${r.type}-${r.to}`} direction="row" spacing={1} sx={{ alignItems: 'center' }}>
             <Typography variant="body2" sx={{ flex: 1 }}>
-              {relationLabels[r.type][forward ? 0 : 1]}{' '}
-              <TicketStatusIcon status={status} />{' '}
+              {relationLabels[r.type][forward ? 0 : 1]} <TicketStatusIcon status={status} />{' '}
               <Tooltip title={title}>
                 <span>
                   <TicketLink number={other} />
@@ -590,7 +579,6 @@ const CommentCard = ({ comment, mentions, reporter }: { comment: Comment; mentio
     </PostCard>
   )
 }
-
 
 const CommentForm = ({ number, inputRef }: { number: number; inputRef: Ref<HTMLTextAreaElement> }) => {
   const invalidate = useInvalidate()

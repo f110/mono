@@ -1,11 +1,4 @@
-import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-} from '@mui/material'
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material'
 import * as React from 'react'
 import { useState } from 'react'
 import type { Repository } from '../model/msg_pb'
@@ -15,9 +8,7 @@ export function useRepositoryDeleteConfirmDialog(): {
   openConfirmDialog: (repository: Repository) => Promise<number>
 } {
   const [open, setOpen] = useState<boolean>(false)
-  const [repository, setRepository] = useState<Repository | undefined>(
-    undefined,
-  )
+  const [repository, setRepository] = useState<Repository | undefined>(undefined)
   const [resolve, setResolve] = useState<(id: number) => void>()
 
   const onClose = () => {
@@ -42,15 +33,8 @@ export function useRepositoryDeleteConfirmDialog(): {
   const ConfirmDialog: React.FC = () => {
     return (
       repository && (
-        <Dialog
-          open={open}
-          onClose={onClose}
-          aria-labelledby="alert-dialog-title"
-          aria-describedby="alert-dialog-description"
-        >
-          <DialogTitle id="alert-dialog-title">
-            Are you sure you want to delete the repository?
-          </DialogTitle>
+        <Dialog open={open} onClose={onClose} aria-labelledby="alert-dialog-title" aria-describedby="alert-dialog-description">
+          <DialogTitle id="alert-dialog-title">Are you sure you want to delete the repository?</DialogTitle>
           <DialogContent>
             <DialogContentText id="alert-dialog-description">
               {`Are you sure you want to delete the repository "${repository.name}"?`}

@@ -40,13 +40,7 @@ export const Markdown = ({ text }: { text: string }) => (
       pre: ({ children }) =>
         isValidElement<{ className?: string }>(children) && children.props.className === 'language-mermaid' ? children : <pre>{children}</pre>,
       code: ({ className, children }) =>
-        className === 'language-mermaid' ? (
-          <Mermaid code={String(children).replace(/\n$/, '')} />
-        ) : (
-          <code className={className}>
-            {children}
-          </code>
-        ),
+        className === 'language-mermaid' ? <Mermaid code={String(children).replace(/\n$/, '')} /> : <code className={className}>{children}</code>,
     }}
   >
     {text}

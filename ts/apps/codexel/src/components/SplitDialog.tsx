@@ -65,7 +65,11 @@ export const SplitDialog = ({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" disabled={selected.size === 0 || selected.size === files.length} onClick={() => onSubmit([...selected], description)}>
+        <Button
+          variant="contained"
+          disabled={selected.size === 0 || selected.size === files.length}
+          onClick={() => onSubmit([...selected], description)}
+        >
           Split
         </Button>
       </DialogActions>

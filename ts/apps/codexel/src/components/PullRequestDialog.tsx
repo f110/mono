@@ -1,6 +1,21 @@
 import { useState, type KeyboardEvent } from 'react'
 import { useMutation, useQuery } from '@connectrpc/connect-query'
-import { Alert, Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Link, MenuItem, Stack, TextField, Typography } from '@mui/material'
+import {
+  Alert,
+  Box,
+  Button,
+  Checkbox,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControlLabel,
+  Link,
+  MenuItem,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material'
 import { PullRequestAction, PullRequestService, type Commit } from '../connect/codexel_pb.js'
 
 const actionLabel: Record<PullRequestAction, string> = {
@@ -110,7 +125,11 @@ export const PullRequestDialog = ({
             }
             label={<Typography variant="body2">Comment the link to the changes on the updated pull requests except drafts</Typography>}
           />
-          {submit.error && <Alert severity="error" sx={{ whiteSpace: 'pre-wrap' }}>{submit.error.message}</Alert>}
+          {submit.error && (
+            <Alert severity="error" sx={{ whiteSpace: 'pre-wrap' }}>
+              {submit.error.message}
+            </Alert>
+          )}
           {submit.data && (
             <Box>
               {submit.data.pushed.map((id) => (

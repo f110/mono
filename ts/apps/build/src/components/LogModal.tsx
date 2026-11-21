@@ -34,12 +34,7 @@ export const LogModal: React.FC<Props> = ({ open, onClose, taskId }) => {
   }
 
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      aria-labelledby="modal-modal-title"
-      aria-describedby="modal-modal-description"
-    >
+    <Modal open={open} onClose={onClose} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
       <Container sx={modalStyle} maxWidth="lg">
         <Box sx={{ width: '100%', height: '100%' }}>
           <Stack spacing={2} sx={{ height: '100%' }}>

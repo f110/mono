@@ -74,7 +74,7 @@ const sidebarKey = 'codexel.files.sidebar'
 
 type View = 'log' | 'bookmarks' | 'oplog' | 'evolog' | 'files' | 'workspaces'
 
-type Editing ={ kind: 'describe'; commit: Commit; initial: string } | { kind: 'commit'; initial: string }
+type Editing = { kind: 'describe'; commit: Commit; initial: string } | { kind: 'commit'; initial: string }
 
 // Mode is the inline mode to pick the destination by moving the cursor. The sources are fixed when it starts.
 type Mode =
@@ -173,7 +173,11 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   const { data, error, refetch } = useQuery(RepositoryService.method.log, { path, revset })
   const { data: bookmarkData, refetch: refetchBookmarks } = useQuery(RepositoryService.method.listBookmarks, { path })
   const bookmarks = bookmarkData?.bookmarks ?? []
-  const { data: opData, refetch: refetchOperations } = useQuery(RepositoryService.method.listOperations, { path, limit: operationLimit }, { enabled: view === 'oplog' })
+  const { data: opData, refetch: refetchOperations } = useQuery(
+    RepositoryService.method.listOperations,
+    { path, limit: operationLimit },
+    { enabled: view === 'oplog' },
+  )
   const operations = opData?.operations ?? []
   const { data: evologData } = useQuery(
     RepositoryService.method.evolog,
@@ -237,12 +241,15 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
     }
   }, [operation, view, sidebar, refetch, refetchBookmarks, refetchOperations, refetchWorkspaces, refetchWorkingCopy])
 
-  const selectIndex = useCallback((i: number) => {
-    const c = commits[Math.max(0, Math.min(i, commits.length - 1))]
-    if (c) {
-      setSelectedKey(revisionKey(c))
-    }
-  }, [commits])
+  const selectIndex = useCallback(
+    (i: number) => {
+      const c = commits[Math.max(0, Math.min(i, commits.length - 1))]
+      if (c) {
+        setSelectedKey(revisionKey(c))
+      }
+    },
+    [commits],
+  )
 
   const clearChecked = useCallback(() => {
     setChecked(new Set())
@@ -271,7 +278,10 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   )
 
   // targets returns the checked revisions, or the selected one if nothing is checked.
-  const targets = useCallback((): Commit[] => (checkedCommits.length > 0 ? checkedCommits : selectedCommit ? [selectedCommit] : []), [checkedCommits, selectedCommit])
+  const targets = useCallback(
+    (): Commit[] => (checkedCommits.length > 0 ? checkedCommits : selectedCommit ? [selectedCommit] : []),
+    [checkedCommits, selectedCommit],
+  )
 
   const newRevision = useCallback(
     (cs: Commit[]) => run(() => repositoryClient.new({ path, revisions: cs.map((c) => c.commitId) }), true),
@@ -316,7 +326,8 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   const deleteBookmark = useCallback((b: Bookmark) => run(() => repositoryClient.deleteBookmark({ path, name: b.name }), false), [path, run])
   const forgetBookmark = useCallback((b: Bookmark) => run(() => repositoryClient.forgetBookmark({ path, name: b.name }), false), [path, run])
   const toggleTracking = useCallback(
-    (b: Bookmark) => run(() => (b.tracked ? repositoryClient.untrackBookmark : repositoryClient.trackBookmark)({ path, name: b.name, remote: b.remote }), false),
+    (b: Bookmark) =>
+      run(() => (b.tracked ? repositoryClient.untrackBookmark : repositoryClient.trackBookmark)({ path, name: b.name, remote: b.remote }), false),
     [path, run],
   )
   const revertOperation = useCallback((id: string) => run(() => repositoryClient.revertOperation({ path, id }), false), [path, run])
@@ -412,7 +423,17 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
         return
       }
       const src = commits[selected]
-      run(() => repositoryClient.rebase({ path, revisions: [src.commitId], source: RebaseSource.REVISIONS, destinations: [s.destination], target: s.target }), false)
+      run(
+        () =>
+          repositoryClient.rebase({
+            path,
+            revisions: [src.commitId],
+            source: RebaseSource.REVISIONS,
+            destinations: [s.destination],
+            target: s.target,
+          }),
+        false,
+      )
     },
     [commits, selected, path, run],
   )
@@ -788,7 +809,13 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
     revisionMenuItem('Review', 'v', false, () => startReview(targets())),
     revisionMenuItem('Create the pull request', 'P', false, () => setSubmittingPR(targets())),
     <Divider key="d4" />,
-    revisionMenuItem('Abandon', undefined, targets().some((t) => t.immutable), () => setAbandoning(targets()), 'error.main'),
+    revisionMenuItem(
+      'Abandon',
+      undefined,
+      targets().some((t) => t.immutable),
+      () => setAbandoning(targets()),
+      'error.main',
+    ),
   ]
 
   return (
@@ -946,7 +973,10 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           </Box>
         </Stack>
         <Stack sx={{ flex: 1, minWidth: 0 }}>
-          <Stack direction="row" sx={{ minHeight: 36, px: 1, justifyContent: 'flex-end', alignItems: 'center', borderBottom: 1, borderColor: 'divider' }}>
+          <Stack
+            direction="row"
+            sx={{ minHeight: 36, px: 1, justifyContent: 'flex-end', alignItems: 'center', borderBottom: 1, borderColor: 'divider' }}
+          >
             <DiffControls navigation={diffNavigation} />
           </Stack>
           <Box ref={detailRef} sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
@@ -1233,7 +1263,8 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
       <Dialog open={removingWorkspace !== undefined} onClose={() => setRemovingWorkspace(undefined)}>
         <DialogTitle>Remove the workspace {removingWorkspace?.name}?</DialogTitle>
         <DialogContent>
-          {removingWorkspace?.root} is deleted. The changes are snapshotted into a revision, but the ignored files are lost. Undo doesn't restore the directory.
+          {removingWorkspace?.root} is deleted. The changes are snapshotted into a revision, but the ignored files are lost. Undo doesn't restore the
+          directory.
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setRemovingWorkspace(undefined)}>Cancel</Button>
@@ -1300,7 +1331,11 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
       </Dialog>
 
       <Snackbar open={message !== undefined} autoHideDuration={message?.error ? null : 6000} onClose={() => setMessage(undefined)}>
-        <Alert severity={message?.error ? 'error' : 'info'} onClose={() => setMessage(undefined)} sx={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: 12 }}>
+        <Alert
+          severity={message?.error ? 'error' : 'info'}
+          onClose={() => setMessage(undefined)}
+          sx={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: 12 }}
+        >
           {message?.text || 'Done'}
         </Alert>
       </Snackbar>

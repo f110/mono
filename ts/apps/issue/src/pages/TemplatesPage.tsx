@@ -54,7 +54,14 @@ export const TemplatesPage = () => {
         <Typography variant="subtitle1">{editing ? `${editing.title} を編集` : 'テンプレートを追加'}</Typography>
         <Stack direction="row" spacing={1}>
           <TextField size="small" label="タイトル" value={title} onChange={(e) => setTitle(e.target.value)} sx={{ width: 320 }} />
-          <TextField select size="small" label="Component" value={componentId} onChange={(e) => setComponentId(Number(e.target.value))} sx={{ width: 240 }}>
+          <TextField
+            select
+            size="small"
+            label="Component"
+            value={componentId}
+            onChange={(e) => setComponentId(Number(e.target.value))}
+            sx={{ width: 240 }}
+          >
             <MenuItem value={0}>未分類</MenuItem>
             {components.map((c) => (
               <MenuItem key={c.id} value={c.id}>

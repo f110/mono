@@ -7,7 +7,10 @@ export type Action = { label: string; shortcut?: string; run: () => void }
 export const CommandPalette = ({ actions, onClose }: { actions: Action[]; onClose: () => void }) => {
   const [filter, setFilter] = useState('')
   const [selected, setSelected] = useState(0)
-  const words = filter.toLowerCase().split(/\s+/).filter((w) => w !== '')
+  const words = filter
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((w) => w !== '')
   const matched = actions.filter((a) => words.every((w) => a.label.toLowerCase().includes(w)))
   const index = Math.min(selected, Math.max(matched.length - 1, 0))
 

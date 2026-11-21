@@ -11,9 +11,7 @@ export interface ListArtifactsParams {
 // commit (repositoryId + revision). The query stays disabled until one of the
 // two selectors is fully specified.
 export function useListArtifacts(params: ListArtifactsParams) {
-  const enabled =
-    params.taskId !== undefined ||
-    (params.repositoryId !== undefined && !!params.revision)
+  const enabled = params.taskId !== undefined || (params.repositoryId !== undefined && !!params.revision)
   return useQuery(
     BFF.method.listArtifacts,
     {

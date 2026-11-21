@@ -328,7 +328,9 @@ export const FileBrowser = ({
   const { history } = useRouter()
   const initial = useMemo(() => fileLocation(history.location.state, repoPath), [history, repoPath])
   const [tabs, setTabs] = useState<string[]>(() => (initial ? [initial.file] : []))
-  const [active, setActive] = useState<ActiveFile | undefined>(() => (initial ? { file: initial.file, scrollTop: initial.scrollTop, seq: 0 } : undefined))
+  const [active, setActive] = useState<ActiveFile | undefined>(() =>
+    initial ? { file: initial.file, scrollTop: initial.scrollTop, seq: 0 } : undefined,
+  )
   const [selectedPath, setSelectedPath] = useState<string | undefined>(initial?.file)
   const { nodes, filter, setFilter, toggle, expand } = useFileTree(repoPath, revision.commitId, initial ? parentDirs(initial.file) : [])
   const filterRef = useRef<HTMLInputElement>(null)
@@ -336,7 +338,10 @@ export const FileBrowser = ({
   const scrolls = useRef(new Map<string, number>())
   const seq = useRef(1)
   const requested = useRef<number>(undefined)
-  const selected = Math.max(0, nodes.findIndex((n) => n.path === selectedPath))
+  const selected = Math.max(
+    0,
+    nodes.findIndex((n) => n.path === selectedPath),
+  )
 
   // show shows the file in the tab and the tree, and scrolls to scrollTop.
   const show = useCallback(
@@ -507,7 +512,12 @@ export const FileBrowser = ({
       </Box>
       <Stack sx={{ flex: 1, minWidth: 0 }}>
         {tabs.length > 0 && (
-          <Tabs value={active?.file ?? false} onChange={(_, v) => open(v)} variant="scrollable" sx={{ borderBottom: 1, borderColor: 'divider', minHeight: 40 }}>
+          <Tabs
+            value={active?.file ?? false}
+            onChange={(_, v) => open(v)}
+            variant="scrollable"
+            sx={{ borderBottom: 1, borderColor: 'divider', minHeight: 40 }}
+          >
             {tabs.map((t) => (
               <Tab
                 key={t}

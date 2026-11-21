@@ -37,7 +37,12 @@ export const RepositoriesPage = () => {
   return (
     <Stack sx={{ height: '100%' }}>
       <Stack direction="row" sx={{ borderBottom: 1, borderColor: 'divider', alignItems: 'center' }}>
-        <Tabs value={repositories.some((r) => r.path === current) ? current : false} onChange={(_, v) => select(v)} variant="scrollable" sx={{ flex: 1 }}>
+        <Tabs
+          value={repositories.some((r) => r.path === current) ? current : false}
+          onChange={(_, v) => select(v)}
+          variant="scrollable"
+          sx={{ flex: 1 }}
+        >
           {repositories.map((r) => (
             <Tab
               key={r.path}

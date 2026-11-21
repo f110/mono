@@ -69,12 +69,7 @@ const ticketRoute = createRoute({
 })
 
 export const router = createRouter({
-  routeTree: rootRoute.addChildren([
-    listRoute,
-    newRoute,
-    adminRoute.addChildren([adminIndexRoute, componentsRoute, templatesRoute]),
-    ticketRoute,
-  ]),
+  routeTree: rootRoute.addChildren([listRoute, newRoute, adminRoute.addChildren([adminIndexRoute, componentsRoute, templatesRoute]), ticketRoute]),
 })
 
 declare module '@tanstack/react-router' {

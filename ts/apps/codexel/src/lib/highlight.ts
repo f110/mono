@@ -24,7 +24,10 @@ const lowlight = createLowlight({ ...common, protobuf, starlark })
 export type Token = { text: string; className?: string }
 
 // The nodes of hast which lowlight returns. Only the fields used here are declared.
-type Node = { type: 'text'; value: string } | { type: 'element'; properties?: { className?: string[] }; children: Node[] } | { type: string; children?: Node[] }
+type Node =
+  | { type: 'text'; value: string }
+  | { type: 'element'; properties?: { className?: string[] }; children: Node[] }
+  | { type: string; children?: Node[] }
 
 const languages: Record<string, string> = {
   go: 'go',

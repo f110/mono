@@ -44,7 +44,15 @@ export const DivergenceDialog = ({
             <Typography variant="body2" noWrap sx={{ flex: 1, minWidth: 0 }}>
               {v.description || '(no description set)'} · {v.author}
             </Typography>
-            <Button size="small" onClick={() => onKeep(v, versions.filter((o) => o.commitId !== v.commitId))}>
+            <Button
+              size="small"
+              onClick={() =>
+                onKeep(
+                  v,
+                  versions.filter((o) => o.commitId !== v.commitId),
+                )
+              }
+            >
               Keep this
             </Button>
           </Stack>

@@ -124,9 +124,7 @@ const ChangeReview = ({
           {commit?.commitId}
         </Typography>
       </Stack>
-      {files.length > 0 && (
-        <ChangedFiles files={files} findFile={(p) => ref.current?.querySelector(`[data-file="${CSS.escape(p)}"]`)} />
-      )}
+      {files.length > 0 && <ChangedFiles files={files} findFile={(p) => ref.current?.querySelector(`[data-file="${CSS.escape(p)}"]`)} />}
       {otherComments.map((c) => (
         <CommentThread key={c.id} comment={c} showLocation {...actions.thread(c)} />
       ))}
@@ -198,7 +196,14 @@ const ChangeReview = ({
             collapsed={collapsed}
             actions={
               <>
-                {generated && <Chip label="generated" size="small" variant="outlined" title="Detected by linguist-generated in .gitattributes or the heuristics of Linguist" />}
+                {generated && (
+                  <Chip
+                    label="generated"
+                    size="small"
+                    variant="outlined"
+                    title="Detected by linguist-generated in .gitattributes or the heuristics of Linguist"
+                  />
+                )}
                 {fileComments.length > 0 && collapsed && (
                   <Typography variant="caption" color="text.secondary">
                     {fileComments.length} comment(s)
@@ -306,7 +311,8 @@ export const ReviewPage = () => {
   )
   const actions: Actions = useMemo(
     () => ({
-      add: (changeId, path, side, startLine, endLine, body) => run(() => client.addComment({ reviewId, changeId, path, side, startLine, endLine, body })),
+      add: (changeId, path, side, startLine, endLine, body) =>
+        run(() => client.addComment({ reviewId, changeId, path, side, startLine, endLine, body })),
       setViewed: (changeId, path, viewed) => run(() => client.setViewed({ reviewId, changeId, path, viewed })).catch(() => {}),
       thread: (c) => ({
         onReply: (body) => run(() => client.reply({ reviewId, commentId: c.id, body })),

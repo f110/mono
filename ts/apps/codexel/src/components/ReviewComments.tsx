@@ -119,7 +119,9 @@ export const CommentThread = ({
         <Typography variant="caption" color="text.secondary">
           round {comment.round} · {new Date(Number(comment.createdAt) * 1000).toLocaleString()}
         </Typography>
-        {comment.drifted && <Chip label="drifted" size="small" color="warning" variant="outlined" title="The commented lines are not found in the latest round" />}
+        {comment.drifted && (
+          <Chip label="drifted" size="small" color="warning" variant="outlined" title="The commented lines are not found in the latest round" />
+        )}
         {comment.resolved && <Chip label="resolved" size="small" color="success" variant="outlined" />}
         {comment.replies.length > 0 && !open && (
           <Typography variant="caption" color="text.secondary">

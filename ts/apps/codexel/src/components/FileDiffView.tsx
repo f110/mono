@@ -78,7 +78,17 @@ export type LineAnnotation = {
 
 // LineContent renders the highlighted tokens of the line. The tokens are split at the boundaries of the changed ranges
 // of the word diff to emphasize them.
-const LineContent = ({ line, lang, ranges, emphasis }: { line: DiffLine; lang: string | undefined; ranges: Range[] | undefined; emphasis: string }) => {
+const LineContent = ({
+  line,
+  lang,
+  ranges,
+  emphasis,
+}: {
+  line: DiffLine
+  lang: string | undefined
+  ranges: Range[] | undefined
+  emphasis: string
+}) => {
   const segments: { text: string; className?: string; changed: boolean }[] = []
   let pos = 0
   for (const token of tokenize(line.text, lang)) {
@@ -151,9 +161,23 @@ const decoder = new TextDecoder()
 
 // useFile reads the file at the revision when enabled is true.
 const useFile = (repoPath: string, revision: string | undefined, file: string, enabled: boolean) =>
-  useQuery(RepositoryService.method.getFile, { path: repoPath, revision: revision ?? '', file }, { enabled: enabled && revision !== undefined, staleTime: Infinity })
+  useQuery(
+    RepositoryService.method.getFile,
+    { path: repoPath, revision: revision ?? '', file },
+    { enabled: enabled && revision !== undefined, staleTime: Infinity },
+  )
 
-const ImageDiff = ({ file, repoPath, revision, oldRevision }: { file: FileDiff; repoPath: string; revision: string; oldRevision: string | undefined }) => {
+const ImageDiff = ({
+  file,
+  repoPath,
+  revision,
+  oldRevision,
+}: {
+  file: FileDiff
+  repoPath: string
+  revision: string
+  oldRevision: string | undefined
+}) => {
   const type = imageTypes[extension(file.path)]
   const newImage = useFile(repoPath, revision, file.path, file.status !== FileStatus.DELETED)
   const oldImage = useFile(repoPath, oldRevision, file.oldPath || file.path, file.status !== FileStatus.ADDED)
@@ -180,7 +204,11 @@ const ImageDiff = ({ file, repoPath, revision, oldRevision }: { file: FileDiff; 
           <Typography variant="caption" color="text.secondary">
             {v.label}
           </Typography>
-          {v.url ? <Box component="img" src={v.url} sx={{ display: 'block', maxWidth: '100%', border: 1, borderColor: 'divider' }} /> : <Typography color="text.disabled">-</Typography>}
+          {v.url ? (
+            <Box component="img" src={v.url} sx={{ display: 'block', maxWidth: '100%', border: 1, borderColor: 'divider' }} />
+          ) : (
+            <Typography color="text.disabled">-</Typography>
+          )}
         </Box>
       ))}
     </Stack>
@@ -230,7 +258,8 @@ export const FileDiffView = ({
   const ranges = useMemo(() => file.hunks.map((h) => lineRanges(h)), [file])
   const fileGaps = useMemo(() => gaps(file.hunks), [file])
   const [expanded, setExpanded] = useState<Set<number>>(() => new Set())
-  const expandable = title === undefined && !file.binary && file.status !== FileStatus.ADDED && file.status !== FileStatus.DELETED && file.hunks.length > 0
+  const expandable =
+    title === undefined && !file.binary && file.status !== FileStatus.ADDED && file.status !== FileStatus.DELETED && file.hunks.length > 0
   const showPreview = title === undefined && preview && isMarkdown(file.path) && file.status !== FileStatus.DELETED
   const content = useFile(repoPath, revision, file.path, (expandable && expanded.size > 0) || showPreview)
   const lines = useMemo(() => {
@@ -304,7 +333,13 @@ export const FileDiffView = ({
     </Stack>
   )
 
-  const splitRow = (left: DiffLine | undefined, right: DiffLine | undefined, leftRanges: Range[] | undefined, rightRanges: Range[] | undefined, key: string | number) => (
+  const splitRow = (
+    left: DiffLine | undefined,
+    right: DiffLine | undefined,
+    leftRanges: Range[] | undefined,
+    rightRanges: Range[] | undefined,
+    key: string | number,
+  ) => (
     <Fragment key={key}>
       <Stack direction="row">
         {cell(left, leftRanges, 'old')}
@@ -343,7 +378,11 @@ export const FileDiffView = ({
           onClick={() => setExpanded((s) => new Set(s).add(index))}
           sx={{ justifyContent: 'flex-start', borderRadius: 0, fontSize: 11, py: 0, color: 'text.secondary', bgcolor: 'action.hover' }}
         >
-          {content.isLoading && expanded.has(index) ? 'Loading…' : count === undefined ? '↕ Show the rest of the file' : `↕ Show ${count} hidden line(s)`}
+          {content.isLoading && expanded.has(index)
+            ? 'Loading…'
+            : count === undefined
+              ? '↕ Show the rest of the file'
+              : `↕ Show ${count} hidden line(s)`}
         </Button>
       )
     }
@@ -372,7 +411,16 @@ export const FileDiffView = ({
       <Stack
         direction="row"
         spacing={1}
-        sx={{ p: 1, alignItems: 'center', bgcolor: 'background.paper', position: 'sticky', top: 'var(--sticky-top, 0px)', zIndex: 1, borderBottom: 1, borderColor: 'divider' }}
+        sx={{
+          p: 1,
+          alignItems: 'center',
+          bgcolor: 'background.paper',
+          position: 'sticky',
+          top: 'var(--sticky-top, 0px)',
+          zIndex: 1,
+          borderBottom: 1,
+          borderColor: 'divider',
+        }}
       >
         {title === undefined ? (
           <>
@@ -405,7 +453,9 @@ export const FileDiffView = ({
         {actions}
       </Stack>
       {!collapsed && children}
-      {!collapsed && file.binary && imageTypes[extension(file.path)] && <ImageDiff file={file} repoPath={repoPath} revision={revision} oldRevision={oldRevision} />}
+      {!collapsed && file.binary && imageTypes[extension(file.path)] && (
+        <ImageDiff file={file} repoPath={repoPath} revision={revision} oldRevision={oldRevision} />
+      )}
       {!collapsed && file.binary && !imageTypes[extension(file.path)] && (
         <Typography variant="body2" color="text.secondary" sx={{ p: 1 }}>
           Binary file
@@ -422,7 +472,9 @@ export const FileDiffView = ({
               {renderGap(i)}
               <HunkHeader hunk={h} />
               {split
-                ? splitRows(h).map((r, j) => splitRow(r.left, r.right, r.left ? ranges[i].get(r.left) : undefined, r.right ? ranges[i].get(r.right) : undefined, j))
+                ? splitRows(h).map((r, j) =>
+                    splitRow(r.left, r.right, r.left ? ranges[i].get(r.left) : undefined, r.right ? ranges[i].get(r.right) : undefined, j),
+                  )
                 : h.lines.map((l, j) => row(l, ranges[i].get(l), j))}
             </Box>
           ))}

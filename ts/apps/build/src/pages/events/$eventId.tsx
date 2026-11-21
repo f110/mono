@@ -31,8 +31,7 @@ const DefinitionTableCell = styled(TableCell)(({ theme }) => ({
   },
 }))
 
-const formatTime = (ts?: GithubEvent['createdAt']): string =>
-  ts ? dayjs(timestampDate(ts)).format('YYYY-MM-DD HH:mm:ss') : ''
+const formatTime = (ts?: GithubEvent['createdAt']): string => (ts ? dayjs(timestampDate(ts)).format('YYYY-MM-DD HH:mm:ss') : '')
 
 export const EventPage: React.FC = () => {
   const { eventId } = useParams({ strict: false })
@@ -70,10 +69,7 @@ export const EventPage: React.FC = () => {
     <Container maxWidth="xl">
       <Box sx={{ width: '100%' }}>
         <Stack spacing={2}>
-          <Breadcrumbs
-            aria-label="breadcrumb"
-            separator={<NavigateNextIcon fontSize="small" />}
-          >
+          <Breadcrumbs aria-label="breadcrumb" separator={<NavigateNextIcon fontSize="small" />}>
             <Link color="inherit" to="/events">
               Events
             </Link>
@@ -92,12 +88,7 @@ export const EventPage: React.FC = () => {
                   <DefinitionTableCell>
                     {event.repository ? (
                       event.repositoryUrl ? (
-                        <MuiLink
-                          href={event.repositoryUrl}
-                          target="_blank"
-                          rel="noopener"
-                          underline="hover"
-                        >
+                        <MuiLink href={event.repositoryUrl} target="_blank" rel="noopener" underline="hover">
                           {event.repository}
                         </MuiLink>
                       ) : (
@@ -119,11 +110,7 @@ export const EventPage: React.FC = () => {
                 <TableRow>
                   <DefinitionTableCell>State</DefinitionTableCell>
                   <DefinitionTableCell>
-                    <Chip
-                      label={event.state}
-                      size="small"
-                      color={stateColor[event.state] ?? 'default'}
-                    />
+                    <Chip label={event.state} size="small" color={stateColor[event.state] ?? 'default'} />
                   </DefinitionTableCell>
                 </TableRow>
                 <TableRow>

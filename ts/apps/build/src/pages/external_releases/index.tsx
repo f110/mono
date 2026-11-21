@@ -1,18 +1,5 @@
 import * as React from 'react'
-import {
-  Box,
-  Stack,
-  Container,
-  Link,
-  Chip,
-  Table,
-  TableBody,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Typography,
-} from '@mui/material'
+import { Box, Stack, Container, Link, Chip, Table, TableBody, TableContainer, TableHead, TableRow, Paper, Typography } from '@mui/material'
 import { StyledTableCell, StyledTableRow } from '../../components/Table.tsx'
 import { useListExternalReleaseTriggers } from '../../hooks/useListExternalReleaseTriggers.ts'
 
@@ -44,30 +31,16 @@ export const ExternalReleaseTriggersPage: React.FC = () => {
                 <TableBody>
                   {triggers.map((t) => (
                     <StyledTableRow key={t.id}>
-                      <StyledTableCell>
-                        {t.repositoryUrl ? (
-                          <Link href={t.repositoryUrl}>{t.repositoryName}</Link>
-                        ) : (
-                          t.repositoryName
-                        )}
-                      </StyledTableCell>
+                      <StyledTableCell>{t.repositoryUrl ? <Link href={t.repositoryUrl}>{t.repositoryName}</Link> : t.repositoryName}</StyledTableCell>
                       <StyledTableCell>{t.jobName}</StyledTableCell>
-                      <StyledTableCell>
-                        {t.externalRepoUrl ? (
-                          <Link href={t.externalRepoUrl}>{t.externalRepo}</Link>
-                        ) : (
-                          t.externalRepo
-                        )}
-                      </StyledTableCell>
+                      <StyledTableCell>{t.externalRepoUrl ? <Link href={t.externalRepoUrl}>{t.externalRepo}</Link> : t.externalRepo}</StyledTableCell>
                       <StyledTableCell>
                         <Chip label={t.kind || 'release'} size="small" />
                       </StyledTableCell>
                       <StyledTableCell>
                         <code>{t.tagPattern || '*'}</code>
                       </StyledTableCell>
-                      <StyledTableCell>
-                        {t.includePrerelease ? 'yes' : 'no'}
-                      </StyledTableCell>
+                      <StyledTableCell>{t.includePrerelease ? 'yes' : 'no'}</StyledTableCell>
                     </StyledTableRow>
                   ))}
                 </TableBody>

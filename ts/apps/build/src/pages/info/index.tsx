@@ -1,23 +1,7 @@
-import {
-  Container,
-  TableContainer,
-  Table,
-  TableRow,
-  TableCell,
-  TableBody,
-  Box,
-  Chip,
-  Divider,
-  Paper,
-  Stack,
-  Typography,
-} from '@mui/material'
+import { Container, TableContainer, Table, TableRow, TableCell, TableBody, Box, Chip, Divider, Paper, Stack, Typography } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import * as React from 'react'
-import {
-  useGetServerInfo,
-  type ServerConfig,
-} from '../../hooks/useGetServerInfo.ts'
+import { useGetServerInfo, type ServerConfig } from '../../hooks/useGetServerInfo.ts'
 
 const DefinitionTableCell = styled(TableCell)(({ theme }) => ({
   '&:first-child': {
@@ -62,9 +46,7 @@ function configItems(c: ServerConfig): { label: string; value: string }[] {
     { label: 'Job namespace', value: c.namespace || '(default)' },
     {
       label: 'Bazel version management',
-      value: c.useBazelisk
-        ? 'Bazelisk'
-        : `Fixed (${c.defaultBazelVersion || 'unset'})`,
+      value: c.useBazelisk ? 'Bazelisk' : `Fixed (${c.defaultBazelVersion || 'unset'})`,
     },
     {
       label: 'Remote cache',
@@ -81,15 +63,11 @@ function configItems(c: ServerConfig): { label: string; value: string }[] {
     },
     {
       label: 'Repository data source',
-      value: c.gitDataServiceUrl
-        ? `git-data-service (${c.gitDataServiceUrl})`
-        : 'GitHub (direct)',
+      value: c.gitDataServiceUrl ? `git-data-service (${c.gitDataServiceUrl})` : 'GitHub (direct)',
     },
     {
       label: 'Repository refresh',
-      value: c.gitDataRefreshInterval
-        ? `Every ${c.gitDataRefreshInterval} (workers: ${c.gitDataRefreshWorkers})`
-        : 'Disabled',
+      value: c.gitDataRefreshInterval ? `Every ${c.gitDataRefreshInterval} (workers: ${c.gitDataRefreshWorkers})` : 'Disabled',
     },
     {
       label: 'GitHub event reconcile interval',
@@ -111,23 +89,14 @@ function configItems(c: ServerConfig): { label: string; value: string }[] {
 export const InfoPage: React.FC = () => {
   const { supportedBazelVersions, schemaVersion, config } = useGetServerInfo()
 
-  const versions = React.useMemo(
-    () => [...supportedBazelVersions].sort((a, b) => compareVersion(b, a)),
-    [supportedBazelVersions],
-  )
-  const highlighted = React.useMemo(
-    () => latestPerMajor(supportedBazelVersions),
-    [supportedBazelVersions],
-  )
+  const versions = React.useMemo(() => [...supportedBazelVersions].sort((a, b) => compareVersion(b, a)), [supportedBazelVersions])
+  const highlighted = React.useMemo(() => latestPerMajor(supportedBazelVersions), [supportedBazelVersions])
 
   return (
     <Container maxWidth="xl">
       <Box sx={{ width: '100%' }}>
         <Paper sx={{ p: 2.5 }}>
-          <Stack
-            direction="row"
-            sx={{ justifyContent: 'space-between', alignItems: 'baseline' }}
-          >
+          <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
             <Typography variant="h6">Supported Bazel versions</Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               {versions.length} versions on the mirror
@@ -173,9 +142,7 @@ export const InfoPage: React.FC = () => {
               </TableRow>
               <TableRow>
                 <DefinitionTableCell>Schema version</DefinitionTableCell>
-                <DefinitionTableCell sx={{ fontFamily: 'monospace' }}>
-                  {schemaVersion}
-                </DefinitionTableCell>
+                <DefinitionTableCell sx={{ fontFamily: 'monospace' }}>{schemaVersion}</DefinitionTableCell>
               </TableRow>
             </TableBody>
           </Table>

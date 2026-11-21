@@ -51,7 +51,15 @@ export const PostCard = ({
         {reporter && (
           <Box
             component="span"
-            sx={{ fontSize: '0.75rem', lineHeight: '18px', px: '7px', border: 1, borderColor: 'rgba(0, 0, 0, 0.23)', borderRadius: '9px', color: 'text.secondary' }}
+            sx={{
+              fontSize: '0.75rem',
+              lineHeight: '18px',
+              px: '7px',
+              border: 1,
+              borderColor: 'rgba(0, 0, 0, 0.23)',
+              borderRadius: '9px',
+              color: 'text.secondary',
+            }}
           >
             Reporter
           </Box>

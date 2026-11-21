@@ -15,10 +15,7 @@ export const Route = createRootRoute({
       <CssBaseline />
       <Box sx={{}}>
         <Stack>
-          <AppBar
-            position="fixed"
-            sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
-          >
+          <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
             <Toolbar>
               <Typography variant="h6" noWrap component="div">
                 Build Dashboard

@@ -9,11 +9,7 @@ type Args = {
   duration?: Duration
 }
 
-export function useLiveDuration({
-  startAt,
-  finishedAt,
-  duration,
-}: Args): string {
+export function useLiveDuration({ startAt, finishedAt, duration }: Args): string {
   const running = !!startAt && !finishedAt
   const [now, setNow] = useState(() => Date.now())
 

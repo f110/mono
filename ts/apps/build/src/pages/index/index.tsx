@@ -48,15 +48,8 @@ type TaskResultRowProps = {
   openLogModal: (taskId: number) => void
 }
 
-const TaskResultRow: React.FC<TaskResultRowProps> = ({
-  task,
-  onRestart,
-  openManifestModal,
-  openLogModal,
-}) => {
-  const start = task.startAt
-    ? dayjs(timestampDate(task.startAt)).format('YYYY-MM-DD HH:mm:ss')
-    : ''
+const TaskResultRow: React.FC<TaskResultRowProps> = ({ task, onRestart, openManifestModal, openLogModal }) => {
+  const start = task.startAt ? dayjs(timestampDate(task.startAt)).format('YYYY-MM-DD HH:mm:ss') : ''
   const duration = useLiveDuration({
     startAt: task.startAt,
     finishedAt: task.finishedAt,
@@ -66,13 +59,7 @@ const TaskResultRow: React.FC<TaskResultRowProps> = ({
   return (
     <StyledTableRow>
       <StyledTableCell align="center">
-        {task.success ? (
-          <CheckIcon color="success" />
-        ) : task.finishedAt ? (
-          <ErrorIcon color="error" />
-        ) : (
-          <SyncIcon color="warning" />
-        )}
+        {task.success ? <CheckIcon color="success" /> : task.finishedAt ? <ErrorIcon color="error" /> : <SyncIcon color="warning" />}
       </StyledTableCell>
       <StyledTableCell>
         <Link to={'/task/$taskId'} params={{ taskId: String(task.id) }}>
@@ -90,9 +77,7 @@ const TaskResultRow: React.FC<TaskResultRowProps> = ({
         </Link>
         @
         <Link to="." href={task.revisionUrl}>
-          {task.revision.length === 40
-            ? task.revision.slice(0, 8)
-            : task.revision}
+          {task.revision.length === 40 ? task.revision.slice(0, 8) : task.revision}
         </Link>
       </StyledTableCell>
       <StyledTableCell>{task.jobName}</StyledTableCell>
@@ -163,13 +148,8 @@ export const IndexPage: React.FC = () => {
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(50)
   const [pageToken, setPageToken] = useState<string | undefined>(undefined)
-  const [pageTokenHistory, setPageTokenHistory] = useState<
-    (string | undefined)[]
-  >([])
-  const handleChangePage = (
-    _: React.MouseEvent<HTMLButtonElement> | null,
-    newPage: number,
-  ) => {
+  const [pageTokenHistory, setPageTokenHistory] = useState<(string | undefined)[]>([])
+  const handleChangePage = (_: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
     if (page + 1 == newPage) {
       setPageTokenHistory([...pageTokenHistory, pageToken])
       setPageToken(tasks.data?.nextPageToken)
@@ -181,9 +161,7 @@ export const IndexPage: React.FC = () => {
     }
     setPage(newPage)
   }
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setRowsPerPage(parseInt(event.target.value, 10))
     setPage(0)
     setPageToken(undefined)
@@ -192,8 +170,7 @@ export const IndexPage: React.FC = () => {
 
   const params = useSearch({ strict: false })
   const tasks = useQuery(BFF.method.listTasks, {
-    repositoryId:
-      'repository_id' in params ? Number(params['repository_id']) : undefined,
+    repositoryId: 'repository_id' in params ? Number(params['repository_id']) : undefined,
     pageSize: rowsPerPage,
     pageToken: pageToken,
   })
@@ -202,9 +179,7 @@ export const IndexPage: React.FC = () => {
   const onRestart = (id: number) => {
     restartTask({ taskId: id })
   }
-  const [repository, setRepository] = useState<string>(
-    'repository_id' in params ? String(params['repository_id']) : '',
-  )
+  const [repository, setRepository] = useState<string>('repository_id' in params ? String(params['repository_id']) : '')
   const navigate = useNavigate({ from: Route.fullPath })
   const onSelectRepository = async (select: SelectChangeEvent) => {
     setRepository(select.target.value)
@@ -228,41 +203,19 @@ export const IndexPage: React.FC = () => {
         }}
       >
         <Stack spacing={2}>
-          <Breadcrumbs
-            aria-label="breadcrumb"
-            separator={<NavigateNextIcon fontSize="small" />}
-          >
+          <Breadcrumbs aria-label="breadcrumb" separator={<NavigateNextIcon fontSize="small" />}>
             <Typography>All tasks</Typography>
-            {repository !== '' && (
-              <Typography>
-                {repositories.find((v) => v.id === Number(repository))?.name}
-              </Typography>
-            )}
+            {repository !== '' && <Typography>{repositories.find((v) => v.id === Number(repository))?.name}</Typography>}
           </Breadcrumbs>
 
           <Stack direction="row" spacing={2}>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<PlayArrowIcon />}
-              onClick={runTaskModalOpen}
-              sx={{ textTransform: 'none' }}
-            >
+            <Button variant="contained" color="primary" startIcon={<PlayArrowIcon />} onClick={runTaskModalOpen} sx={{ textTransform: 'none' }}>
               Run
             </Button>
 
-            <FormControl
-              sx={{ m: 1, minWidth: '100px', textAlign: 'left' }}
-              variant="standard"
-            >
+            <FormControl sx={{ m: 1, minWidth: '100px', textAlign: 'left' }} variant="standard">
               <InputLabel id="repository">Repository...</InputLabel>
-              <Select
-                labelId="repository"
-                label="Repository..."
-                onChange={onSelectRepository}
-                value={repository}
-                autoWidth
-              >
+              <Select labelId="repository" label="Repository..." onChange={onSelectRepository} value={repository} autoWidth>
                 <MenuItem value="">All</MenuItem>
                 {repositories.map((repository) => (
                   <MenuItem value={repository.id}>{repository.name}</MenuItem>
@@ -272,11 +225,7 @@ export const IndexPage: React.FC = () => {
           </Stack>
 
           <TableContainer component={Paper}>
-            <Table
-              size="small"
-              sx={{ width: '100%' }}
-              aria-label="customized table"
-            >
+            <Table size="small" sx={{ width: '100%' }} aria-label="customized table">
               <TableHead>
                 <TableRow>
                   <StyledTableCell></StyledTableCell>
@@ -323,19 +272,11 @@ export const IndexPage: React.FC = () => {
         </Stack>
       </Box>
 
-      <RunTaskModal
-        open={runTaskModal}
-        onClose={runTaskModalClose}
-        repositories={repositories}
-      />
+      <RunTaskModal open={runTaskModal} onClose={runTaskModalClose} repositories={repositories} />
 
       <LogModal open={logModal} onClose={logModalClose} taskId={taskId} />
 
-      <ManifestModal
-        open={manifestModal}
-        onClose={manifestModalClose}
-        manifest={manifest}
-      />
+      <ManifestModal open={manifestModal} onClose={manifestModalClose} manifest={manifest} />
     </Container>
   )
 }

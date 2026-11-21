@@ -20,7 +20,14 @@ export const statusColors: Record<TicketStatus, { backgroundColor?: string; colo
   [TicketStatus.IN_REVIEW]: { backgroundColor: '#00838f', color: '#fff' },
 }
 
-export const statuses = [TicketStatus.OPEN, TicketStatus.NEED_INVESTIGATION, TicketStatus.IN_PROGRESS, TicketStatus.IN_REVIEW, TicketStatus.DONE, TicketStatus.WONT_FIX]
+export const statuses = [
+  TicketStatus.OPEN,
+  TicketStatus.NEED_INVESTIGATION,
+  TicketStatus.IN_PROGRESS,
+  TicketStatus.IN_REVIEW,
+  TicketStatus.DONE,
+  TicketStatus.WONT_FIX,
+]
 
 export const typeLabels: Record<TicketType, string> = {
   [TicketType.UNSPECIFIED]: 'なし',

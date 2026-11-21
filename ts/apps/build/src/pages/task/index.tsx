@@ -54,8 +54,7 @@ const formatMs = (ms: bigint): string => {
   return n < 1000 ? `${n} ms` : `${(n / 1000).toFixed(2)} s`
 }
 
-const formatBytes = (b: bigint): string =>
-  `${(Number(b) / (1024 * 1024)).toFixed(1)} MiB`
+const formatBytes = (b: bigint): string => `${(Number(b) / (1024 * 1024)).toFixed(1)} MiB`
 
 // cacheHitRate reports the remote cache hit rate. CI jobs always start with a cold
 // local cache, so every action is either a remote cache hit or actually executed.
@@ -90,9 +89,7 @@ export const TaskPage: React.FC = () => {
     throw notFound()
   }
   const task = tasks.tasks[0]
-  const start = task?.startAt
-    ? dayjs(timestampDate(task.startAt)).format('YYYY-MM-DD HH:mm:ss')
-    : ''
+  const start = task?.startAt ? dayjs(timestampDate(task.startAt)).format('YYYY-MM-DD HH:mm:ss') : ''
   const duration = useLiveDuration({
     startAt: task?.startAt,
     finishedAt: task?.finishedAt,
@@ -114,8 +111,7 @@ export const TaskPage: React.FC = () => {
   const handleRerun = () => {
     restartTask({ taskId: Number(taskId) })
   }
-  const { mutate: forceStopTask, isPending: isForceStopping } =
-    useForceStopTask()
+  const { mutate: forceStopTask, isPending: isForceStopping } = useForceStopTask()
   const handleForceStop = () => {
     forceStopTask({ taskId: Number(taskId) })
   }
@@ -135,10 +131,7 @@ export const TaskPage: React.FC = () => {
     <Container maxWidth="xl">
       <Box sx={{ width: '100%' }}>
         <Stack spacing={2}>
-          <Breadcrumbs
-            aria-label="breadcrumb"
-            separator={<NavigateNextIcon fontSize="small" />}
-          >
+          <Breadcrumbs aria-label="breadcrumb" separator={<NavigateNextIcon fontSize="small" />}>
             <Link color="inherit" to="/">
               {task?.repository?.name}
             </Link>
@@ -156,13 +149,7 @@ export const TaskPage: React.FC = () => {
                 <TableRow>
                   <DefinitionTableCell>Succeeded</DefinitionTableCell>
                   <DefinitionTableCell>
-                    {task?.success ? (
-                      <CheckIcon color="success" />
-                    ) : task?.finishedAt ? (
-                      <ErrorIcon color="error" />
-                    ) : (
-                      <SyncIcon color="warning" />
-                    )}
+                    {task?.success ? <CheckIcon color="success" /> : task?.finishedAt ? <ErrorIcon color="error" /> : <SyncIcon color="warning" />}
                   </DefinitionTableCell>
                 </TableRow>
                 <TableRow>
@@ -179,9 +166,7 @@ export const TaskPage: React.FC = () => {
                 </TableRow>
                 <TableRow>
                   <DefinitionTableCell>Trunk</DefinitionTableCell>
-                  <DefinitionTableCell>
-                    {task?.isTrunk ? 'Yes' : 'No'}
-                  </DefinitionTableCell>
+                  <DefinitionTableCell>{task?.isTrunk ? 'Yes' : 'No'}</DefinitionTableCell>
                 </TableRow>
                 <TableRow>
                   <DefinitionTableCell>Started at</DefinitionTableCell>
@@ -200,15 +185,9 @@ export const TaskPage: React.FC = () => {
                             {task?.testReports.map((v) => (
                               <ListItem>
                                 <ListItemIcon>
-                                  {v.status === TestStatus.PASSED && (
-                                    <CheckIcon color="success" />
-                                  )}
-                                  {v.status === TestStatus.FLAKY && (
-                                    <CheckIcon color="warning" />
-                                  )}
-                                  {v.status === TestStatus.FAILED && (
-                                    <ErrorIcon color="error" />
-                                  )}
+                                  {v.status === TestStatus.PASSED && <CheckIcon color="success" />}
+                                  {v.status === TestStatus.FLAKY && <CheckIcon color="warning" />}
+                                  {v.status === TestStatus.FAILED && <ErrorIcon color="error" />}
                                 </ListItemIcon>
                                 <ListItemText>{v.label}</ListItemText>
                               </ListItem>
@@ -235,9 +214,7 @@ export const TaskPage: React.FC = () => {
                 </TableRow>
                 <TableRow>
                   <DefinitionTableCell>Bazel version</DefinitionTableCell>
-                  <DefinitionTableCell>
-                    {task?.bazelVersion}
-                  </DefinitionTableCell>
+                  <DefinitionTableCell>{task?.bazelVersion}</DefinitionTableCell>
                 </TableRow>
                 <TableRow>
                   <DefinitionTableCell>Container</DefinitionTableCell>
@@ -278,10 +255,7 @@ export const TaskPage: React.FC = () => {
                   <DefinitionTableCell>Artifacts</DefinitionTableCell>
                   <DefinitionTableCell>
                     {artifactCount ? (
-                      <Link
-                        to="/artifacts"
-                        search={{ task_id: Number(taskId) }}
-                      >
+                      <Link to="/artifacts" search={{ task_id: Number(taskId) }}>
                         view({artifactCount})
                       </Link>
                     ) : null}
@@ -298,71 +272,42 @@ export const TaskPage: React.FC = () => {
                 <Table>
                   <TableBody>
                     <TableRow>
-                      <DefinitionTableCell>
-                        Remote cache hit rate
-                      </DefinitionTableCell>
-                      <DefinitionTableCell>
-                        {cacheHitRate(task.buildMetrics)}
-                      </DefinitionTableCell>
+                      <DefinitionTableCell>Remote cache hit rate</DefinitionTableCell>
+                      <DefinitionTableCell>{cacheHitRate(task.buildMetrics)}</DefinitionTableCell>
                     </TableRow>
                     <TableRow>
                       <DefinitionTableCell>Wall / CPU time</DefinitionTableCell>
                       <DefinitionTableCell>
-                        {formatMs(task.buildMetrics.wallTimeMs)} /{' '}
-                        {formatMs(task.buildMetrics.cpuTimeMs)}
+                        {formatMs(task.buildMetrics.wallTimeMs)} / {formatMs(task.buildMetrics.cpuTimeMs)}
                       </DefinitionTableCell>
                     </TableRow>
                     <TableRow>
+                      <DefinitionTableCell>Analysis / Execution phase</DefinitionTableCell>
                       <DefinitionTableCell>
-                        Analysis / Execution phase
-                      </DefinitionTableCell>
-                      <DefinitionTableCell>
-                        {formatMs(task.buildMetrics.analysisPhaseTimeMs)} /{' '}
-                        {formatMs(task.buildMetrics.executionPhaseTimeMs)}
+                        {formatMs(task.buildMetrics.analysisPhaseTimeMs)} / {formatMs(task.buildMetrics.executionPhaseTimeMs)}
                       </DefinitionTableCell>
                     </TableRow>
                     <TableRow>
-                      <DefinitionTableCell>
-                        Actions (created / executed)
-                      </DefinitionTableCell>
-                      <DefinitionTableCell>
-                        {`${task.buildMetrics.actionsCreated} / ${task.buildMetrics.actionsExecuted}`}
-                      </DefinitionTableCell>
+                      <DefinitionTableCell>Actions (created / executed)</DefinitionTableCell>
+                      <DefinitionTableCell>{`${task.buildMetrics.actionsCreated} / ${task.buildMetrics.actionsExecuted}`}</DefinitionTableCell>
                     </TableRow>
                     <TableRow>
-                      <DefinitionTableCell>
-                        Graph action count
-                      </DefinitionTableCell>
-                      <DefinitionTableCell>
-                        {`${task.buildMetrics.graphActionCount}`}
-                      </DefinitionTableCell>
+                      <DefinitionTableCell>Graph action count</DefinitionTableCell>
+                      <DefinitionTableCell>{`${task.buildMetrics.graphActionCount}`}</DefinitionTableCell>
                     </TableRow>
                     <TableRow>
-                      <DefinitionTableCell>
-                        Targets / Packages
-                      </DefinitionTableCell>
-                      <DefinitionTableCell>
-                        {`${task.buildMetrics.targetsConfigured} / ${task.buildMetrics.packagesLoaded}`}
-                      </DefinitionTableCell>
+                      <DefinitionTableCell>Targets / Packages</DefinitionTableCell>
+                      <DefinitionTableCell>{`${task.buildMetrics.targetsConfigured} / ${task.buildMetrics.packagesLoaded}`}</DefinitionTableCell>
                     </TableRow>
                     <TableRow>
                       <DefinitionTableCell>Skyframe nodes</DefinitionTableCell>
-                      <DefinitionTableCell>
-                        {`${task.buildMetrics.skyframeNodeCount}`}
-                      </DefinitionTableCell>
+                      <DefinitionTableCell>{`${task.buildMetrics.skyframeNodeCount}`}</DefinitionTableCell>
                     </TableRow>
                     <TableRow>
+                      <DefinitionTableCell>Artifacts read / seen / from cache</DefinitionTableCell>
                       <DefinitionTableCell>
-                        Artifacts read / seen / from cache
-                      </DefinitionTableCell>
-                      <DefinitionTableCell>
-                        {formatBytes(task.buildMetrics.sourceArtifactsReadBytes)}{' '}
-                        /{' '}
-                        {formatBytes(task.buildMetrics.outputArtifactsSeenBytes)}{' '}
-                        /{' '}
-                        {formatBytes(
-                          task.buildMetrics.outputArtifactsFromCacheBytes,
-                        )}
+                        {formatBytes(task.buildMetrics.sourceArtifactsReadBytes)} / {formatBytes(task.buildMetrics.outputArtifactsSeenBytes)} /{' '}
+                        {formatBytes(task.buildMetrics.outputArtifactsFromCacheBytes)}
                       </DefinitionTableCell>
                     </TableRow>
                   </TableBody>
@@ -372,44 +317,21 @@ export const TaskPage: React.FC = () => {
           )}
 
           <Stack direction="row" sx={{ width: '100%' }} spacing={2}>
-            <Button
-              variant="contained"
-              color="warning"
-              sx={{ textTransform: 'none' }}
-              onClick={handleRerun}
-            >
+            <Button variant="contained" color="warning" sx={{ textTransform: 'none' }} onClick={handleRerun}>
               Rerun
             </Button>
             {!task.finishedAt && (
-              <Button
-                variant="contained"
-                color="error"
-                onClick={handleForceStop}
-                loading={isForceStopping}
-                loadingPosition="end"
-              >
+              <Button variant="contained" color="error" onClick={handleForceStop} loading={isForceStopping} loadingPosition="end">
                 Force Stop
               </Button>
             )}
             {/* Dev-only: only shown when the builder emulates the cluster with kwok. */}
             {config?.emulateJobControl && !task.finishedAt && (
               <>
-                <Button
-                  variant="outlined"
-                  color="success"
-                  onClick={() => handleComplete(true)}
-                  loading={isCompleting}
-                  loadingPosition="end"
-                >
+                <Button variant="outlined" color="success" onClick={() => handleComplete(true)} loading={isCompleting} loadingPosition="end">
                   Complete (dev)
                 </Button>
-                <Button
-                  variant="outlined"
-                  color="error"
-                  onClick={() => handleComplete(false)}
-                  loading={isCompleting}
-                  loadingPosition="end"
-                >
+                <Button variant="outlined" color="error" onClick={() => handleComplete(false)} loading={isCompleting} loadingPosition="end">
                   Fail (dev)
                 </Button>
               </>
@@ -425,11 +347,7 @@ export const TaskPage: React.FC = () => {
         }}
         taskId={taskId ? Number(taskId) : 0}
       />
-      <ManifestModal
-        open={manifestModal}
-        onClose={manifestModalClose}
-        manifest={manifest}
-      />
+      <ManifestModal open={manifestModal} onClose={manifestModalClose} manifest={manifest} />
     </Container>
   )
 }

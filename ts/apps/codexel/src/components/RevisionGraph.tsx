@@ -139,7 +139,12 @@ const CommitLine = ({
     <Typography
       variant="body2"
       noWrap
-      sx={{ flex: 1, minWidth: 0, color: commit.description ? 'text.primary' : 'text.disabled', fontStyle: commit.description ? undefined : 'italic' }}
+      sx={{
+        flex: 1,
+        minWidth: 0,
+        color: commit.description ? 'text.primary' : 'text.disabled',
+        fontStyle: commit.description ? undefined : 'italic',
+      }}
     >
       {commit.description || (commit.empty ? '(empty) (no description set)' : '(no description set)')}
     </Typography>

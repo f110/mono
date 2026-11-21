@@ -63,15 +63,7 @@ export const ComponentsPage = () => {
   )
 }
 
-const ComponentRow = ({
-  component,
-  disabled,
-  onSave,
-}: {
-  component: Component
-  disabled: boolean
-  onSave: (name: string) => Promise<unknown>
-}) => {
+const ComponentRow = ({ component, disabled, onSave }: { component: Component; disabled: boolean; onSave: (name: string) => Promise<unknown> }) => {
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(component.name)
 

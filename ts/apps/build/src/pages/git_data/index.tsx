@@ -1,16 +1,4 @@
-import {
-  Box,
-  Collapse,
-  Container,
-  IconButton,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-} from '@mui/material'
+import { Box, Collapse, Container, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp'
 import { timestampDate } from '@bufbuild/protobuf/wkt'
@@ -20,15 +8,11 @@ import type { GitDataRepository } from '../../connect/bff_pb'
 import { useListGitData } from '../../hooks/useListGitData.ts'
 import { useGetGitDataStatistics } from '../../hooks/useGetGitDataStatistics.ts'
 
-const RepositoryRow: React.FC<{ repository: GitDataRepository }> = ({
-  repository,
-}) => {
+const RepositoryRow: React.FC<{ repository: GitDataRepository }> = ({ repository }) => {
   const [open, setOpen] = React.useState(false)
   const { data, isLoading } = useGetGitDataStatistics(repository.name, open)
 
-  const lastUpdate = data?.headCommitWhen
-    ? dayjs(timestampDate(data.headCommitWhen)).format('YYYY-MM-DD HH:mm:ss')
-    : ''
+  const lastUpdate = data?.headCommitWhen ? dayjs(timestampDate(data.headCommitWhen)).format('YYYY-MM-DD HH:mm:ss') : ''
 
   return (
     <>
@@ -39,9 +23,7 @@ const RepositoryRow: React.FC<{ repository: GitDataRepository }> = ({
           </IconButton>
         </TableCell>
         <TableCell>{repository.name}</TableCell>
-        <TableCell sx={{ fontFamily: 'monospace' }}>
-          {repository.defaultBranch}
-        </TableCell>
+        <TableCell sx={{ fontFamily: 'monospace' }}>{repository.defaultBranch}</TableCell>
         <TableCell>
           {repository.url ? (
             <a href={repository.url} target="_blank" rel="noreferrer">
@@ -66,9 +48,7 @@ const RepositoryRow: React.FC<{ repository: GitDataRepository }> = ({
                     </TableRow>
                     <TableRow>
                       <TableCell variant="head">HEAD commit</TableCell>
-                      <TableCell sx={{ fontFamily: 'monospace' }}>
-                        {data.headCommitSha}
-                      </TableCell>
+                      <TableCell sx={{ fontFamily: 'monospace' }}>{data.headCommitSha}</TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell variant="head">Author</TableCell>
@@ -76,9 +56,7 @@ const RepositoryRow: React.FC<{ repository: GitDataRepository }> = ({
                     </TableRow>
                     <TableRow>
                       <TableCell variant="head">Message</TableCell>
-                      <TableCell sx={{ whiteSpace: 'pre-wrap' }}>
-                        {data.headCommitMessage}
-                      </TableCell>
+                      <TableCell sx={{ whiteSpace: 'pre-wrap' }}>{data.headCommitMessage}</TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>

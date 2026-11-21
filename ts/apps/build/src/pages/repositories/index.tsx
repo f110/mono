@@ -2,20 +2,7 @@ import { create } from '@bufbuild/protobuf'
 import { useQuery } from '@connectrpc/connect-query'
 import { useState } from 'react'
 import * as React from 'react'
-import {
-  Box,
-  Button,
-  Stack,
-  List,
-  ListItem,
-  ListItemText,
-  Link,
-  ListItemAvatar,
-  Avatar,
-  IconButton,
-  Container,
-  Badge,
-} from '@mui/material'
+import { Box, Button, Stack, List, ListItem, ListItemText, Link, ListItemAvatar, Avatar, IconButton, Container, Badge } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import DeleteIcon from '@mui/icons-material/Delete'
 import Inventory2Icon from '@mui/icons-material/Inventory2'
@@ -43,11 +30,7 @@ export const RepositoriesPage: React.FC = () => {
   const handleNewModalOpen = () => setNewModal(true)
   const handleNewModalClose = () => setNewModal(false)
 
-  const {
-    register,
-    handleSubmit,
-    reset: resetForm,
-  } = useForm<NewRepositoryForm>()
+  const { register, handleSubmit, reset: resetForm } = useForm<NewRepositoryForm>()
   const { mutate: saveRepository } = useNewRepository()
   const handleNew = (data: NewRepositoryForm) => {
     saveRepository({
@@ -61,13 +44,9 @@ export const RepositoriesPage: React.FC = () => {
     setNewModal(false)
     resetForm()
   }
-  const { data: repositories } = useQuery(
-    BFF.method.listRepositories,
-    create(BFF.method.listRepositories.input),
-  )
+  const { data: repositories } = useQuery(BFF.method.listRepositories, create(BFF.method.listRepositories.input))
 
-  const { ConfirmDialog, openConfirmDialog } =
-    useRepositoryDeleteConfirmDialog()
+  const { ConfirmDialog, openConfirmDialog } = useRepositoryDeleteConfirmDialog()
   const { mutate: removeRepository } = useRemoveRepository()
   const openDialog = async (repository: Repository) => {
     const result = await openConfirmDialog(repository)
@@ -80,12 +59,7 @@ export const RepositoriesPage: React.FC = () => {
       <Box sx={{ width: '100%' }}>
         <Stack spacing={2}>
           <Stack direction="row">
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={handleNewModalOpen}
-            >
+            <Button variant="contained" color="primary" startIcon={<AddIcon />} onClick={handleNewModalOpen}>
               New
             </Button>
           </Stack>
@@ -114,11 +88,7 @@ export const RepositoriesPage: React.FC = () => {
                         </RouterLink>
                       </Tooltip>
                     )}
-                    <IconButton
-                      edge="end"
-                      aria-label="delete"
-                      onClick={() => openDialog(repository)}
-                    >
+                    <IconButton edge="end" aria-label="delete" onClick={() => openDialog(repository)}>
                       <DeleteIcon />
                     </IconButton>
                   </Stack>
@@ -126,11 +96,7 @@ export const RepositoriesPage: React.FC = () => {
               >
                 <ListItemAvatar>
                   {repository.private ? (
-                    <Badge
-                      overlap="circular"
-                      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                      badgeContent={<LockIcon color="inherit" />}
-                    >
+                    <Badge overlap="circular" anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} badgeContent={<LockIcon color="inherit" />}>
                       <Avatar>
                         <SourceIcon />
                       </Avatar>
@@ -154,18 +120,14 @@ export const RepositoriesPage: React.FC = () => {
                             fontSize: '0.85em',
                           }}
                         >
-                          {repository.headRevision.length === 40
-                            ? repository.headRevision.slice(0, 8)
-                            : repository.headRevision}
+                          {repository.headRevision.length === 40 ? repository.headRevision.slice(0, 8) : repository.headRevision}
                         </Box>
                       </>
                     ) : (
                       repository.name
                     )
                   }
-                  secondary={
-                    <Link href={repository.url}>{repository.url}</Link>
-                  }
+                  secondary={<Link href={repository.url}>{repository.url}</Link>}
                 />
               </ListItem>
             ))}
@@ -173,12 +135,7 @@ export const RepositoriesPage: React.FC = () => {
         </Stack>
       </Box>
 
-      <NewRepositoryModal
-        form={register}
-        open={newModal}
-        onClose={handleNewModalClose}
-        onSubmit={handleSubmit(handleNew)}
-      />
+      <NewRepositoryModal form={register} open={newModal} onClose={handleNewModalClose} onSubmit={handleSubmit(handleNew)} />
 
       <ConfirmDialog />
     </Container>

@@ -3,15 +3,7 @@ import { useMutation, useQuery } from '@connectrpc/connect-query'
 import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Stack, TextField } from '@mui/material'
 import { AgentService, type Agent } from '../connect/codexel_pb.js'
 
-export const StartAgentDialog = ({
-  open,
-  onClose,
-  onStarted,
-}: {
-  open: boolean
-  onClose: () => void
-  onStarted: (agent: Agent) => void
-}) => {
+export const StartAgentDialog = ({ open, onClose, onStarted }: { open: boolean; onClose: () => void; onStarted: (agent: Agent) => void }) => {
   const { data } = useQuery(AgentService.method.listWorkspaces, {}, { enabled: open })
   const start = useMutation(AgentService.method.start)
   const [workspaceId, setWorkspaceId] = useState('')
