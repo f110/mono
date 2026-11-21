@@ -1,5 +1,6 @@
-import { isValidElement, useEffect, useId, useState } from 'react'
+import { isValidElement, useId } from 'react'
 import { Alert, Box } from '@mui/material'
+import { useQuery } from '@tanstack/react-query'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
@@ -7,33 +8,27 @@ import remarkGfm from 'remark-gfm'
 // strict sanitizes the diagram because it is written by the agents and the files in the repository.
 const Mermaid = ({ code }: { code: string }) => {
   const id = useId().replace(/[^a-zA-Z0-9]/g, '')
-  const [result, setResult] = useState<{ svg?: string; error?: string }>({})
+  const { data, error } = useQuery({
+    queryKey: ['mermaid', code],
+    queryFn: async () => {
+      const { default: mermaid } = await import('mermaid')
+      mermaid.initialize({ startOnLoad: false, securityLevel: 'strict' })
+      const { svg } = await mermaid.render(`mermaid${id}`, code)
+      return svg
+    },
+    staleTime: Infinity,
+    retry: false,
+  })
 
-  useEffect(() => {
-    let canceled = false
-    import('mermaid')
-      .then(async ({ default: mermaid }) => {
-        mermaid.initialize({ startOnLoad: false, securityLevel: 'strict' })
-        const { svg } = await mermaid.render(`mermaid${id}`, code)
-        if (!canceled) setResult({ svg })
-      })
-      .catch((e: unknown) => {
-        if (!canceled) setResult({ error: e instanceof Error ? e.message : String(e) })
-      })
-    return () => {
-      canceled = true
-    }
-  }, [code, id])
-
-  if (result.error) {
+  if (error) {
     return (
       <>
-        <Alert severity="warning">{result.error}</Alert>
+        <Alert severity="warning">{error.message}</Alert>
         <pre>{code}</pre>
       </>
     )
   }
-  return <Box sx={{ '& svg': { maxWidth: '100%', height: 'auto' } }} dangerouslySetInnerHTML={{ __html: result.svg ?? '' }} />
+  return <Box sx={{ '& svg': { maxWidth: '100%', height: 'auto' } }} dangerouslySetInnerHTML={{ __html: data ?? '' }} />
 }
 
 // Markdown renders GitHub Flavored Markdown. The code blocks of mermaid are rendered as the diagrams.
