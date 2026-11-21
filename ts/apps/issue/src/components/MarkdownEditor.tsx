@@ -37,7 +37,9 @@ export const MarkdownEditor = ({
             }
             e.preventDefault()
             const form = (e.target as HTMLTextAreaElement).form
-            const submitter = form?.querySelector<HTMLButtonElement>('button[type=submit]')
+            const submitter = Array.from(form?.elements ?? []).find(
+              (el): el is HTMLButtonElement => el instanceof HTMLButtonElement && el.type === 'submit',
+            )
             if (form && submitter && !submitter.disabled) {
               form.requestSubmit(submitter)
             }
