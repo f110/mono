@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { useQuery } from '@connectrpc/connect-query'
 import { useRouter } from '@tanstack/react-router'
 import { Box, Button, IconButton, Stack, Tab, Tabs, TextField, ToggleButton, Typography } from '@mui/material'
@@ -58,7 +58,7 @@ export const FileTreePanel = ({
   nodes: TreeNode[]
   selected: number
   filter: string
-  filterRef: React.RefObject<HTMLInputElement | null>
+  filterRef: RefObject<HTMLInputElement | null>
   placeholder: string
   help?: string
   onFilterChange: (filter: string) => void
@@ -203,7 +203,7 @@ export const FileView = ({
   repoPath: string
   revision: string
   file: string
-  scrollRef: React.RefObject<HTMLElement | null>
+  scrollRef: RefObject<HTMLElement | null>
   scrollTop: number
   preview: boolean
   onTogglePreview: () => void

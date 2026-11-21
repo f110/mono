@@ -229,7 +229,7 @@ export const FileDiffView = ({
   const lang = languageOf(file.path)
   const ranges = useMemo(() => file.hunks.map((h) => lineRanges(h)), [file])
   const fileGaps = useMemo(() => gaps(file.hunks), [file])
-  const [expanded, setExpanded] = useState<Set<number>>(new Set())
+  const [expanded, setExpanded] = useState<Set<number>>(() => new Set())
   const expandable = title === undefined && !file.binary && file.status !== FileStatus.ADDED && file.status !== FileStatus.DELETED && file.hunks.length > 0
   const showPreview = title === undefined && preview && isMarkdown(file.path) && file.status !== FileStatus.DELETED
   const content = useFile(repoPath, revision, file.path, (expandable && expanded.size > 0) || showPreview)

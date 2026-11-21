@@ -16,7 +16,7 @@ export const SplitDialog = ({
   onClose: () => void
 }) => {
   const { data } = useQuery(RepositoryService.method.getRevision, { path: repoPath, revision: commit.commitId }, { staleTime: Infinity })
-  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [selected, setSelected] = useState<Set<string>>(() => new Set())
   const [description, setDescription] = useState('')
   const files = data?.files ?? []
 

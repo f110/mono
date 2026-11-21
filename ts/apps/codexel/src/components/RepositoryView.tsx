@@ -131,7 +131,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   const [revset, setRevset] = useState('')
   const [revsetInput, setRevsetInput] = useState('')
   const [selectedKey, setSelectedKey] = useState<string>()
-  const [checked, setChecked] = useState<Set<string>>(new Set())
+  const [checked, setChecked] = useState<Set<string>>(() => new Set())
   const [message, setMessage] = useState<{ text: string; error: boolean }>()
   const [editing, setEditing] = useState<Editing>()
   const [abandoning, setAbandoning] = useState<Commit[]>()
@@ -280,15 +280,23 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   const edit = useCallback((c: Commit) => run(() => repositoryClient.edit({ path, revision: c.commitId }), true), [path, run])
   const startDescribe = useCallback(
     async (c: Commit) => {
-      const res = await repositoryClient.getRevision({ path, revision: c.commitId })
-      setEditing({ kind: 'describe', commit: c, initial: res.description })
+      try {
+        const res = await repositoryClient.getRevision({ path, revision: c.commitId })
+        setEditing({ kind: 'describe', commit: c, initial: res.description })
+      } catch (e) {
+        setMessage({ text: e instanceof Error ? e.message : String(e), error: true })
+      }
     },
     [path],
   )
   const startCommit = useCallback(async () => {
     const wc = commits.find((c) => c.currentWorkingCopy)
-    const res = wc ? await repositoryClient.getRevision({ path, revision: wc.commitId }) : undefined
-    setEditing({ kind: 'commit', initial: res?.description ?? '' })
+    try {
+      const res = wc ? await repositoryClient.getRevision({ path, revision: wc.commitId }) : undefined
+      setEditing({ kind: 'commit', initial: res?.description ?? '' })
+    } catch (e) {
+      setMessage({ text: e instanceof Error ? e.message : String(e), error: true })
+    }
   }, [commits, path])
   const undo = useCallback(() => run(() => repositoryClient.undo({ path }), false), [path, run])
   const navigate = useNavigate()

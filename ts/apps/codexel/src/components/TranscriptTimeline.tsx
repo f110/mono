@@ -1,11 +1,10 @@
 import { Fragment, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
 import { Box, Button, IconButton, Stack, Tooltip, Typography } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { TranscriptEntryKind, type TranscriptEntry } from '../connect/codexel_pb.js'
+import { Markdown } from './Markdown.tsx'
 
 type RecordKind = 'user' | 'assistant' | 'tool'
 
@@ -271,7 +270,7 @@ const Inspector = ({ rec, onClose }: { rec: Rec; onClose: () => void }) => {
       {rec.kind === 'assistant' && (
         <Section title="Output">
           <Box sx={{ fontSize: 13, '& p': { my: 0.5 }, '& pre': { overflow: 'auto' } }}>
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{rec.entry.text}</ReactMarkdown>
+            <Markdown text={rec.entry.text} />
           </Box>
         </Section>
       )}
@@ -306,8 +305,8 @@ const KeyValues = ({ rows }: { rows: [string, string][] }) => (
 export const TranscriptTimeline = ({ entries }: { entries: TranscriptEntry[] }) => {
   const ref = useRef<HTMLDivElement>(null)
   const atBottom = useRef(true)
-  const [foldedTurns, setFoldedTurns] = useState<Set<number>>(new Set())
-  const [foldedCalls, setFoldedCalls] = useState<Set<number>>(new Set())
+  const [foldedTurns, setFoldedTurns] = useState<Set<number>>(() => new Set())
+  const [foldedCalls, setFoldedCalls] = useState<Set<number>>(() => new Set())
   const [selected, setSelected] = useState<number>()
 
   useLayoutEffect(() => {
