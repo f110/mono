@@ -6,39 +6,10 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import CloseIcon from '@mui/icons-material/Close'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import FolderIcon from '@mui/icons-material/Folder'
-import FolderOpenIcon from '@mui/icons-material/FolderOpen'
-import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined'
-import fileArchiveIcon from '@jetbrains/icons/file-archive.svg'
-import fileAsIcon from '@jetbrains/icons/file-as.svg'
-import fileAspectjIcon from '@jetbrains/icons/file-aspectj.svg'
-import fileCssIcon from '@jetbrains/icons/file-css.svg'
-import fileDtdIcon from '@jetbrains/icons/file-dtd.svg'
-import fileGoIcon from '@jetbrains/icons/file-go.svg'
-import fileGqlIcon from '@jetbrains/icons/file-gql.svg'
-import fileHtaccessIcon from '@jetbrains/icons/file-htaccess.svg'
-import fileHtmlIcon from '@jetbrains/icons/file-html.svg'
-import fileJavaClassIcon from '@jetbrains/icons/file-java-class.svg'
-import fileJavaIcon from '@jetbrains/icons/file-java.svg'
-import fileJsIcon from '@jetbrains/icons/file-js.svg'
-import fileJsonIcon from '@jetbrains/icons/file-json.svg'
-import fileJspIcon from '@jetbrains/icons/file-jsp.svg'
-import fileJspxIcon from '@jetbrains/icons/file-jspx.svg'
-import fileKotlinIcon from '@jetbrains/icons/file-kotlin.svg'
-import fileManifestIcon from '@jetbrains/icons/file-manifest.svg'
-import filePropertiesIcon from '@jetbrains/icons/file-properties.svg'
-import filePythonIcon from '@jetbrains/icons/file-python.svg'
-import fileTextIcon from '@jetbrains/icons/file-text.svg'
-import fileTsIcon from '@jetbrains/icons/file-ts.svg'
-import fileTsxIcon from '@jetbrains/icons/file-tsx.svg'
-import fileWsdlIcon from '@jetbrains/icons/file-wsdl.svg'
-import fileXhtmlIcon from '@jetbrains/icons/file-xhtml.svg'
-import fileXmlIcon from '@jetbrains/icons/file-xml.svg'
-import fileXsdIcon from '@jetbrains/icons/file-xsd.svg'
-import fileYamlIcon from '@jetbrains/icons/file-yaml.svg'
 import { RepositoryService } from '../connect/codexel_pb.js'
 import { fileLocation, parentDirs, visibleNodes, withFileLocation, type FileRevision, type TreeNode } from '../lib/fileTree.ts'
 import { languageOf, tokenize } from '../lib/highlight.ts'
+import { FileIcon, FolderIcon } from './FileIcon.tsx'
 import { ignoreKey } from '../lib/keys.ts'
 import { isMarkdown } from './FileDiffView.tsx'
 import { Markdown } from './Markdown.tsx'
@@ -113,7 +84,7 @@ export const FileTreePanel = ({
           {n.dir ? (
             <>
               {n.expanded ? <ExpandMoreIcon sx={{ fontSize: 16 }} /> : <ChevronRightIcon sx={{ fontSize: 16 }} />}
-              {n.expanded ? <FolderOpenIcon sx={{ fontSize: 16 }} /> : <FolderIcon sx={{ fontSize: 16 }} />}
+              <FolderIcon open={n.expanded} />
               {n.name}
             </>
           ) : (
@@ -127,63 +98,6 @@ export const FileTreePanel = ({
       ))}
     </Box>
   )
-}
-
-const iconsByName: Record<string, string> = {
-  '.htaccess': fileHtaccessIcon,
-  'MANIFEST.MF': fileManifestIcon,
-}
-
-const iconsByExtension: Record<string, string> = {
-  aj: fileAspectjIcon,
-  as: fileAsIcon,
-  cjs: fileJsIcon,
-  class: fileJavaClassIcon,
-  css: fileCssIcon,
-  cts: fileTsIcon,
-  dtd: fileDtdIcon,
-  ear: fileArchiveIcon,
-  go: fileGoIcon,
-  gql: fileGqlIcon,
-  graphql: fileGqlIcon,
-  htm: fileHtmlIcon,
-  html: fileHtmlIcon,
-  jar: fileArchiveIcon,
-  java: fileJavaIcon,
-  js: fileJsIcon,
-  json: fileJsonIcon,
-  jsp: fileJspIcon,
-  jspx: fileJspxIcon,
-  jsx: fileJsIcon,
-  kt: fileKotlinIcon,
-  kts: fileKotlinIcon,
-  mjs: fileJsIcon,
-  mts: fileTsIcon,
-  properties: filePropertiesIcon,
-  py: filePythonIcon,
-  ts: fileTsIcon,
-  tsx: fileTsxIcon,
-  txt: fileTextIcon,
-  war: fileArchiveIcon,
-  wsdl: fileWsdlIcon,
-  xhtml: fileXhtmlIcon,
-  xml: fileXmlIcon,
-  xsd: fileXsdIcon,
-  yaml: fileYamlIcon,
-  yml: fileYamlIcon,
-  zip: fileArchiveIcon,
-}
-
-// FileIcon shows the icon of the file type determined by the name of the file. The generic icon is shown for the
-// unknown file types.
-const FileIcon = ({ path }: { path: string }) => {
-  const name = path.split('/').pop() ?? path
-  const ext = name.includes('.') ? name.split('.').pop()!.toLowerCase() : ''
-  const icon = iconsByName[name] ?? iconsByExtension[ext]
-  if (!icon) {
-    return <InsertDriveFileOutlinedIcon sx={{ fontSize: 16 }} />
-  }
-  return <Box component="img" src={icon} alt="" sx={{ width: 16, height: 16, flexShrink: 0 }} />
 }
 
 const decoder = new TextDecoder()
