@@ -1151,7 +1151,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
                   { label: 'Edit the revision (check out)', run: () => edit(selectedCommit) },
                   { label: 'Abandon the revision', run: () => setAbandoning(targets()) },
                   { label: 'Split the revision', shortcut: 's', run: () => setSplitting(selectedCommit) },
-                  { label: 'Rebase', shortcut: 'R', run: () => setMode({ kind: 'rebase', sources: targets(), source: RebaseSource.REVISIONS, target: RebaseTarget.ONTO }) },
+                  { label: 'Rebase', shortcut: 'R', run: startRebase },
                   { label: 'Squash', shortcut: 'S', run: () => setMode({ kind: 'squash', sources: targets(), combine: false }) },
                   { label: 'Slide down (swap with the parent)', shortcut: 'J', run: () => slide('down') },
                   { label: 'Slide up (swap with the child)', shortcut: 'K', run: () => slide('up') },
