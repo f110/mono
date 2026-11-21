@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Box, Dialog, List, ListItemButton, ListItemText, TextField, Typography } from '@mui/material'
+import { isInputSubmitKey } from '../lib/keys.ts'
 
 export type Action = { label: string; shortcut?: string; run: () => void }
 
@@ -38,7 +39,7 @@ export const CommandPalette = ({ actions, onClose }: { actions: Action[]; onClos
           } else if (e.key === 'ArrowUp') {
             e.preventDefault()
             setSelected(Math.max(index - 1, 0))
-          } else if (e.key === 'Enter') {
+          } else if (isInputSubmitKey(e.nativeEvent)) {
             e.preventDefault()
             run(matched[index])
           }

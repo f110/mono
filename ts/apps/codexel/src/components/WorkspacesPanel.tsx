@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField, Typography } from '@mui/material'
 import type { RepositoryWorkspace } from '../connect/codexel_pb.js'
+import { isInputSubmitKey } from '../lib/keys.ts'
 
 // WorkspacesPanel lists the workspaces of the repository. The workspace is opened as another repository. The operations
 // on the workspace are shown in the selected row. The keys are handled by the parent.
@@ -111,7 +112,7 @@ export const WorkspaceNameDialog = ({
           value={name}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && name) {
+            if (isInputSubmitKey(e.nativeEvent) && name) {
               onSubmit(name)
             }
           }}

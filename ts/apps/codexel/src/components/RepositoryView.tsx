@@ -41,7 +41,7 @@ import { useOperation } from '../hooks/useOperation.ts'
 import { usePullRequests } from '../hooks/usePullRequests.ts'
 import { useReviews } from '../hooks/useReviews.ts'
 import { fileLocation, fileRevset, type FileRevision } from '../lib/fileTree.ts'
-import { ignoreKey, pressKey } from '../lib/keys.ts'
+import { ignoreKey, isInputSubmitKey, pressKey } from '../lib/keys.ts'
 import { computeSlide } from '../lib/slide.ts'
 import { transport } from '../providers/AppProvider.tsx'
 import { BookmarkDialog } from './BookmarkDialog.tsx'
@@ -832,7 +832,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           value={revsetInput}
           onChange={(e) => setRevsetInput(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') {
+            if (isInputSubmitKey(e.nativeEvent)) {
               setRevset(revsetInput)
               setSelectedKey(undefined)
               revsetRef.current?.blur()

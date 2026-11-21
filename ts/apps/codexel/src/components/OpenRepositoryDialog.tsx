@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useMutation } from '@connectrpc/connect-query'
 import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField } from '@mui/material'
 import { RepositoryService, type Repository } from '../connect/codexel_pb.js'
+import { isInputSubmitKey } from '../lib/keys.ts'
 
 export const OpenRepositoryDialog = ({ open, onClose, onOpened }: { open: boolean; onClose: () => void; onOpened: (repo: Repository) => void }) => {
   const openRepository = useMutation(RepositoryService.method.open)
@@ -33,7 +34,7 @@ export const OpenRepositoryDialog = ({ open, onClose, onOpened }: { open: boolea
             value={path}
             onChange={(e) => setPath(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && path) {
+              if (isInputSubmitKey(e.nativeEvent) && path) {
                 submit(path)
               }
             }}

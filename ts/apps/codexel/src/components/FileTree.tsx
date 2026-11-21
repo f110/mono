@@ -10,7 +10,7 @@ import { RepositoryService } from '../connect/codexel_pb.js'
 import { fileLocation, parentDirs, visibleNodes, withFileLocation, type FileRevision, type TreeNode } from '../lib/fileTree.ts'
 import { languageOf, tokenize } from '../lib/highlight.ts'
 import { FileIcon, FolderIcon } from './FileIcon.tsx'
-import { ignoreKey } from '../lib/keys.ts'
+import { ignoreKey, isInputSubmitKey } from '../lib/keys.ts'
 import { isMarkdown } from './FileDiffView.tsx'
 import { Markdown } from './Markdown.tsx'
 
@@ -51,7 +51,7 @@ export const FileTreePanel = ({
           value={filter}
           onChange={(e) => onFilterChange(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') {
+            if (isInputSubmitKey(e.nativeEvent)) {
               filterRef.current?.blur()
             }
           }}
