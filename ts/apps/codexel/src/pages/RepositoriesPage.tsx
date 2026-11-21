@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useMutation, useQuery } from '@connectrpc/connect-query'
 import { Box, Button, IconButton, Stack, Tab, Tabs, Typography } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
@@ -12,12 +12,8 @@ export const RepositoriesPage = () => {
   const { path } = useSearch({ from: '/repositories' })
   const navigate = useNavigate({ from: '/repositories' })
   const { data, refetch } = useQuery(RepositoryService.method.list, {})
-  const { agents } = useAgents()
-  useEffect(() => {
-    if (agents) {
-      refetch()
-    }
-  }, [agents, refetch])
+  // useAgents reads the list of the repositories again when the agents change.
+  useAgents()
   const closeRepository = useMutation(RepositoryService.method.close)
   const [openDialog, setOpenDialog] = useState(false)
   const repositories = data?.repositories ?? []
