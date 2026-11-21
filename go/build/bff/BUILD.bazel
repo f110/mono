@@ -50,6 +50,7 @@ go_library(
         "//go/build/model",
         "//go/enumerable",
         "//go/git",
+        "//go/http/httpserver",
         "//go/logger",
         "//go/storage",
         "@com_connectrpc_connect//:connect",
@@ -78,6 +79,7 @@ go_test(
     deps = [
         "//go/build/api",
         "//go/build/model",
+        "//go/storage",
         "//go/testing/assertion",
         "@com_connectrpc_connect//:connect",
         "@dev_f110_go_xerrors//:xerrors",

@@ -25,6 +25,7 @@ import (
 	"go.f110.dev/mono/go/build/model"
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/git"
+	"go.f110.dev/mono/go/http/httpserver"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )
@@ -41,7 +42,7 @@ type BFF struct {
 	s3            *storage.S3
 }
 
-func NewBFF(addr string, grpcConn *grpc.ClientConn, apiClient api.APIClient, gitDataClient git.GitDataClient, bucket string, s3Opt storage.S3Options) *BFF {
+func NewBFF(addr string, grpcConn *grpc.ClientConn, apiClient api.APIClient, gitDataClient git.GitDataClient, bucket string, s3Opt storage.S3Options, assetsDir string) *BFF {
 	b := &BFF{
 		apiClient:     apiClient,
 		gitDataClient: gitDataClient,
@@ -57,6 +58,9 @@ func NewBFF(addr string, grpcConn *grpc.ClientConn, apiClient api.APIClient, git
 			w.WriteHeader(http.StatusServiceUnavailable)
 		}
 	})
+	if assetsDir != "" {
+		mux.Handle("/", httpserver.SinglePageApplication(assetsDir))
+	}
 	c := cors.New(cors.Options{
 		AllowOriginFunc:  func(_ string) bool { return true },
 		AllowedHeaders:   []string{"Connect-Protocol-Version", "Content-Type"},

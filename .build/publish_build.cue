@@ -13,7 +13,4 @@ jobs: {
 	publish_build_sidecar: _job_common & {
 		targets: ["//containers/build:push_sidecar"]
 	}
-	publish_build_frontend: _job_common & {
-		targets: ["//containers/build:push_frontend"]
-	}
 }

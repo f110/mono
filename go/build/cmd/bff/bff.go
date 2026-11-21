@@ -48,7 +48,7 @@ func bffCmd(ctx context.Context, opts options) error {
 
 	s3Opt := storage.NewS3OptionToExternal(opts.StorageEndpoint, opts.StorageRegion, opts.AccessKey, opts.SecretAccessKey)
 	s3Opt.PathStyle = true
-	b := bff.NewBFF(opts.Addr, conn, apiClient, gitDataClient, opts.Bucket, s3Opt)
+	b := bff.NewBFF(opts.Addr, conn, apiClient, gitDataClient, opts.Bucket, s3Opt, opts.AssetsDir)
 	go func() {
 		<-ctx.Done()
 		b.Shutdown(context.Background())
@@ -78,6 +78,7 @@ type options struct {
 	AccessKey           string
 	SecretAccessKey     string
 	SecretAccessKeyFile string
+	AssetsDir           string
 }
 
 func AddCommand(rootCmd *cli.Command) {
@@ -99,6 +100,7 @@ func AddCommand(rootCmd *cli.Command) {
 	fs.String("access-key", "The access key").Var(&opt.AccessKey)
 	fs.String("secret-access-key", "The secret access key").Var(&opt.SecretAccessKey)
 	fs.String("secret-access-key-file", "The file path that contains secret access key").Var(&opt.SecretAccessKeyFile)
+	fs.String("assets", "The directory of the assets of the frontend. If empty, the assets are not served.").Var(&opt.AssetsDir)
 
 	rootCmd.AddCommand(cmd)
 }

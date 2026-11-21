@@ -2,6 +2,10 @@ package bff
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -11,6 +15,7 @@ import (
 
 	"go.f110.dev/mono/go/build/api"
 	"go.f110.dev/mono/go/build/model"
+	"go.f110.dev/mono/go/storage"
 	"go.f110.dev/mono/go/testing/assertion"
 )
 
@@ -43,6 +48,36 @@ func TestBFF_GetServerInfo(t *testing.T) {
 		assertion.MustNoError(t, err)
 		assertion.Equal(t, res.Msg.GetCommitSha(), "")
 		assertion.False(t, res.Msg.HasCommitTime())
+	})
+}
+
+func TestNewBFF(t *testing.T) {
+	t.Run("serve the assets of the frontend", func(t *testing.T) {
+		dir := t.TempDir()
+		assertion.MustNoError(t, os.WriteFile(filepath.Join(dir, "index.html"), []byte("index"), 0644))
+		assertion.MustNoError(t, os.Mkdir(filepath.Join(dir, "assets"), 0755))
+		assertion.MustNoError(t, os.WriteFile(filepath.Join(dir, "assets", "app.js"), []byte("app"), 0644))
+		b := NewBFF(":0", nil, &fakeAPIClient{}, nil, "", storage.S3Options{}, dir)
+
+		cases := map[string]string{
+			"/":              "index",
+			"/assets/app.js": "app",
+			"/tasks/1":       "index",
+		}
+		for p, body := range cases {
+			rec := httptest.NewRecorder()
+			b.Handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, p, nil))
+			assertion.Equal(t, rec.Code, http.StatusOK)
+			assertion.Equal(t, rec.Body.String(), body)
+		}
+	})
+
+	t.Run("the assets are not served without the directory", func(t *testing.T) {
+		b := NewBFF(":0", nil, &fakeAPIClient{}, nil, "", storage.S3Options{}, "")
+
+		rec := httptest.NewRecorder()
+		b.Handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
+		assertion.Equal(t, rec.Code, http.StatusNotFound)
 	})
 }
 

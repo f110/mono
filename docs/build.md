@@ -253,9 +253,9 @@ TypeScript の両方を生成する（BUILD.bazel の `proto_library` + `go` 生
 ## フロントエンド (`ts/apps/build`)
 
 React + Vite + TanStack Router + TanStack Query + Connect (`@connectrpc/connect-query`) + MUI 構成
-（pnpm workspace / turbo）。ビルドした静的アセットは専用イメージ (`build/frontend`) として、bff とは別の
-`{env}-build-frontend` Pod（ポート 8090）から配信される。ブラウザはこの Pod から取得したアプリから、
-`VITE_BFF_URL` 宛て（bff の backend）に Connect リクエストを送る。
+（pnpm workspace / turbo）。ビルドした静的アセットは `build/build` イメージの `/assets` に同梱され、
+bff が `--assets` で指定したディレクトリから配信する。ブラウザは bff から取得したアプリから、同じオリジンの bff に
+Connect リクエストを送る。
 
 - **通信**: `providers/AppProvider.tsx` が `createConnectTransport`（ページと同じオリジン宛て）と `QueryClient` を
   セットアップ。bff の Connect サービスだけを叩き、builder API を直接は呼ばない。
