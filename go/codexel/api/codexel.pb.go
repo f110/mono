@@ -8477,7 +8477,7 @@ func (b0 ResponseFetch_builder) Build() *ResponseFetch {
 type RequestPush struct {
 	state                  protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
-	xxx_hidden_Bookmark    *string                `protobuf:"bytes,2,opt,name=bookmark"`
+	xxx_hidden_Bookmarks   []string               `protobuf:"bytes,2,rep,name=bookmarks"`
 	XXX_raceDetectHookData protoimpl.RaceDetectHookData
 	XXX_presence           [1]uint32
 	unknownFields          protoimpl.UnknownFields
@@ -8519,14 +8519,11 @@ func (x *RequestPush) GetPath() string {
 	return ""
 }
 
-func (x *RequestPush) GetBookmark() string {
+func (x *RequestPush) GetBookmarks() []string {
 	if x != nil {
-		if x.xxx_hidden_Bookmark != nil {
-			return *x.xxx_hidden_Bookmark
-		}
-		return ""
+		return x.xxx_hidden_Bookmarks
 	}
-	return ""
+	return nil
 }
 
 func (x *RequestPush) SetPath(v string) {
@@ -8534,9 +8531,8 @@ func (x *RequestPush) SetPath(v string) {
 	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 2)
 }
 
-func (x *RequestPush) SetBookmark(v string) {
-	x.xxx_hidden_Bookmark = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
+func (x *RequestPush) SetBookmarks(v []string) {
+	x.xxx_hidden_Bookmarks = v
 }
 
 func (x *RequestPush) HasPath() bool {
@@ -8546,28 +8542,16 @@ func (x *RequestPush) HasPath() bool {
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
 }
 
-func (x *RequestPush) HasBookmark() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
-}
-
 func (x *RequestPush) ClearPath() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
 	x.xxx_hidden_Path = nil
 }
 
-func (x *RequestPush) ClearBookmark() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
-	x.xxx_hidden_Bookmark = nil
-}
-
 type RequestPush_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	Path     *string
-	Bookmark *string
+	Path      *string
+	Bookmarks []string
 }
 
 func (b0 RequestPush_builder) Build() *RequestPush {
@@ -8578,10 +8562,7 @@ func (b0 RequestPush_builder) Build() *RequestPush {
 		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 2)
 		x.xxx_hidden_Path = b.Path
 	}
-	if b.Bookmark != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
-		x.xxx_hidden_Bookmark = b.Bookmark
-	}
+	x.xxx_hidden_Bookmarks = b.Bookmarks
 	return m0
 }
 
@@ -18855,10 +18836,10 @@ const file_proto_codexel_codexel_proto_rawDesc = "" +
 	"\fRequestFetch\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\"'\n" +
 	"\rResponseFetch\x12\x16\n" +
-	"\x06output\x18\x01 \x01(\tR\x06output\"=\n" +
+	"\x06output\x18\x01 \x01(\tR\x06output\"?\n" +
 	"\vRequestPush\x12\x12\n" +
-	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1a\n" +
-	"\bbookmark\x18\x02 \x01(\tR\bbookmark\"&\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1c\n" +
+	"\tbookmarks\x18\x02 \x03(\tR\tbookmarks\"&\n" +
 	"\fResponsePush\x12\x16\n" +
 	"\x06output\x18\x01 \x01(\tR\x06output\"\x7f\n" +
 	"\tOperation\x12\x0e\n" +

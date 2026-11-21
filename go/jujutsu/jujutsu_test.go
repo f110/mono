@@ -138,8 +138,8 @@ func TestBookmarkArgs(t *testing.T) {
 	assertion.Equal(t, bookmarkMoveArgs("feat-*", "abc"), []string{"bookmark", "move", "--to=abc", "--allow-backwards", "--", "exact:feat-*"})
 	assertion.Equal(t, bookmarkDeleteArgs("feat-*"), []string{"bookmark", "delete", "--", "exact:feat-*"})
 	assertion.Equal(t, bookmarkTrackArgs("main", "origin"), []string{"bookmark", "track", "--remote=exact:origin", "--", "exact:main"})
-	assertion.Equal(t, gitPushArgs(""), []string{"git", "push"})
-	assertion.Equal(t, gitPushArgs("feat-*"), []string{"git", "push", "--bookmark=exact:feat-*"})
+	assertion.Equal(t, gitPushArgs(nil), []string{"git", "push"})
+	assertion.Equal(t, gitPushArgs([]string{"feat-*", "main"}), []string{"git", "push", "--bookmark=exact:feat-*", "--bookmark=exact:main"})
 }
 
 func TestWorkspaceAddArgs(t *testing.T) {

@@ -505,7 +505,7 @@ func (h *RepositoryHandler) Fetch(ctx context.Context, req *connect.Request[api.
 }
 
 func (h *RepositoryHandler) Push(ctx context.Context, req *connect.Request[api.RequestPush]) (*connect.Response[api.ResponsePush], error) {
-	out, err := mutate(h.config, req.Msg.GetPath(), func(r *jujutsu.Repository) (string, error) { return r.GitPush(ctx, req.Msg.GetBookmark()) })
+	out, err := mutate(h.config, req.Msg.GetPath(), func(r *jujutsu.Repository) (string, error) { return r.GitPush(ctx, req.Msg.GetBookmarks()) })
 	if err != nil {
 		return nil, err
 	}

@@ -317,8 +317,8 @@ func (r *Repository) GitFetch(ctx context.Context) (string, error) {
 	return r.mutate(ctx, gitFetchArgs()...)
 }
 
-func (r *Repository) GitPush(ctx context.Context, bookmark string) (string, error) {
-	return r.mutate(ctx, gitPushArgs(bookmark)...)
+func (r *Repository) GitPush(ctx context.Context, bookmarks []string) (string, error) {
+	return r.mutate(ctx, gitPushArgs(bookmarks)...)
 }
 
 func (r *Repository) Workspaces(ctx context.Context) ([]*Workspace, error) {
@@ -910,12 +910,13 @@ func gitFetchArgs() []string {
 	return []string{"git", "fetch"}
 }
 
-// gitPushArgs returns the arguments of jj git push. It pushes the bookmarks of revsets.git-push if bookmark is empty.
-func gitPushArgs(bookmark string) []string {
-	if bookmark == "" {
-		return []string{"git", "push"}
+// gitPushArgs returns the arguments of jj git push. It pushes the bookmarks of revsets.git-push if bookmarks is empty.
+func gitPushArgs(bookmarks []string) []string {
+	args := []string{"git", "push"}
+	for _, v := range bookmarks {
+		args = append(args, "--bookmark=exact:"+v)
 	}
-	return []string{"git", "push", "--bookmark=exact:" + bookmark}
+	return args
 }
 
 func workspaceAddArgs(name, rev, dir string) []string {

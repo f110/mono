@@ -139,6 +139,11 @@ remove・forget ともに Codexel で開いている workspace は対象にで�
 詳細パネルの「⋯」メニューにも入れる。
 lightjj にはコピーのキーがないので vim の yank に合わせる (`docs/ui-conventions.md`)。
 
+push はダイアログでチェックしたローカルの bookmark を `jj git push --bookmark=exact:<name>` で push する (#203)。
+引数なしの `jj git push` は `revsets.git-push` の範囲にある tracking 済みの bookmark しか push しないため、`@` の祖先でない bookmark や新しい bookmark を push できない。
+候補は tracking しているリモートの bookmark と同期していないもの、tracking しているリモートの bookmark がないもの、削除したものとする。コンフリクトしているものは push できないので除く。
+split のファイルの選択と同じく複数チェックして一度に push できる。初期状態は何もチェックしない。
+
 すべての操作はボタンでも実行できるようにする (#155)。iPad などのタッチ端末ではキーボード・コマンドパレットが使えないため。
 キー・コマンドパレットはショートカットとして残す。長押しでメニューを開く操作は見つけにくいので使わない。
 右クリックのメニューは使わない (#186)。右クリックのメニューの操作はすべてボタンでも実行でき、導線が重複するため。

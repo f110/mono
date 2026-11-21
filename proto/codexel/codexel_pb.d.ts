@@ -1703,9 +1703,9 @@ export declare type RequestPush = Message<"mono.codexel.RequestPush"> & {
   path: string;
 
   /**
-   * @generated from field: string bookmark = 2;
+   * @generated from field: repeated string bookmarks = 2;
    */
-  bookmark: string;
+  bookmarks: string[];
 };
 
 /**
@@ -4535,7 +4535,7 @@ export declare const RepositoryService: GenService<{
     output: typeof ResponseFetchSchema;
   },
   /**
-   * Push pushes the bookmark. The bookmarks of revsets.git-push are pushed if bookmark is empty.
+   * Push pushes the bookmarks. The bookmarks of revsets.git-push are pushed if bookmarks is empty.
    *
    * @generated from rpc mono.codexel.RepositoryService.Push
    */

@@ -84,7 +84,7 @@ service RepositoryService {
   rpc UntrackBookmark(RequestUntrackBookmark) returns (ResponseUntrackBookmark);
 
   rpc Fetch(RequestFetch) returns (ResponseFetch);
-  // Push pushes the bookmark. The bookmarks of revsets.git-push are pushed if bookmark is empty.
+  // Push pushes the bookmarks. The bookmarks of revsets.git-push are pushed if bookmarks is empty.
   rpc Push(RequestPush) returns (ResponsePush);
 
   // ListOperations returns the operations from the newest.
@@ -626,8 +626,8 @@ message ResponseFetch {
 }
 
 message RequestPush {
-  string path     = 1;
-  string bookmark = 2;
+  string          path      = 1;
+  repeated string bookmarks = 2;
 }
 
 message ResponsePush {

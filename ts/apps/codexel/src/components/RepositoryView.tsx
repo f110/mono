@@ -45,7 +45,7 @@ import { ignoreKey, isInputSubmitKey, pressKey } from '../lib/keys.ts'
 import { computeSlide } from '../lib/slide.ts'
 import { transport } from '../providers/AppProvider.tsx'
 import { BookmarkDialog } from './BookmarkDialog.tsx'
-import { BookmarksPanel, bookmarkLabel } from './BookmarksPanel.tsx'
+import { BookmarksPanel } from './BookmarksPanel.tsx'
 import { CommandPalette } from './CommandPalette.tsx'
 import { DescriptionDialog } from './DescriptionDialog.tsx'
 import { DiffControls } from './DiffControls.tsx'
@@ -54,6 +54,7 @@ import { FileDiffView } from './FileDiffView.tsx'
 import { FileBrowser, FileSidebar, type OpenRequest } from './FileTree.tsx'
 import { EvologPanel, OperationsPanel } from './HistoryPanels.tsx'
 import { PullRequestDialog } from './PullRequestDialog.tsx'
+import { PushDialog } from './PushDialog.tsx'
 import { RevisionDetail } from './RevisionDetail.tsx'
 import { RevisionGraph } from './RevisionGraph.tsx'
 import { SplitDialog } from './SplitDialog.tsx'
@@ -1152,32 +1153,16 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
         />
       )}
 
-      <Dialog open={pushing} onClose={() => setPushing(false)}>
-        <DialogTitle>Push to the remote?</DialogTitle>
-        <DialogContent>
-          The bookmarks of revsets.git-push are pushed.
-          {bookmarks
-            .filter((b) => b.remote !== '' && b.tracked && !b.synced)
-            .map((b) => (
-              <Box key={bookmarkLabel(b)} sx={{ fontFamily: 'monospace', fontSize: 13 }}>
-                {bookmarkLabel(b)}: {b.behind} to push, {b.ahead} new on remote
-              </Box>
-            ))}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setPushing(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            autoFocus
-            onClick={() => {
-              setPushing(false)
-              run(() => repositoryClient.push({ path }), false)
-            }}
-          >
-            Push
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {pushing && (
+        <PushDialog
+          bookmarks={bookmarks}
+          onClose={() => setPushing(false)}
+          onSubmit={(names) => {
+            setPushing(false)
+            run(() => repositoryClient.push({ path, bookmarks: names }), false)
+          }}
+        />
+      )}
 
       {paletteOpen && (
         <CommandPalette
