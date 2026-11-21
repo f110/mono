@@ -68,3 +68,12 @@ if (e.isComposing || e.keyCode === 229) {
 - `Enter` が押された時に `body` 以外の要素にフォーカスがある。フォーカス中のボタンやリンクの操作を優先するため
 - 修飾キー（`metaKey`, `ctrlKey`, `altKey`）が押されている
 - ダイアログやメニュー、Select のメニュー（`role="dialog"`, `role="menu"`, `role="listbox"`）が開いている
+
+### 候補のリストを選択中の Enter
+
+候補のリスト（Autocomplete のポップアップ、Select のメニューなど）で候補を選択中の `Enter` は候補の決定にだけ使い、送信しない。
+候補を選択していない時の `Enter` で送信する。
+
+- IME で変換中のキー入力では送信しない。判定は「IME 変換中の扱い」と同じ
+- MUI の Autocomplete と Select のメニューは、候補を決定した `Enter` で `preventDefault()` を呼ぶ。送信は `defaultPrevented` が `false` の時だけ行う
+- Autocomplete は入力欄より外側の要素で `Enter` を処理する。送信の処理は入力欄ではなく候補のリストを含む祖先の要素（`DialogContent`, `Dialog` など）の `onKeyDown` に置き、候補のリストが先に処理するようにする

@@ -38,3 +38,10 @@ export const ignoreKey = (e: KeyboardEvent): boolean => {
 // The key which commits the composition may have isComposing false on some browsers, so keyCode 229 is also checked.
 // See docs/ui-conventions.md.
 export const isSubmitKey = (e: KeyboardEvent): boolean => e.key === 'Enter' && (e.metaKey || e.ctrlKey) && !e.isComposing && e.keyCode !== 229
+
+// isCandidateInputSubmitKey reports whether the key submits the single-line input with the list of the candidates: Enter
+// except while the IME is composing and except the key which has confirmed the candidate. The list of the candidates calls
+// preventDefault on the key which confirms the candidate, so the key must be checked on the ancestor of the list.
+// See docs/ui-conventions.md.
+export const isCandidateInputSubmitKey = (e: KeyboardEvent): boolean =>
+  e.key === 'Enter' && !e.defaultPrevented && !e.isComposing && e.keyCode !== 229

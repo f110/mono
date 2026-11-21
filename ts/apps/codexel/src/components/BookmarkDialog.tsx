@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Autocomplete, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material'
+import { isCandidateInputSubmitKey } from '../lib/keys.ts'
 
 // BookmarkDialog asks the name of the bookmark to set on the revision. The existing local bookmarks are suggested.
 export const BookmarkDialog = ({
@@ -18,7 +19,13 @@ export const BookmarkDialog = ({
   return (
     <Dialog open onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>{title}</DialogTitle>
-      <DialogContent>
+      <DialogContent
+        onKeyDown={(e) => {
+          if (isCandidateInputSubmitKey(e.nativeEvent) && name) {
+            onSubmit(name)
+          }
+        }}
+      >
         <Autocomplete
           freeSolo
           options={names}
@@ -30,11 +37,6 @@ export const BookmarkDialog = ({
               autoFocus
               label="Bookmark"
               helperText="The existing bookmark is moved to the revision even if it moves backwards"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && name) {
-                  onSubmit(name)
-                }
-              }}
             />
           )}
           sx={{ mt: 1 }}
