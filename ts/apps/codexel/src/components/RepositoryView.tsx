@@ -1155,6 +1155,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
 
       {pushing && (
         <PushDialog
+          repoPath={path}
           bookmarks={bookmarks}
           onClose={() => setPushing(false)}
           onSubmit={(names) => {

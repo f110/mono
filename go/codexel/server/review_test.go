@@ -241,3 +241,38 @@ func TestStartReviewAgent(t *testing.T) {
 	_, err = startAgent()
 	assertion.Equal(t, connect.CodeOf(err), connect.CodeFailedPrecondition)
 }
+
+func TestListUnreviewedCommits(t *testing.T) {
+	if *jjBinaryPath == "" {
+		t.Skipf("Skip %s because -test.jj-binary is not set", t.Name())
+	}
+
+	repo, _ := newStackRepository(t)
+	runCommand(t, repo, "jj", "commit", "--message=approved\n\nAgent: claude\nAgent-Session: s1\n")
+	runCommand(t, repo, "jj", "commit", "--message=unreviewed\n\nAgent: claude\nAgent-Session: s1\n")
+	runCommand(t, repo, "jj", "commit", "--message=human")
+	runCommand(t, repo, "jj", "bookmark", "set", "master", "--revision=@-")
+	runCommand(t, repo, "jj", "bookmark", "create", "feature", "--revision=@-")
+	approved := runCommand(t, repo, "jj", "log", "--no-graph", "--revisions=@---", "--template=change_id.short()")
+	conf := newConfig(t, repo)
+	h := NewReviewHandler(conf, review.NewStore(t.TempDir()), nil)
+	started, err := h.Start(t.Context(), connect.NewRequest(api.RequestStartReview_builder{Path: new(repo), ChangeIds: []string{approved}}.Build()))
+	assertion.MustNoError(t, err)
+	_, err = h.Finish(t.Context(), connect.NewRequest(api.RequestFinish_builder{ReviewId: new(started.Msg.GetReview().GetId())}.Build()))
+	assertion.MustNoError(t, err)
+
+	list := func(bookmarks ...string) *api.ResponseListUnreviewedCommits {
+		res, err := h.ListUnreviewedCommits(t.Context(), connect.NewRequest(api.RequestListUnreviewedCommits_builder{Path: new(repo), Bookmarks: bookmarks}.Build()))
+		assertion.MustNoError(t, err)
+		return res.Msg
+	}
+	res := list("feature", "master")
+	assertion.Equal(t, res.GetDefaultBranch(), "master")
+	assertion.MustLen(t, res.GetCommits(), 1)
+	assertion.Equal(t, res.GetCommits()[0].GetDescription(), "unreviewed")
+	// The commits pushed to the other bookmarks may be reviewed on the remote.
+	assertion.Len(t, list("feature").GetCommits(), 0)
+
+	runCommand(t, repo, "jj", "git", "push", "--bookmark=master")
+	assertion.Len(t, list("master").GetCommits(), 0)
+}

@@ -148,6 +148,17 @@ push はダイアログでチェックしたローカルの bookmark を `jj git
 候補は tracking しているリモートの bookmark と同期していないもの、tracking しているリモートの bookmark がないもの、削除したものとする。コンフリクトしているものは push できないので除く。
 split のファイルの選択と同じく複数チェックして一度に push できる。初期状態は何もチェックしない。
 
+デフォルトブランチをチェックした時、push する範囲に未レビューのエージェントのコミットがあればダイアログに警告とそのコミットを表示する (#205)。
+エージェントのコミットは push 前のレビューを必須にするため。警告だけで push は止めない。
+デフォルトブランチ以外は push 先 (PR など) でレビューされる可能性があるので対象にしない。
+
+- デフォルトブランチは `trunk()` の remote bookmark の名前にする。jj-pr のベースブランチ (`jujutsu.DefaultBranch`) と同じ。
+  GitHub には問い合わせない。`trunk()` に remote bookmark がなければ警告しない
+- push する範囲は `trunk()..<ローカルの bookmark のコミット>` にする
+- エージェントのコミットは `Agent` と `Agent-Session` の Trailer (§6.1) の両方があるコミットにする。リビジョングラフのバッジと同じ
+- 未レビューは Approve のマーク (§5.3) がないコミットにする
+- 判定は `ReviewService.ListUnreviewedCommits` で行う。チェックを変えるたびに問い合わせる
+
 すべての操作はボタンでも実行できるようにする (#155)。iPad などのタッチ端末ではキーボード・コマンドパレットが使えないため。
 キー・コマンドパレットはショートカットとして残す。長押しでメニューを開く操作は見つけにくいので使わない。
 右クリックのメニューは使わない (#186)。右クリックのメニューの操作はすべてボタンでも実行でき、導線が重複するため。
@@ -444,7 +455,7 @@ UI から作成した PR の URL を保存し、リビジョングラフの PR �
 |---|---|
 | `AgentService` | `List`, `Watch` (stream), `ReadOutput`, `SendPrompt`, `SendKeys`, `Focus`, `ListWorkspaces`, `Start`, `Stop`, `WatchTranscript` (stream) |
 | `RepositoryService` | `List`, `Open`, `Close`, `Watch` (stream, op ID の変化), `Log`, `GetRevision`, `Diff`, `DiffRange`, `Files`, `FileTree`, `FileHistory`, ... と §4.2 の各操作 (リビジョン、ブックマーク、Git、オペレーション、ファイル、ワークスペース、エイリアス) |
-| `ReviewService` | `List`, `Get`, `Start`, `AddComment`, `EditComment`, `DeleteComment`, `Reply`, `ResolveComment`, `Finish`, `Discard`, `StartNextRound`, `RoundDiff`, `SetViewed` |
+| `ReviewService` | `List`, `ListApprovedCommits`, `ListUnreviewedCommits`, `Get`, `Start`, `AddComment`, `EditComment`, `DeleteComment`, `Reply`, `ResolveComment`, `Finish`, `Discard`, `StartNextRound`, `RoundDiff`, `SetViewed` |
 | `PullRequestService` | `List`, `ListTemplates`, `Validate`, `Submit` |
 | `SystemService` | `GetStatus` (起動時に PATH に見つからなかった `herdr` と `jj`、`--issue-url`) |
 

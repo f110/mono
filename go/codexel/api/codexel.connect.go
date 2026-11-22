@@ -179,6 +179,9 @@ const (
 	// ReviewServiceListApprovedCommitsProcedure is the fully-qualified name of the ReviewService's
 	// ListApprovedCommits RPC.
 	ReviewServiceListApprovedCommitsProcedure = "/mono.codexel.ReviewService/ListApprovedCommits"
+	// ReviewServiceListUnreviewedCommitsProcedure is the fully-qualified name of the ReviewService's
+	// ListUnreviewedCommits RPC.
+	ReviewServiceListUnreviewedCommitsProcedure = "/mono.codexel.ReviewService/ListUnreviewedCommits"
 	// ReviewServiceGetProcedure is the fully-qualified name of the ReviewService's Get RPC.
 	ReviewServiceGetProcedure = "/mono.codexel.ReviewService/Get"
 	// ReviewServiceStartProcedure is the fully-qualified name of the ReviewService's Start RPC.
@@ -1641,6 +1644,7 @@ func (UnimplementedRepositoryServiceHandler) RunAlias(context.Context, *connect.
 type ReviewServiceClient interface {
 	List(context.Context, *connect.Request[RequestListReviews]) (*connect.Response[ResponseListReviews], error)
 	ListApprovedCommits(context.Context, *connect.Request[RequestListApprovedCommits]) (*connect.Response[ResponseListApprovedCommits], error)
+	ListUnreviewedCommits(context.Context, *connect.Request[RequestListUnreviewedCommits]) (*connect.Response[ResponseListUnreviewedCommits], error)
 	Get(context.Context, *connect.Request[RequestGetReview]) (*connect.Response[ResponseGetReview], error)
 	Start(context.Context, *connect.Request[RequestStartReview]) (*connect.Response[ResponseStartReview], error)
 	AddComment(context.Context, *connect.Request[RequestAddComment]) (*connect.Response[ResponseAddComment], error)
@@ -1676,6 +1680,12 @@ func NewReviewServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			httpClient,
 			baseURL+ReviewServiceListApprovedCommitsProcedure,
 			connect.WithSchema(reviewServiceMethods.ByName("ListApprovedCommits")),
+			connect.WithClientOptions(opts...),
+		),
+		listUnreviewedCommits: connect.NewClient[RequestListUnreviewedCommits, ResponseListUnreviewedCommits](
+			httpClient,
+			baseURL+ReviewServiceListUnreviewedCommitsProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("ListUnreviewedCommits")),
 			connect.WithClientOptions(opts...),
 		),
 		get: connect.NewClient[RequestGetReview, ResponseGetReview](
@@ -1755,20 +1765,21 @@ func NewReviewServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 
 // reviewServiceClient implements ReviewServiceClient.
 type reviewServiceClient struct {
-	list                *connect.Client[RequestListReviews, ResponseListReviews]
-	listApprovedCommits *connect.Client[RequestListApprovedCommits, ResponseListApprovedCommits]
-	get                 *connect.Client[RequestGetReview, ResponseGetReview]
-	start               *connect.Client[RequestStartReview, ResponseStartReview]
-	addComment          *connect.Client[RequestAddComment, ResponseAddComment]
-	editComment         *connect.Client[RequestEditComment, ResponseEditComment]
-	deleteComment       *connect.Client[RequestDeleteComment, ResponseDeleteComment]
-	reply               *connect.Client[RequestReply, ResponseReply]
-	resolveComment      *connect.Client[RequestResolveComment, ResponseResolveComment]
-	finish              *connect.Client[RequestFinish, ResponseFinish]
-	discard             *connect.Client[RequestDiscard, ResponseDiscard]
-	startNextRound      *connect.Client[RequestStartNextRound, ResponseStartNextRound]
-	roundDiff           *connect.Client[RequestRoundDiff, ResponseRoundDiff]
-	setViewed           *connect.Client[RequestSetViewed, ResponseSetViewed]
+	list                  *connect.Client[RequestListReviews, ResponseListReviews]
+	listApprovedCommits   *connect.Client[RequestListApprovedCommits, ResponseListApprovedCommits]
+	listUnreviewedCommits *connect.Client[RequestListUnreviewedCommits, ResponseListUnreviewedCommits]
+	get                   *connect.Client[RequestGetReview, ResponseGetReview]
+	start                 *connect.Client[RequestStartReview, ResponseStartReview]
+	addComment            *connect.Client[RequestAddComment, ResponseAddComment]
+	editComment           *connect.Client[RequestEditComment, ResponseEditComment]
+	deleteComment         *connect.Client[RequestDeleteComment, ResponseDeleteComment]
+	reply                 *connect.Client[RequestReply, ResponseReply]
+	resolveComment        *connect.Client[RequestResolveComment, ResponseResolveComment]
+	finish                *connect.Client[RequestFinish, ResponseFinish]
+	discard               *connect.Client[RequestDiscard, ResponseDiscard]
+	startNextRound        *connect.Client[RequestStartNextRound, ResponseStartNextRound]
+	roundDiff             *connect.Client[RequestRoundDiff, ResponseRoundDiff]
+	setViewed             *connect.Client[RequestSetViewed, ResponseSetViewed]
 }
 
 // List calls mono.codexel.ReviewService.List.
@@ -1779,6 +1790,11 @@ func (c *reviewServiceClient) List(ctx context.Context, req *connect.Request[Req
 // ListApprovedCommits calls mono.codexel.ReviewService.ListApprovedCommits.
 func (c *reviewServiceClient) ListApprovedCommits(ctx context.Context, req *connect.Request[RequestListApprovedCommits]) (*connect.Response[ResponseListApprovedCommits], error) {
 	return c.listApprovedCommits.CallUnary(ctx, req)
+}
+
+// ListUnreviewedCommits calls mono.codexel.ReviewService.ListUnreviewedCommits.
+func (c *reviewServiceClient) ListUnreviewedCommits(ctx context.Context, req *connect.Request[RequestListUnreviewedCommits]) (*connect.Response[ResponseListUnreviewedCommits], error) {
+	return c.listUnreviewedCommits.CallUnary(ctx, req)
 }
 
 // Get calls mono.codexel.ReviewService.Get.
@@ -1845,6 +1861,7 @@ func (c *reviewServiceClient) SetViewed(ctx context.Context, req *connect.Reques
 type ReviewServiceHandler interface {
 	List(context.Context, *connect.Request[RequestListReviews]) (*connect.Response[ResponseListReviews], error)
 	ListApprovedCommits(context.Context, *connect.Request[RequestListApprovedCommits]) (*connect.Response[ResponseListApprovedCommits], error)
+	ListUnreviewedCommits(context.Context, *connect.Request[RequestListUnreviewedCommits]) (*connect.Response[ResponseListUnreviewedCommits], error)
 	Get(context.Context, *connect.Request[RequestGetReview]) (*connect.Response[ResponseGetReview], error)
 	Start(context.Context, *connect.Request[RequestStartReview]) (*connect.Response[ResponseStartReview], error)
 	AddComment(context.Context, *connect.Request[RequestAddComment]) (*connect.Response[ResponseAddComment], error)
@@ -1876,6 +1893,12 @@ func NewReviewServiceHandler(svc ReviewServiceHandler, opts ...connect.HandlerOp
 		ReviewServiceListApprovedCommitsProcedure,
 		svc.ListApprovedCommits,
 		connect.WithSchema(reviewServiceMethods.ByName("ListApprovedCommits")),
+		connect.WithHandlerOptions(opts...),
+	)
+	reviewServiceListUnreviewedCommitsHandler := connect.NewUnaryHandler(
+		ReviewServiceListUnreviewedCommitsProcedure,
+		svc.ListUnreviewedCommits,
+		connect.WithSchema(reviewServiceMethods.ByName("ListUnreviewedCommits")),
 		connect.WithHandlerOptions(opts...),
 	)
 	reviewServiceGetHandler := connect.NewUnaryHandler(
@@ -1956,6 +1979,8 @@ func NewReviewServiceHandler(svc ReviewServiceHandler, opts ...connect.HandlerOp
 			reviewServiceListHandler.ServeHTTP(w, r)
 		case ReviewServiceListApprovedCommitsProcedure:
 			reviewServiceListApprovedCommitsHandler.ServeHTTP(w, r)
+		case ReviewServiceListUnreviewedCommitsProcedure:
+			reviewServiceListUnreviewedCommitsHandler.ServeHTTP(w, r)
 		case ReviewServiceGetProcedure:
 			reviewServiceGetHandler.ServeHTTP(w, r)
 		case ReviewServiceStartProcedure:
@@ -1995,6 +2020,10 @@ func (UnimplementedReviewServiceHandler) List(context.Context, *connect.Request[
 
 func (UnimplementedReviewServiceHandler) ListApprovedCommits(context.Context, *connect.Request[RequestListApprovedCommits]) (*connect.Response[ResponseListApprovedCommits], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.ListApprovedCommits is not implemented"))
+}
+
+func (UnimplementedReviewServiceHandler) ListUnreviewedCommits(context.Context, *connect.Request[RequestListUnreviewedCommits]) (*connect.Response[ResponseListUnreviewedCommits], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.ListUnreviewedCommits is not implemented"))
 }
 
 func (UnimplementedReviewServiceHandler) Get(context.Context, *connect.Request[RequestGetReview]) (*connect.Response[ResponseGetReview], error) {

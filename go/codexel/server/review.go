@@ -81,6 +81,51 @@ func (h *ReviewHandler) ListApprovedCommits(ctx context.Context, req *connect.Re
 	return connect.NewResponse(api.ResponseListApprovedCommits_builder{CommitIds: commits}.Build()), nil
 }
 
+func (h *ReviewHandler) ListUnreviewedCommits(ctx context.Context, req *connect.Request[api.RequestListUnreviewedCommits]) (*connect.Response[api.ResponseListUnreviewedCommits], error) {
+	repo, err := openedRepository(h.config, req.Msg.GetPath())
+	if err != nil {
+		return nil, err
+	}
+	trunk, err := repo.Log(ctx, "trunk()", 1)
+	if err != nil {
+		return nil, toJujutsuError(err)
+	}
+	if len(trunk) == 0 || len(trunk[0].Commit.RemoteBookmarks) == 0 {
+		return connect.NewResponse(&api.ResponseListUnreviewedCommits{}), nil
+	}
+	defaultBranch := trunk[0].Commit.RemoteBookmarks[0].Name
+	res := api.ResponseListUnreviewedCommits_builder{DefaultBranch: new(defaultBranch)}
+	if !slices.Contains(req.Msg.GetBookmarks(), defaultBranch) {
+		return connect.NewResponse(res.Build()), nil
+	}
+	bookmarks, err := repo.Bookmarks(ctx)
+	if err != nil {
+		return nil, toJujutsuError(err)
+	}
+	i := slices.IndexFunc(bookmarks, func(b *jujutsu.Bookmark) bool { return b.Remote == "" && b.Name == defaultBranch })
+	if i == -1 || bookmarks[i].Target == "" {
+		return connect.NewResponse(res.Build()), nil
+	}
+	rows, err := repo.Log(ctx, "trunk().."+bookmarks[i].Target, 0)
+	if err != nil {
+		return nil, toJujutsuError(err)
+	}
+	reviews, err := h.store.List(repo.Root())
+	if err != nil {
+		return nil, toReviewError(err)
+	}
+	approved, err := h.approvals.Commits(ctx, repo, reviews)
+	if err != nil {
+		return nil, toReviewError(err)
+	}
+	for _, row := range rows {
+		if row.Commit.CreatedByAgent() && !slices.Contains(approved, row.Commit.CommitID) {
+			res.Commits = append(res.Commits, toCommit(row.Commit))
+		}
+	}
+	return connect.NewResponse(res.Build()), nil
+}
+
 func (h *ReviewHandler) Get(_ context.Context, req *connect.Request[api.RequestGetReview]) (*connect.Response[api.ResponseGetReview], error) {
 	r, err := h.store.Get(req.Msg.GetId())
 	if err != nil {

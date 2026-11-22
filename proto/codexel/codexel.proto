@@ -128,6 +128,10 @@ service ReviewService {
   // ListApprovedCommits returns the commits approved in the reviews of the repository. The commit rewritten after the
   // approval is included if the change of it is not changed including the description (e.g. rebased).
   rpc ListApprovedCommits(RequestListApprovedCommits) returns (ResponseListApprovedCommits);
+  // ListUnreviewedCommits returns the commits which are pushed to the default branch by pushing the bookmarks and are
+  // created by the agents but not approved in the reviews. The default branch is the bookmark of trunk(). The other
+  // bookmarks are ignored because the commits may be reviewed on the remote.
+  rpc ListUnreviewedCommits(RequestListUnreviewedCommits) returns (ResponseListUnreviewedCommits);
   rpc Get(RequestGetReview) returns (ResponseGetReview);
   // Start starts the review of the changes. The first round is the current commits of the changes.
   rpc Start(RequestStartReview) returns (ResponseStartReview);
@@ -996,6 +1000,20 @@ message RequestListApprovedCommits {
 
 message ResponseListApprovedCommits {
   repeated string commit_ids = 1;
+}
+
+message RequestListUnreviewedCommits {
+  // path is the repository.
+  string path = 1;
+  // bookmarks are the names of the local bookmarks to push.
+  repeated string bookmarks = 2;
+}
+
+message ResponseListUnreviewedCommits {
+  // default_branch is the name of the default branch. It is empty if trunk() has no remote bookmarks.
+  string default_branch = 1;
+  // commits are in the order of jj log.
+  repeated Commit commits = 2;
 }
 
 message RequestGetReview {

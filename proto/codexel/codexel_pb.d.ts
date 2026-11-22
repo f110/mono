@@ -3091,6 +3091,56 @@ export declare type ResponseListApprovedCommits = Message<"mono.codexel.Response
 export declare const ResponseListApprovedCommitsSchema: GenMessage<ResponseListApprovedCommits>;
 
 /**
+ * @generated from message mono.codexel.RequestListUnreviewedCommits
+ */
+export declare type RequestListUnreviewedCommits = Message<"mono.codexel.RequestListUnreviewedCommits"> & {
+  /**
+   * path is the repository.
+   *
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * bookmarks are the names of the local bookmarks to push.
+   *
+   * @generated from field: repeated string bookmarks = 2;
+   */
+  bookmarks: string[];
+};
+
+/**
+ * Describes the message mono.codexel.RequestListUnreviewedCommits.
+ * Use `create(RequestListUnreviewedCommitsSchema)` to create a new message.
+ */
+export declare const RequestListUnreviewedCommitsSchema: GenMessage<RequestListUnreviewedCommits>;
+
+/**
+ * @generated from message mono.codexel.ResponseListUnreviewedCommits
+ */
+export declare type ResponseListUnreviewedCommits = Message<"mono.codexel.ResponseListUnreviewedCommits"> & {
+  /**
+   * default_branch is the name of the default branch. It is empty if trunk() has no remote bookmarks.
+   *
+   * @generated from field: string default_branch = 1;
+   */
+  defaultBranch: string;
+
+  /**
+   * commits are in the order of jj log.
+   *
+   * @generated from field: repeated mono.codexel.Commit commits = 2;
+   */
+  commits: Commit[];
+};
+
+/**
+ * Describes the message mono.codexel.ResponseListUnreviewedCommits.
+ * Use `create(ResponseListUnreviewedCommitsSchema)` to create a new message.
+ */
+export declare const ResponseListUnreviewedCommitsSchema: GenMessage<ResponseListUnreviewedCommits>;
+
+/**
  * @generated from message mono.codexel.RequestGetReview
  */
 export declare type RequestGetReview = Message<"mono.codexel.RequestGetReview"> & {
@@ -4713,6 +4763,18 @@ export declare const ReviewService: GenService<{
     methodKind: "unary";
     input: typeof RequestListApprovedCommitsSchema;
     output: typeof ResponseListApprovedCommitsSchema;
+  },
+  /**
+   * ListUnreviewedCommits returns the commits which are pushed to the default branch by pushing the bookmarks and are
+   * created by the agents but not approved in the reviews. The default branch is the bookmark of trunk(). The other
+   * bookmarks are ignored because the commits may be reviewed on the remote.
+   *
+   * @generated from rpc mono.codexel.ReviewService.ListUnreviewedCommits
+   */
+  listUnreviewedCommits: {
+    methodKind: "unary";
+    input: typeof RequestListUnreviewedCommitsSchema;
+    output: typeof ResponseListUnreviewedCommitsSchema;
   },
   /**
    * @generated from rpc mono.codexel.ReviewService.Get

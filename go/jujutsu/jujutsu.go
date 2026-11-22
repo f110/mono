@@ -572,6 +572,12 @@ func (c *Commit) CreatedBy(kind, sessionID string) bool {
 		slices.Contains(c.Trailers, Trailer{Key: TrailerAgentSession, Value: sessionID})
 }
 
+// CreatedByAgent reports whether the commit has the trailers of an agent.
+func (c *Commit) CreatedByAgent() bool {
+	return slices.ContainsFunc(c.Trailers, func(t Trailer) bool { return t.Key == TrailerAgent }) &&
+		slices.ContainsFunc(c.Trailers, func(t Trailer) bool { return t.Key == TrailerAgentSession })
+}
+
 // GraphLine is a line of the graph of jj log. Gutter is the characters of the graph (e.g. "│ ○  ").
 type GraphLine struct {
 	Gutter string
