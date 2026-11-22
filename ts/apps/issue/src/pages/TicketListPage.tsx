@@ -286,6 +286,11 @@ const TicketTable = ({
                   </Typography>
                 )}
                 <Stack direction="row" spacing={1} sx={{ display: { xs: 'flex', sm: 'none' }, alignItems: 'center', mt: 0.5 }}>
+                  {t.componentId > 0 && (
+                    <Typography variant="body2" color="text.secondary">
+                      {componentName(t.componentId)}
+                    </Typography>
+                  )}
                   <Chip label={statusLabels[t.status]} size="small" sx={statusColors[t.status]} />
                   <Typography variant="body2" color="text.secondary">
                     <RelativeTime time={t.lastActivityAt} />
