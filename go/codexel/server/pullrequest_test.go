@@ -97,7 +97,10 @@ func TestSubmitPullRequest(t *testing.T) {
 	list, err := h.List(t.Context(), connect.NewRequest(api.RequestListPullRequests_builder{Path: new(repo)}.Build()))
 	assertion.MustNoError(t, err)
 	assertion.MustLen(t, list.Msg.GetPullRequests(), 1)
-	assertion.Equal(t, list.Msg.GetPullRequests()[0].GetChangeId(), res.Msg.GetPushed()[0])
+	rows, err := jujutsu.NewRepository(repo).Log(t.Context(), commits[2], 0)
+	assertion.MustNoError(t, err)
+	assertion.MustLen(t, rows, 1)
+	assertion.Equal(t, list.Msg.GetPullRequests()[0].GetChangeId(), rows[0].Commit.ChangeID)
 	assertion.Equal(t, list.Msg.GetPullRequests()[0].GetUrl(), res.Msg.GetPullRequests()[0].GetUrl())
 	assertion.True(t, validate(commits[2], commits[1], commits[0]).GetHasPushedCommits())
 }

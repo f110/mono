@@ -428,6 +428,8 @@ UI から作成した PR の URL を保存し、リビジョングラフの PR �
 - `Submit` の結果の PR を作成・更新・既存に関わらずすべて保存する。複数選択 (`--single-pr`) は結果に最上位の change だけが入るので、
   最上位の change に紐付く
 - 保存に失敗しても PR は作成済みなので、`Submit` は失敗にせず結果を返す
+- 保存する change ID は `Submit` の結果のまま (完全な change ID) にする。`List` は `RepositoryService.Log` の change ID と同じ形式
+  (`change_id.short()` の 12 文字) にして返す (#211)
 - フロントエンドは `PullRequestService.List` で取得し、change ID で引いてバッジを表示する。バッジは PR を新しいタブで開く
 
 ## 8. API

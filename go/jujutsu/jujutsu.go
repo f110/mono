@@ -147,6 +147,12 @@ func WorkspaceRoot(ctx context.Context, dir string) (string, error) {
 	return strings.TrimSpace(string(out)), nil
 }
 
+// ShortChangeID returns the change ID in the same form as Commit.ChangeID, which is the first 12 characters by
+// change_id.short() of jj.
+func ShortChangeID(changeID string) string {
+	return changeID[:min(len(changeID), 12)]
+}
+
 func (r *Repository) Log(ctx context.Context, revset string, limit int) ([]*LogRow, error) {
 	out, err := run(ctx, r.root, logArgs(revset, limit)...)
 	if err != nil {

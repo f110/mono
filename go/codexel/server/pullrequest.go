@@ -45,7 +45,7 @@ func (h *PullRequestHandler) List(_ context.Context, req *connect.Request[api.Re
 	}
 	res := make([]*api.PullRequest, 0, len(prs))
 	for _, v := range prs {
-		res = append(res, api.PullRequest_builder{ChangeId: new(v.ChangeID), Url: new(v.URL)}.Build())
+		res = append(res, api.PullRequest_builder{ChangeId: new(jujutsu.ShortChangeID(v.ChangeID)), Url: new(v.URL)}.Build())
 	}
 	return connect.NewResponse(api.ResponseListPullRequests_builder{PullRequests: res}.Build()), nil
 }
