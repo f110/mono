@@ -129,9 +129,16 @@ const CommitLine = ({
       <Chip key={`${w}@`} label={`${w}@`} size="small" color="success" variant="outlined" sx={{ height: 18 }} />
     ))}
     {commit.localBookmarks.map((b) => (
-      <Chip key={b} label={b} size="small" color="primary" variant="outlined" sx={{ height: 18 }} />
+      <Chip
+        key={b}
+        label={commit.unsyncedBookmarks.includes(b) ? `${b}*` : b}
+        size="small"
+        color="primary"
+        variant="outlined"
+        sx={{ height: 18 }}
+      />
     ))}
-    {commit.remoteBookmarks.map((b) => (
+    {commit.remoteBookmarks.filter((b) => !commit.localBookmarks.includes(b.name)).map((b) => (
       <Chip key={`${b.name}@${b.remote}`} label={`${b.name}@${b.remote}`} size="small" variant="outlined" sx={{ height: 18 }} />
     ))}
     {commit.conflict && <Chip label="conflict" size="small" color="error" sx={{ height: 18 }} />}

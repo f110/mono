@@ -582,6 +582,14 @@ export declare type Commit = Message<"mono.codexel.Commit"> & {
    * @generated from field: repeated string working_copies = 19;
    */
   workingCopies: string[];
+
+  /**
+   * unsynced_bookmarks is the names of local_bookmarks which point to the different commit from the tracked remote
+   * bookmarks.
+   *
+   * @generated from field: repeated string unsynced_bookmarks = 20;
+   */
+  unsyncedBookmarks: string[];
 };
 
 /**

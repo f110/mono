@@ -122,6 +122,10 @@ lightjj の機能を次のとおり分類する。キーバインドは lightjj 
 
 リビジョングラフ・bookmark 一覧・op log・workspace 一覧は、キーに加えて左ペイン上部のタブでも切り替えられる。
 
+リビジョングラフの bookmark は jjui (jj の `bookmarks` キーワード) と同じ形式で出す (#212)。
+ローカルの bookmark と同じ名前のリモートの bookmark が同じリビジョンにある場合はローカルのものだけを出す。
+ローカルの bookmark が tracking しているリモートの bookmark と違うリビジョンを指す場合は `<name>*` と出す。判定は jj の `synced()` で、tracking していないリモートの bookmark は対象にしない。
+
 workspace 一覧では `d` で remove (`jj workspace remove`)、`f` で forget する (#175)。bookmark 一覧の `d` (delete) / `f` (forget) に合わせる。
 作業を終えた workspace はディレクトリごと消す remove を使うことが多いので、選択中の行のボタンは Remove を Forget の前に置く。
 remove は ignore されたファイルも消え、undo してもディレクトリは戻らないので確認ダイアログを出してから実行する。

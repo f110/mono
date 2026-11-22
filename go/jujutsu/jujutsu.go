@@ -45,6 +45,7 @@ const (
 		`",\"hidden\":" ++ json(self.hidden()) ++ ` +
 		`",\"parents\":[" ++ parents.map(|x| json(x.commit_id().short())).join(",") ++ "]" ++ ` +
 		`",\"local_bookmarks\":[" ++ local_bookmarks.map(|x| json(x.name())).join(",") ++ "]" ++ ` +
+		`",\"unsynced_bookmarks\":[" ++ local_bookmarks.filter(|x| !x.synced()).map(|x| json(x.name())).join(",") ++ "]" ++ ` +
 		`",\"remote_bookmarks\":[" ++ remote_bookmarks.map(|x| "[" ++ json(x.name()) ++ "," ++ json(x.remote()) ++ "]").join(",") ++ "]" ++ ` +
 		`",\"trailers\":[" ++ trailers.map(|x| "[" ++ json(x.key()) ++ "," ++ json(x.value()) ++ "]").join(",") ++ "]"`
 
@@ -547,18 +548,20 @@ type Commit struct {
 	Author      string `json:"author"`
 	Email       string `json:"email"`
 	// Timestamp is the unix time of the committer.
-	Timestamp          int64            `json:"timestamp,string"`
-	WorkingCopies      []string         `json:"working_copies"`
-	CurrentWorkingCopy bool             `json:"current_working_copy"`
-	Immutable          bool             `json:"immutable"`
-	Conflict           bool             `json:"conflict"`
-	Empty              bool             `json:"empty"`
-	Divergent          bool             `json:"divergent"`
-	Hidden             bool             `json:"hidden"`
-	Parents            []string         `json:"parents"`
-	LocalBookmarks     []string         `json:"local_bookmarks"`
-	RemoteBookmarks    []RemoteBookmark `json:"remote_bookmarks"`
-	Trailers           []Trailer        `json:"trailers"`
+	Timestamp          int64    `json:"timestamp,string"`
+	WorkingCopies      []string `json:"working_copies"`
+	CurrentWorkingCopy bool     `json:"current_working_copy"`
+	Immutable          bool     `json:"immutable"`
+	Conflict           bool     `json:"conflict"`
+	Empty              bool     `json:"empty"`
+	Divergent          bool     `json:"divergent"`
+	Hidden             bool     `json:"hidden"`
+	Parents            []string `json:"parents"`
+	LocalBookmarks     []string `json:"local_bookmarks"`
+	// UnsyncedBookmarks is the names of LocalBookmarks which point to the different commit from the tracked remote bookmarks.
+	UnsyncedBookmarks []string         `json:"unsynced_bookmarks"`
+	RemoteBookmarks   []RemoteBookmark `json:"remote_bookmarks"`
+	Trailers          []Trailer        `json:"trailers"`
 	// FullDescription is the whole description. It is set only by Show.
 	FullDescription string `json:"full_description"`
 }

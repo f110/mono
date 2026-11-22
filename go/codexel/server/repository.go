@@ -891,6 +891,7 @@ func toCommit(c *jujutsu.Commit) *api.Commit {
 		RemoteBookmarks:    remotes,
 		Trailers:           trailers,
 		WorkingCopies:      c.WorkingCopies,
+		UnsyncedBookmarks:  c.UnsyncedBookmarks,
 	}.Build()
 }
 

@@ -319,6 +319,9 @@ message Commit {
   repeated Trailer        trailers             = 18;
   // working_copies is the names of the workspaces whose working copy is the commit.
   repeated string         working_copies       = 19;
+  // unsynced_bookmarks is the names of local_bookmarks which point to the different commit from the tracked remote
+  // bookmarks.
+  repeated string         unsynced_bookmarks   = 20;
 }
 
 // GraphLine is a line of the graph. gutter is the characters of the graph.

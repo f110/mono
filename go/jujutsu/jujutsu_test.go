@@ -24,10 +24,12 @@ func TestParseLog(t *testing.T) {
 	assertion.Equal(t, merge.Lines, []GraphLine{{Gutter: "@    ", Node: true}, {Gutter: "├─╮"}})
 
 	assertion.Equal(t, rows[1].Lines, []GraphLine{{Gutter: "│ ○  ", Node: true}})
+	assertion.Equal(t, rows[1].Commit.UnsyncedBookmarks, []string{"feature"})
 
 	second := rows[2]
 	assertion.Equal(t, second.Commit.Description, "second")
 	assertion.Equal(t, second.Commit.LocalBookmarks, []string{"main"})
+	assertion.Len(t, second.Commit.UnsyncedBookmarks, 0)
 	assertion.Len(t, second.Commit.RemoteBookmarks, 0)
 	assertion.Equal(t, second.Commit.Trailers, []Trailer{{Key: "Agent", Value: "claude"}, {Key: "Agent-Session", Value: "sess-1"}})
 	assertion.Equal(t, second.Commit.Timestamp, int64(1700000000))
