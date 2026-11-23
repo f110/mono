@@ -1,2 +1,35 @@
 resources:
   - ../base
+  - webhook.yaml
+
+patchesJson6902:
+  - target:
+      version: v1
+      group: apps
+      kind: Deployment
+      name: mono-controller-manager
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: --webhook-cert=/etc/webhook/tls.crt
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: --webhook-key=/etc/webhook/tls.key
+      - op: add
+        path: /spec/template/spec/containers/0/ports/-
+        value:
+          name: webhook
+          containerPort: 8443
+          protocol: TCP
+      - op: add
+        path: /spec/template/spec/containers/0/volumeMounts
+        value:
+          - name: webhook-cert
+            mountPath: /etc/webhook
+            readOnly: true
+      - op: add
+        path: /spec/template/spec/volumes
+        value:
+          - name: webhook-cert
+            secret:
+              secretName: mono-controller-manager-webhook

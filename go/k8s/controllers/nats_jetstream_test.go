@@ -2,12 +2,15 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 	"time"
 
 	"github.com/nats-io/nats.go/jetstream"
 	"go.f110.dev/kubeproto/go/apis/metav1"
+	admissionv1 "k8s.io/api/admission/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"go.f110.dev/mono/go/api/natsv1alpha1"
 	"go.f110.dev/mono/go/k8s/controllers/controllertest"
@@ -158,6 +161,57 @@ func TestNATSJetStreamController(t *testing.T) {
 		assertion.MustNoError(t, err)
 		assertion.Len(t, updated.Finalizers, 0)
 	})
+}
+
+func TestValidateJetStream(t *testing.T) {
+	old := natsv1alpha1.JetStreamSpec{
+		Subjects:     []string{"test.*"},
+		Retention:    natsv1alpha1.RetentionPolicyInterest,
+		Storage:      natsv1alpha1.StorageTypeFile,
+		Replicas:     1,
+		MaxConsumers: 10,
+		MaxMsgs:      100,
+	}
+
+	cases := []struct {
+		Name      string
+		Operation admissionv1.Operation
+		Spec      func(*natsv1alpha1.JetStreamSpec)
+		Denied    bool
+	}{
+		{Name: "NoChange", Operation: admissionv1.Update, Spec: func(*natsv1alpha1.JetStreamSpec) {}},
+		{Name: "Subjects", Operation: admissionv1.Update, Spec: func(s *natsv1alpha1.JetStreamSpec) { s.Subjects = []string{"foo.*"} }},
+		{Name: "Replicas", Operation: admissionv1.Update, Spec: func(s *natsv1alpha1.JetStreamSpec) { s.Replicas = 3 }},
+		{Name: "MaxMsgs", Operation: admissionv1.Update, Spec: func(s *natsv1alpha1.JetStreamSpec) { s.MaxMsgs = 200 }},
+		{Name: "Retention", Operation: admissionv1.Update, Spec: func(s *natsv1alpha1.JetStreamSpec) { s.Retention = natsv1alpha1.RetentionPolicyLimits }, Denied: true},
+		{Name: "Storage", Operation: admissionv1.Update, Spec: func(s *natsv1alpha1.JetStreamSpec) { s.Storage = natsv1alpha1.StorageTypeMemory }, Denied: true},
+		{Name: "StorageFromEmpty", Operation: admissionv1.Update, Spec: func(s *natsv1alpha1.JetStreamSpec) { s.Storage = "" }, Denied: true},
+		{Name: "MaxConsumers", Operation: admissionv1.Update, Spec: func(s *natsv1alpha1.JetStreamSpec) { s.MaxConsumers = 20 }, Denied: true},
+		{Name: "Create", Operation: admissionv1.Create, Spec: func(s *natsv1alpha1.JetStreamSpec) { s.Storage = natsv1alpha1.StorageTypeMemory }},
+	}
+	for _, tc := range cases {
+		t.Run(tc.Name, func(t *testing.T) {
+			oldObj := k8sfactory.JetStreamFactory(nil, k8sfactory.Name("test"))
+			oldObj.Spec = old
+			newObj := oldObj.DeepCopy()
+			tc.Spec(&newObj.Spec)
+			oldRaw, err := json.Marshal(oldObj)
+			assertion.MustNoError(t, err)
+			newRaw, err := json.Marshal(newObj)
+			assertion.MustNoError(t, err)
+
+			err = ValidateJetStream(&admissionv1.AdmissionRequest{
+				Operation: tc.Operation,
+				Object:    runtime.RawExtension{Raw: newRaw},
+				OldObject: runtime.RawExtension{Raw: oldRaw},
+			})
+			if tc.Denied {
+				assertion.Error(t, err)
+			} else {
+				assertion.NoError(t, err)
+			}
+		})
+	}
 }
 
 type fakeStreamManager struct {

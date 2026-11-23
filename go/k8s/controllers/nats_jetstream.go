@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"reflect"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"github.com/nats-io/nats.go/jetstream"
 	"go.f110.dev/kubeproto/go/apis/metav1"
 	"go.f110.dev/xerrors"
+	admissionv1 "k8s.io/api/admission/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 
@@ -89,6 +91,33 @@ func (c *NATSJetStreamController) Shutdown() {
 
 func (c *NATSJetStreamController) newReconciler() controllerutil.GenericReconciler[*natsv1alpha1.JetStream] {
 	return &natsJetStreamReconciler{client: c.client, js: c.js}
+}
+
+// ValidateJetStream denies the update of the fields which NATS can't change.
+func ValidateJetStream(req *admissionv1.AdmissionRequest) error {
+	if req.Operation != admissionv1.Update || req.SubResource != "" {
+		return nil
+	}
+
+	obj := &natsv1alpha1.JetStream{}
+	if err := json.Unmarshal(req.Object.Raw, obj); err != nil {
+		return xerrors.WithStack(err)
+	}
+	old := &natsv1alpha1.JetStream{}
+	if err := json.Unmarshal(req.OldObject.Raw, old); err != nil {
+		return xerrors.WithStack(err)
+	}
+
+	if obj.Spec.Retention != old.Spec.Retention {
+		return xerrors.Define("retention can't be changed").WithStack()
+	}
+	if obj.Spec.Storage != old.Spec.Storage {
+		return xerrors.Define("storage can't be changed").WithStack()
+	}
+	if obj.Spec.MaxConsumers != old.Spec.MaxConsumers {
+		return xerrors.Define("max_consumers can't be changed").WithStack()
+	}
+	return nil
 }
 
 type natsJetStreamReconciler struct {

@@ -12,6 +12,7 @@ import (
 	"go.f110.dev/kubeproto/go/k8sclient"
 	"go.f110.dev/xerrors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -19,6 +20,7 @@ import (
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"k8s.io/component-base/metrics/legacyregistry"
 
+	"go.f110.dev/mono/go/api/natsv1alpha1"
 	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/fsm"
@@ -26,6 +28,7 @@ import (
 	"go.f110.dev/mono/go/k8s/controllers"
 	"go.f110.dev/mono/go/k8s/probe"
 	"go.f110.dev/mono/go/k8s/thirdpartyclient"
+	"go.f110.dev/mono/go/k8s/webhook"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/vault"
 )
@@ -173,6 +176,7 @@ const (
 	stateInit fsm.State = iota
 	stateCheckResources
 	stateStartMetricsServer
+	stateStartWebhookServer
 	stateLeaderElection
 	stateStartWorkers
 	stateShutdown
@@ -208,6 +212,8 @@ type Controllers struct {
 	vaultK8sAuthPath        string
 	vaultK8sAuthRole        string
 	natsURL                 string
+	webhookCert             string
+	webhookKey              string
 
 	config      *rest.Config
 	coreClient  *k8sclient.Set
@@ -215,6 +221,8 @@ type Controllers struct {
 	client      *client.Set
 	tpClient    *thirdpartyclient.Set
 	vaultClient *vault.Client
+
+	webhookServer *webhook.Server
 }
 
 func New(args []string) *Controllers {
@@ -228,6 +236,7 @@ func New(args []string) *Controllers {
 			stateInit:               p.init,
 			stateCheckResources:     p.checkResources,
 			stateStartMetricsServer: p.startMetricsServer,
+			stateStartWebhookServer: p.startWebhookServer,
 			stateLeaderElection:     p.leaderElection,
 			stateStartWorkers:       p.startWorkers,
 			stateShutdown:           p.shutdown,
@@ -259,6 +268,8 @@ func (p *Controllers) Flags(fs *flag.FlagSet) {
 	fs.String("vault-k8s-auth-path", "The mount path of kubernetes auth method").Var(&p.vaultK8sAuthPath).Default("auth/kubernetes")
 	fs.String("vault-k8s-auth-role", "Role name for k8s auth method").Var(&p.vaultK8sAuthRole)
 	fs.String("nats-url", "the url of NATS").Var(&p.natsURL)
+	fs.String("webhook-cert", "the certificate file of the webhook server. The server starts only when the certificate and the key are specified").Var(&p.webhookCert)
+	fs.String("webhook-key", "the private key file of the webhook server").Var(&p.webhookKey)
 }
 
 func (p *Controllers) init(ctx context.Context) (fsm.State, error) {
@@ -395,6 +406,21 @@ func (p *Controllers) startMetricsServer(_ context.Context) (fsm.State, error) {
 		}
 	}()
 
+	return fsm.Next(stateStartWebhookServer)
+}
+
+func (p *Controllers) startWebhookServer(_ context.Context) (fsm.State, error) {
+	if p.webhookCert == "" || p.webhookKey == "" {
+		return fsm.Next(stateLeaderElection)
+	}
+
+	s := webhook.NewServer(":8443", p.webhookCert, p.webhookKey)
+	s.Register(schema.GroupKind{Group: natsv1alpha1.GroupName, Kind: "JetStream"}, controllers.ValidateJetStream)
+	if err := s.Start(); err != nil {
+		return fsm.Error(err)
+	}
+	p.webhookServer = s
+
 	return fsm.Next(stateLeaderElection)
 }
 
@@ -476,6 +502,13 @@ func (p *Controllers) startWorkers(ctx context.Context) (fsm.State, error) {
 func (p *Controllers) shutdown(_ context.Context) (fsm.State, error) {
 	for _, v := range p.controllers {
 		v.Shutdown()
+	}
+	if p.webhookServer != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if err := p.webhookServer.Shutdown(ctx); err != nil {
+			logger.Log.Warn("Failed to shutdown the webhook server", logger.E(err))
+		}
+		cancel()
 	}
 
 	return fsm.Finish()

@@ -1,0 +1,57 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: mono-controller-manager-webhook
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: mono-controller-manager-webhook
+spec:
+  secretName: mono-controller-manager-webhook
+  dnsNames:
+    - mono-controller-manager-webhook.default.svc
+  issuerRef:
+    name: mono-controller-manager-webhook
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mono-controller-manager-webhook
+spec:
+  selector:
+    app.kubernetes.io/name: mono-controller-manager
+  ports:
+    - name: webhook
+      port: 443
+      targetPort: webhook
+      protocol: TCP
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: mono-controller-manager
+  annotations:
+    cert-manager.io/inject-ca-from: default/mono-controller-manager-webhook
+webhooks:
+  - name: jetstreams.nats.f110.dev
+    clientConfig:
+      service:
+        name: mono-controller-manager-webhook
+        namespace: default
+        path: /validate
+    rules:
+      - apiGroups:
+          - nats.f110.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - jetstreams
+        operations:
+          - UPDATE
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
