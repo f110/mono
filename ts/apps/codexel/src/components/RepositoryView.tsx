@@ -73,6 +73,9 @@ const operationLimit = 200
 // sidebarKey is the key of the local storage which keeps whether the sidebar of the files is open.
 const sidebarKey = 'codexel.files.sidebar'
 
+// viewKey is the key of the state of the history which keeps the view shown in the repository.
+const viewKey = 'codexelView'
+
 type View = 'log' | 'bookmarks' | 'oplog' | 'evolog' | 'files' | 'workspaces'
 
 type Editing = { kind: 'describe'; commit: Commit; initial: string } | { kind: 'commit'; initial: string }
@@ -139,7 +142,18 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   const [mode, setMode] = useState<Mode>()
   const { history } = useRouter()
   const [treeTarget, setTreeTarget] = useState<FileRevision | undefined>(() => fileLocation(history.location.state, path)?.revision)
-  const [view, setView] = useState<View>(() => (treeTarget ? 'files' : 'log'))
+  // The evolog is not restored because the target revision is not kept in the history.
+  const [view, setView] = useState<View>(() => {
+    const v = (history.location.state as { [viewKey]?: { repoPath: string; view: View } })[viewKey]
+    if (v?.repoPath === path && v.view !== 'evolog' && (v.view !== 'files' || treeTarget)) {
+      return v.view
+    }
+    return treeTarget ? 'files' : 'log'
+  })
+  useEffect(() => {
+    const { href, state } = history.location
+    history.replace(href, { ...state, [viewKey]: { repoPath: path, view } })
+  }, [history, path, view])
   const [splitting, setSplitting] = useState<Commit>()
   const [workspaceSelected, setWorkspaceSelected] = useState(0)
   const [addingWorkspace, setAddingWorkspace] = useState<Commit>()
