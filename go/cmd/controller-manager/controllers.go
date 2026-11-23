@@ -38,6 +38,7 @@ const (
 	ControllerMinIOBucket        = "minio-bucket"
 	ControllerMinIOUser          = "minio-user"
 	ControllerConsulBackup       = "consul-backup"
+	ControllerNATSJetStream      = "nats-jetstream"
 )
 
 type ChildController struct {
@@ -155,6 +156,17 @@ var AllChildControllers = ChildControllers{
 		},
 		Enable: true,
 	},
+	{
+		Name: ControllerNATSJetStream,
+		New: func(_ context.Context, p *Controllers, _ *k8sclient.InformerFactory, factory *client.InformerFactory, _ *thirdpartyclient.InformerFactory) (controller, error) {
+			c, err := controllers.NewNATSJetStreamController(p.k8sClient, p.client, factory, p.natsURL)
+			if err != nil {
+				return nil, xerrors.WithStack(err)
+			}
+			return c, nil
+		},
+		Enable: true,
+	},
 }
 
 const (
@@ -195,6 +207,7 @@ type Controllers struct {
 	vaultToken              string
 	vaultK8sAuthPath        string
 	vaultK8sAuthRole        string
+	natsURL                 string
 
 	config      *rest.Config
 	coreClient  *k8sclient.Set
@@ -245,6 +258,7 @@ func (p *Controllers) Flags(fs *flag.FlagSet) {
 	fs.String("vault-token", "the token for vault").Var(&p.vaultToken)
 	fs.String("vault-k8s-auth-path", "The mount path of kubernetes auth method").Var(&p.vaultK8sAuthPath).Default("auth/kubernetes")
 	fs.String("vault-k8s-auth-role", "Role name for k8s auth method").Var(&p.vaultK8sAuthRole)
+	fs.String("nats-url", "the url of NATS").Var(&p.natsURL)
 }
 
 func (p *Controllers) init(ctx context.Context) (fsm.State, error) {

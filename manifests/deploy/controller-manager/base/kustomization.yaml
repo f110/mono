@@ -4,6 +4,7 @@ resources:
   - ../../../rbac/harbor
   - ../../../rbac/minio
   - ../../../rbac/consul
+  - ../../../rbac/nats
   - ../../../rbac/leader-election
   - ../../../controller-manager
   - role_binding.yaml

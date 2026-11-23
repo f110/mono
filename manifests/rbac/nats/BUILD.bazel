@@ -1,0 +1,10 @@
+load("//build/rules/kustomize:kustomization.bzl", "kustomization")
+
+kustomization(
+    name = "nats",
+    src = "kustomization.yaml",
+    resources = [
+        "role.yaml",
+    ],
+    visibility = ["//visibility:public"],
+)
