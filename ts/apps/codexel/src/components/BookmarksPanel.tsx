@@ -58,7 +58,7 @@ export const BookmarksPanel = ({
             <Typography variant="body2" sx={{ fontFamily: 'monospace', pl: b.remote ? 2 : 0 }} noWrap>
               {bookmarkLabel(b)}
             </Typography>
-            <Chip label={state.label} size="small" color={state.color} variant="outlined" sx={{ height: 18 }} />
+            <Chip label={state.label} size="small" color={state.color} variant="outlined" />
             <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
               {b.target.slice(0, 8)}
             </Typography>

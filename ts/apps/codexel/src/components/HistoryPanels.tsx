@@ -45,7 +45,7 @@ export const OperationsPanel = ({
           <Typography variant="body2" sx={{ fontFamily: 'monospace', color: 'secondary.main', flexShrink: 0 }}>
             {op.id}
           </Typography>
-          {op.current && <Chip label="current" size="small" color="primary" variant="outlined" sx={{ height: 18 }} />}
+          {op.current && <Chip label="current" size="small" color="primary" variant="outlined" />}
           <Typography variant="body2" noWrap sx={{ flex: 1, minWidth: 0 }}>
             {op.description}
           </Typography>

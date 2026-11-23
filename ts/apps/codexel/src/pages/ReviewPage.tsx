@@ -165,7 +165,7 @@ const ChangeReview = ({
                         selected={selected.extending ?? false}
                         onChange={() => onSelect({ ...selected, extending: !selected.extending })}
                         title="Click the line number to extend the range (Shift+Click)"
-                        sx={{ m: 1, mb: 0, textTransform: 'none', py: 0.25 }}
+                        sx={{ m: 1, mb: 0, py: 0.25 }}
                       >
                         Extend the range
                       </ToggleButton>

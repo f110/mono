@@ -142,7 +142,7 @@ export const FileView = ({
           {file}
         </Typography>
         {markdown && (
-          <ToggleButton size="small" value="preview" selected={preview} onChange={onTogglePreview} title="m" sx={{ textTransform: 'none', py: 0.25 }}>
+          <ToggleButton size="small" value="preview" selected={preview} onChange={onTogglePreview} title="m" sx={{ py: 0.25 }}>
             Preview
           </ToggleButton>
         )}
@@ -426,24 +426,20 @@ export const FileBrowser = ({
       </Box>
       <Stack sx={{ flex: 1, minWidth: 0 }}>
         {tabs.length > 0 && (
-          <Tabs
-            value={active?.file ?? false}
-            onChange={(_, v) => open(v)}
-            variant="scrollable"
-            sx={{ borderBottom: 1, borderColor: 'divider', minHeight: 40 }}
-          >
+          <Tabs value={active?.file ?? false} onChange={(_, v) => open(v)} variant="scrollable" sx={{ borderBottom: 1, borderColor: 'divider' }}>
             {tabs.map((t) => (
               <Tab
                 key={t}
                 value={t}
                 title={t}
-                sx={{ minHeight: 40, textTransform: 'none', fontFamily: 'monospace' }}
+                sx={{ fontFamily: 'monospace' }}
                 label={
                   <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
                     <span>{t.split('/').pop()}</span>
                     <IconButton
                       component="span"
                       size="small"
+                      sx={{ p: 0 }}
                       onClick={(e) => {
                         e.stopPropagation()
                         close(t)

@@ -286,10 +286,10 @@ const AgentDetail = ({ agent }: { agent: Agent }) => {
         </Stack>
       )}
       {shownError && <Alert severity="error">{shownError.message}</Alert>}
-      <Tabs value={shownTab} onChange={(_, v) => setTab(v)} sx={{ minHeight: 36, borderBottom: 1, borderColor: 'divider' }}>
-        <Tab value="output" label="Output" sx={{ minHeight: 36 }} />
-        <Tab value="commits" label="Commits" disabled={!agent.sessionId} sx={{ minHeight: 36 }} />
-        {hasTranscript && <Tab value="timeline" label="Timeline" sx={{ minHeight: 36 }} />}
+      <Tabs value={shownTab} onChange={(_, v) => setTab(v)} sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Tab value="output" label="Output" />
+        <Tab value="commits" label="Commits" disabled={!agent.sessionId} />
+        {hasTranscript && <Tab value="timeline" label="Timeline" />}
       </Tabs>
       <Box sx={{ flex: 1, minHeight: 0 }}>
         {shownTab === 'output' && <AgentOutput text={data?.text ?? ''} />}

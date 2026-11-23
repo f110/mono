@@ -48,13 +48,13 @@ export const RepositoriesPage = () => {
               key={r.path}
               value={r.path}
               title={r.path}
-              sx={{ textTransform: 'none' }}
               label={
                 <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
                   <span>{r.name}</span>
                   <IconButton
                     component="span"
                     size="small"
+                    sx={{ p: 0 }}
                     onClick={(e) => {
                       e.stopPropagation()
                       close(r.path)

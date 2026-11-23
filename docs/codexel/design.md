@@ -471,6 +471,13 @@ lightjj の HTTP API を 1:1 で Connect の RPC に写す。git push/fetch や 
 
 `ts/apps/issue` と同じく Vite でビルドする (`js_run_binary` で `dist_prod` を出力)。
 
+画面をまたいで揃える見た目は MUI のテーマ (`providers/AppProvider.tsx`) に置き、コンポーネントの `sx` で個別に上書きしない (#207)。
+
+- ボタン・タブ・ToggleButton のラベルは大文字にしない。リポジトリ名・ファイル名・bookmark 名のように大文字小文字に意味があるラベルがあるため
+- タブの最小の高さは 36px にする。閉じるボタンを持つタブ (リポジトリ・開いたファイル) もほかのタブと同じ高さにするため、閉じるボタンの余白をなくす
+- 小さい Chip (`size="small"`) の高さは 18px にする。リビジョングラフの 1 行に複数並べるため
+- 等幅フォントは `monospace` にする
+
 ### 9.2 embed
 
 `//ts/apps/codexel:vite_build_prod` の出力ディレクトリを `go/codexel/static` に `copy_directory` でコピーし、それを `go_library` の

@@ -877,14 +877,14 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
               <>
                 <ToggleButtonGroup size="small" exclusive value={mode.source} onChange={(_, v) => v !== null && setMode({ ...mode, source: v })}>
                   {rebaseSources.map(([key, source]) => (
-                    <ToggleButton key={source} value={source} title={key} sx={{ textTransform: 'none', py: 0.25 }}>
+                    <ToggleButton key={source} value={source} title={key} sx={{ py: 0.25 }}>
                       {sourceLabel[source]}
                     </ToggleButton>
                   ))}
                 </ToggleButtonGroup>
                 <ToggleButtonGroup size="small" exclusive value={mode.target} onChange={(_, v) => v !== null && setMode({ ...mode, target: v })}>
                   {rebaseTargets.map(([key, target]) => (
-                    <ToggleButton key={target} value={target} title={key} sx={{ textTransform: 'none', py: 0.25 }}>
+                    <ToggleButton key={target} value={target} title={key} sx={{ py: 0.25 }}>
                       {targetLabel[target]}
                     </ToggleButton>
                   ))}
@@ -897,7 +897,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
                 selected={mode.combine}
                 onChange={() => setMode({ ...mode, combine: !mode.combine })}
                 title="c"
-                sx={{ textTransform: 'none', py: 0.25 }}
+                sx={{ py: 0.25 }}
               >
                 Combine the descriptions
               </ToggleButton>
@@ -924,12 +924,12 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
               value={view === 'log' || view === 'bookmarks' || view === 'oplog' || view === 'workspaces' ? view : false}
               onChange={(_, v) => showView(v)}
               variant="scrollable"
-              sx={{ flex: 1, minWidth: 0, minHeight: 36 }}
+              sx={{ flex: 1, minWidth: 0 }}
             >
-              <Tab value="log" label="Revisions" sx={{ minHeight: 36 }} />
-              <Tab value="bookmarks" label="Bookmarks" sx={{ minHeight: 36 }} />
-              <Tab value="oplog" label="Operations" sx={{ minHeight: 36 }} />
-              <Tab value="workspaces" label="Workspaces" sx={{ minHeight: 36 }} />
+              <Tab value="log" label="Revisions" />
+              <Tab value="bookmarks" label="Bookmarks" />
+              <Tab value="oplog" label="Operations" />
+              <Tab value="workspaces" label="Workspaces" />
             </Tabs>
             {view === 'log' && selecting && (
               <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
@@ -937,11 +937,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
               </Typography>
             )}
             {view === 'log' && (
-              <Button
-                size="small"
-                sx={{ flexShrink: 0, mx: 0.5, textTransform: 'none' }}
-                onClick={() => (selecting ? clearChecked() : setSelecting(true))}
-              >
+              <Button size="small" sx={{ flexShrink: 0, mx: 0.5 }} onClick={() => (selecting ? clearChecked() : setSelecting(true))}>
                 {selecting ? 'Cancel' : 'Select'}
               </Button>
             )}

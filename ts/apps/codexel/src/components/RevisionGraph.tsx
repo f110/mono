@@ -18,7 +18,7 @@ const relativeTime = (unix: bigint): string => {
 }
 
 const ChangeId = ({ commit }: { commit: Commit }) => (
-  <Typography component="span" variant="body2" sx={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace', flexShrink: 0 }}>
+  <Typography component="span" variant="body2" sx={{ fontFamily: 'monospace', flexShrink: 0 }}>
     <Box component="span" sx={{ color: 'secondary.main', fontWeight: 'bold' }}>
       {commit.changeIdPrefix}
     </Box>
@@ -45,7 +45,6 @@ const AgentBadge = ({ commit, agents }: { commit: Commit; agents: Agent[] }) => 
       size="small"
       color="info"
       variant={agent ? 'filled' : 'outlined'}
-      sx={{ height: 18 }}
       onClick={
         agent
           ? (e: MouseEvent) => {
@@ -72,7 +71,6 @@ const ReviewBadge = ({ reviews, approved }: { reviews: Review[]; approved: boole
       size="small"
       color={stateChip[latest.state].color}
       variant={latest.state === ReviewState.APPROVED ? 'filled' : 'outlined'}
-      sx={{ height: 18 }}
       onClick={(e: MouseEvent) => {
         e.stopPropagation()
         navigate({ to: '/reviews/$reviewId', params: { reviewId: latest.id } })
@@ -93,7 +91,6 @@ const PullRequestBadge = ({ url }: { url: string | undefined }) => {
       size="small"
       color="secondary"
       variant="outlined"
-      sx={{ height: 18 }}
       component="a"
       href={url}
       target="_blank"
@@ -120,29 +117,22 @@ const CommitLine = ({
   agents: Agent[]
 }) => (
   <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0, flex: 1 }}>
-    {mark && <Chip label={mark} size="small" color="warning" sx={{ height: 18 }} />}
+    {mark && <Chip label={mark} size="small" color="warning" />}
     <ChangeId commit={commit} />
     <AgentBadge commit={commit} agents={agents} />
     <ReviewBadge reviews={reviews} approved={approved} />
     <PullRequestBadge url={pullRequest} />
     {commit.workingCopies.map((w) => (
-      <Chip key={`${w}@`} label={`${w}@`} size="small" color="success" variant="outlined" sx={{ height: 18 }} />
+      <Chip key={`${w}@`} label={`${w}@`} size="small" color="success" variant="outlined" />
     ))}
     {commit.localBookmarks.map((b) => (
-      <Chip
-        key={b}
-        label={commit.unsyncedBookmarks.includes(b) ? `${b}*` : b}
-        size="small"
-        color="primary"
-        variant="outlined"
-        sx={{ height: 18 }}
-      />
+      <Chip key={b} label={commit.unsyncedBookmarks.includes(b) ? `${b}*` : b} size="small" color="primary" variant="outlined" />
     ))}
     {commit.remoteBookmarks.filter((b) => !commit.localBookmarks.includes(b.name)).map((b) => (
-      <Chip key={`${b.name}@${b.remote}`} label={`${b.name}@${b.remote}`} size="small" variant="outlined" sx={{ height: 18 }} />
+      <Chip key={`${b.name}@${b.remote}`} label={`${b.name}@${b.remote}`} size="small" variant="outlined" />
     ))}
-    {commit.conflict && <Chip label="conflict" size="small" color="error" sx={{ height: 18 }} />}
-    {commit.divergent && <Chip label="divergent" size="small" color="warning" sx={{ height: 18 }} />}
+    {commit.conflict && <Chip label="conflict" size="small" color="error" />}
+    {commit.divergent && <Chip label="divergent" size="small" color="warning" />}
     <Typography
       variant="body2"
       noWrap

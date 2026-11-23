@@ -85,4 +85,4 @@ export const ChangedFiles = ({
 
 // ConflictChip shows that the file is conflicted. The number of the sides is shown if it is more than two.
 const ConflictChip = ({ file }: { file?: ConflictedFile }) =>
-  file ? <Chip label={file.sides > 2 ? `conflict ${file.sides}-way` : 'conflict'} size="small" color="error" sx={{ height: 18 }} /> : null
+  file ? <Chip label={file.sides > 2 ? `conflict ${file.sides}-way` : 'conflict'} size="small" color="error" /> : null

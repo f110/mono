@@ -38,10 +38,10 @@ export const WorkspacesPanel = ({
         <Typography variant="caption" color="text.secondary" sx={{ flex: 1 }}>
           j/k or ↓/↑: move, o: open, d: remove, f: forget, 1: log
         </Typography>
-        <Button size="small" sx={{ textTransform: 'none' }} onClick={onRename}>
+        <Button size="small" onClick={onRename}>
           Rename the current
         </Button>
-        <Button size="small" sx={{ textTransform: 'none' }} onClick={onUpdateStale}>
+        <Button size="small" onClick={onUpdateStale}>
           Update the stale
         </Button>
       </Stack>
@@ -59,7 +59,7 @@ export const WorkspacesPanel = ({
             <Typography variant="body2" sx={{ fontFamily: 'monospace' }} noWrap>
               {w.name}
             </Typography>
-            {current && <Chip label="current" size="small" color="primary" variant="outlined" sx={{ height: 18 }} />}
+            {current && <Chip label="current" size="small" color="primary" variant="outlined" />}
             <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
               {w.target.slice(0, 8)}
             </Typography>

@@ -23,7 +23,7 @@ export const FileStatusChip = ({ status }: { status: FileStatus }) => (
     size="small"
     variant="outlined"
     color={status === FileStatus.ADDED ? 'success' : status === FileStatus.DELETED ? 'error' : 'default'}
-    sx={{ height: 18, minWidth: 24, fontFamily: 'monospace' }}
+    sx={{ minWidth: 24, fontFamily: 'monospace' }}
   />
 )
 
