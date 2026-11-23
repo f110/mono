@@ -499,6 +499,127 @@ spec:
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
+  name: jetstreams.nats.f110.dev
+spec:
+  group: nats.f110.dev
+  names:
+    kind: JetStream
+    listKind: JetStreamList
+    plural: jetstreams
+    singular: jetstream
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: phase
+      format: byte
+      jsonPath: .status.phase
+      name: phase
+      type: string
+    - description: age
+      format: date
+      jsonPath: .metadata.creationTimestamp
+      name: age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values.
+            type: string
+          kind:
+            description: Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated.
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              description:
+                type: string
+              finalize_policy:
+                description: finalize_policy is the policy when the object is deleted.
+                  If it is empty, the stream is kept.
+                enum:
+                - keep
+                - delete
+                type: string
+              max_age:
+                description: max_age is the maximum age of the message. If it is empty,
+                  there is no limit.
+                format: duration
+                type: string
+              max_bytes:
+                description: max_bytes is the maximum size of the stream in bytes.
+                  If it is zero, there is no limit.
+                format: int64
+                type: integer
+              max_consumers:
+                description: max_consumers is the maximum number of the consumers.
+                  If it is zero, there is no limit. It can't be changed.
+                type: integer
+              max_msgs:
+                description: max_msgs is the maximum number of the messages. If it
+                  is zero, there is no limit.
+                format: int64
+                type: integer
+              replicas:
+                description: replicas is the number of the replicas. If it is zero,
+                  the number is 1.
+                type: integer
+              retention:
+                description: retention is the retention policy of the stream. If it
+                  is empty, the policy is limits. It can't be changed.
+                enum:
+                - limits
+                - interest
+                - workqueue
+                type: string
+              storage:
+                description: storage is the storage type of the stream. If it is empty,
+                  the type is file. It can't be changed.
+                enum:
+                - file
+                - memory
+                type: string
+              subjects:
+                description: subjects is the list of the subjects which the stream
+                  consumes. If it is empty, the subject is the name of the stream.
+                items:
+                  type: string
+                type: array
+            type: object
+          status:
+            properties:
+              message:
+                description: message is the error returned by NATS when the phase
+                  is Failed.
+                type: string
+              observed_generation:
+                description: observed_generation is the generation of the object when
+                  the phase is decided.
+                format: int64
+                type: integer
+              phase:
+                description: phase is Ready when the spec is applied to NATS, and
+                  Failed when NATS returns the error.
+                enum:
+                - Ready
+                - Failed
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
   name: miniobuckets.minio.f110.dev
 spec:
   group: minio.f110.dev

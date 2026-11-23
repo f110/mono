@@ -24,6 +24,7 @@ import (
 	"go.f110.dev/mono/go/api/grafanav1alpha1"
 	"go.f110.dev/mono/go/api/harborv1alpha1"
 	"go.f110.dev/mono/go/api/miniov1alpha1"
+	"go.f110.dev/mono/go/api/natsv1alpha1"
 )
 
 var (
@@ -38,6 +39,7 @@ var localSchemeBuilder = runtime.SchemeBuilder{
 	grafanav1alpha1.AddToScheme,
 	harborv1alpha1.AddToScheme,
 	miniov1alpha1.AddToScheme,
+	natsv1alpha1.AddToScheme,
 }
 
 func init() {
@@ -46,6 +48,7 @@ func init() {
 		grafanav1alpha1.AddToScheme,
 		harborv1alpha1.AddToScheme,
 		miniov1alpha1.AddToScheme,
+		natsv1alpha1.AddToScheme,
 	} {
 		if err := v(Scheme); err != nil {
 			panic(err)
@@ -81,6 +84,7 @@ type Set struct {
 	GrafanaV1alpha1 *GrafanaV1alpha1
 	HarborV1alpha1  *HarborV1alpha1
 	MinioV1alpha1   *MinioV1alpha1
+	NatsV1alpha1    *NatsV1alpha1
 }
 
 func NewSet(cfg *rest.Config) (*Set, error) {
@@ -128,6 +132,17 @@ func NewSet(cfg *rest.Config) (*Set, error) {
 			return nil, err
 		}
 		s.MinioV1alpha1 = NewMinioV1alpha1Client(&restBackend{client: c}, &conf)
+	}
+	{
+		conf := *cfg
+		conf.GroupVersion = &natsv1alpha1.SchemaGroupVersion
+		conf.APIPath = "/apis"
+		conf.NegotiatedSerializer = Codecs.WithoutConversion()
+		c, err := rest.RESTClientFor(&conf)
+		if err != nil {
+			return nil, err
+		}
+		s.NatsV1alpha1 = NewNatsV1alpha1Client(&restBackend{client: c}, &conf)
 	}
 
 	return s, nil
@@ -989,6 +1004,79 @@ func (c *MinioV1alpha1) WatchMinIOUser(ctx context.Context, namespace string, op
 	return c.backend.Watch(ctx, schema.GroupVersionResource{Group: "minio.f110.dev", Version: "v1alpha1", Resource: "miniousers"}, namespace, opts)
 }
 
+type NatsV1alpha1 struct {
+	backend Backend
+	config  *rest.Config
+}
+
+func NewNatsV1alpha1Client(b Backend, config *rest.Config) *NatsV1alpha1 {
+	return &NatsV1alpha1{backend: b, config: config}
+}
+
+func (c *NatsV1alpha1) GetJetStream(ctx context.Context, namespace, name string, opts metav1.GetOptions) (*natsv1alpha1.JetStream, error) {
+	result, err := c.backend.Get(ctx, "jetstreams", namespace, name, opts, &natsv1alpha1.JetStream{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*natsv1alpha1.JetStream), nil
+}
+
+func (c *NatsV1alpha1) CreateJetStream(ctx context.Context, v *natsv1alpha1.JetStream, opts metav1.CreateOptions) (*natsv1alpha1.JetStream, error) {
+	result, err := c.backend.Create(ctx, "jetstreams", v, opts, &natsv1alpha1.JetStream{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*natsv1alpha1.JetStream), nil
+}
+
+func (c *NatsV1alpha1) UpdateJetStream(ctx context.Context, v *natsv1alpha1.JetStream, opts metav1.UpdateOptions) (*natsv1alpha1.JetStream, error) {
+	result, err := c.backend.Update(ctx, "jetstreams", v, opts, &natsv1alpha1.JetStream{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*natsv1alpha1.JetStream), nil
+}
+
+func (c *NatsV1alpha1) UpdateStatusJetStream(ctx context.Context, v *natsv1alpha1.JetStream, opts metav1.UpdateOptions) (*natsv1alpha1.JetStream, error) {
+	result, err := c.backend.UpdateStatus(ctx, "jetstreams", v, opts, &natsv1alpha1.JetStream{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*natsv1alpha1.JetStream), nil
+}
+
+func (c *NatsV1alpha1) ApplyJetStream(ctx context.Context, v *natsv1alpha1.JetStream, opts metav1.ApplyOptions) (*natsv1alpha1.JetStream, error) {
+	result, err := c.backend.Apply(ctx, "jetstreams", v, opts, &natsv1alpha1.JetStream{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*natsv1alpha1.JetStream), nil
+}
+
+func (c *NatsV1alpha1) ApplyStatusJetStream(ctx context.Context, v *natsv1alpha1.JetStream, opts metav1.ApplyOptions) (*natsv1alpha1.JetStream, error) {
+	result, err := c.backend.ApplyStatus(ctx, "jetstreams", v, opts, &natsv1alpha1.JetStream{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*natsv1alpha1.JetStream), nil
+}
+
+func (c *NatsV1alpha1) DeleteJetStream(ctx context.Context, namespace, name string, opts metav1.DeleteOptions) error {
+	return c.backend.Delete(ctx, schema.GroupVersionResource{Group: "nats.f110.dev", Version: "v1alpha1", Resource: "jetstreams"}, namespace, name, opts)
+}
+
+func (c *NatsV1alpha1) ListJetStream(ctx context.Context, namespace string, opts metav1.ListOptions) (*natsv1alpha1.JetStreamList, error) {
+	result, err := c.backend.List(ctx, "jetstreams", namespace, opts, &natsv1alpha1.JetStreamList{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*natsv1alpha1.JetStreamList), nil
+}
+
+func (c *NatsV1alpha1) WatchJetStream(ctx context.Context, namespace string, opts metav1.ListOptions) (watch.Interface, error) {
+	return c.backend.Watch(ctx, schema.GroupVersionResource{Group: "nats.f110.dev", Version: "v1alpha1", Resource: "jetstreams"}, namespace, opts)
+}
+
 type InformerCache struct {
 	mu        sync.Mutex
 	informers map[reflect.Type]cache.SharedIndexInformer
@@ -1058,6 +1146,8 @@ func (f *InformerFactory) InformerFor(obj runtime.Object) cache.SharedIndexInfor
 		return NewMinioV1alpha1Informer(f.cache, f.set.MinioV1alpha1, f.namespace, f.resyncPeriod).MinIOClusterInformer()
 	case *miniov1alpha1.MinIOUser:
 		return NewMinioV1alpha1Informer(f.cache, f.set.MinioV1alpha1, f.namespace, f.resyncPeriod).MinIOUserInformer()
+	case *natsv1alpha1.JetStream:
+		return NewNatsV1alpha1Informer(f.cache, f.set.NatsV1alpha1, f.namespace, f.resyncPeriod).JetStreamInformer()
 	default:
 		return nil
 	}
@@ -1081,6 +1171,8 @@ func (f *InformerFactory) InformerForResource(gvr schema.GroupVersionResource) c
 		return NewMinioV1alpha1Informer(f.cache, f.set.MinioV1alpha1, f.namespace, f.resyncPeriod).MinIOClusterInformer()
 	case miniov1alpha1.SchemaGroupVersion.WithResource("miniousers"):
 		return NewMinioV1alpha1Informer(f.cache, f.set.MinioV1alpha1, f.namespace, f.resyncPeriod).MinIOUserInformer()
+	case natsv1alpha1.SchemaGroupVersion.WithResource("jetstreams"):
+		return NewNatsV1alpha1Informer(f.cache, f.set.NatsV1alpha1, f.namespace, f.resyncPeriod).JetStreamInformer()
 	default:
 		return nil
 	}
@@ -1340,6 +1432,46 @@ func (f *MinioV1alpha1Informer) MinIOUserLister() *MinioV1alpha1MinIOUserLister 
 	return NewMinioV1alpha1MinIOUserLister(f.MinIOUserInformer().GetIndexer())
 }
 
+type NatsV1alpha1Informer struct {
+	cache        *InformerCache
+	client       *NatsV1alpha1
+	namespace    string
+	resyncPeriod time.Duration
+	indexers     cache.Indexers
+}
+
+func NewNatsV1alpha1Informer(c *InformerCache, client *NatsV1alpha1, namespace string, resyncPeriod time.Duration) *NatsV1alpha1Informer {
+	return &NatsV1alpha1Informer{
+		cache:        c,
+		client:       client,
+		namespace:    namespace,
+		resyncPeriod: resyncPeriod,
+		indexers:     cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc},
+	}
+}
+
+func (f *NatsV1alpha1Informer) JetStreamInformer() cache.SharedIndexInformer {
+	return f.cache.Write(&natsv1alpha1.JetStream{}, func() cache.SharedIndexInformer {
+		return cache.NewSharedIndexInformer(
+			&cache.ListWatch{
+				ListFunc: func(options k8smetav1.ListOptions) (runtime.Object, error) {
+					return f.client.ListJetStream(context.TODO(), f.namespace, metav1.ListOptionsFromUpstream(options))
+				},
+				WatchFunc: func(options k8smetav1.ListOptions) (watch.Interface, error) {
+					return f.client.WatchJetStream(context.TODO(), f.namespace, metav1.ListOptionsFromUpstream(options))
+				},
+			},
+			&natsv1alpha1.JetStream{},
+			f.resyncPeriod,
+			f.indexers,
+		)
+	})
+}
+
+func (f *NatsV1alpha1Informer) JetStreamLister() *NatsV1alpha1JetStreamLister {
+	return NewNatsV1alpha1JetStreamLister(f.JetStreamInformer().GetIndexer())
+}
+
 type ConsulV1alpha1ConsulBackupLister struct {
 	indexer cache.Indexer
 }
@@ -1554,4 +1686,31 @@ func (x *MinioV1alpha1MinIOUserLister) Get(namespace, name string) (*miniov1alph
 		return nil, k8serrors.NewNotFound(miniov1alpha1.SchemaGroupVersion.WithResource("miniouser").GroupResource(), name)
 	}
 	return obj.(*miniov1alpha1.MinIOUser).DeepCopy(), nil
+}
+
+type NatsV1alpha1JetStreamLister struct {
+	indexer cache.Indexer
+}
+
+func NewNatsV1alpha1JetStreamLister(indexer cache.Indexer) *NatsV1alpha1JetStreamLister {
+	return &NatsV1alpha1JetStreamLister{indexer: indexer}
+}
+
+func (x *NatsV1alpha1JetStreamLister) List(namespace string, selector labels.Selector) ([]*natsv1alpha1.JetStream, error) {
+	var ret []*natsv1alpha1.JetStream
+	err := cache.ListAllByNamespace(x.indexer, namespace, selector, func(m interface{}) {
+		ret = append(ret, m.(*natsv1alpha1.JetStream).DeepCopy())
+	})
+	return ret, err
+}
+
+func (x *NatsV1alpha1JetStreamLister) Get(namespace, name string) (*natsv1alpha1.JetStream, error) {
+	obj, exists, err := x.indexer.GetByKey(namespace + "/" + name)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, k8serrors.NewNotFound(natsv1alpha1.SchemaGroupVersion.WithResource("jetstream").GroupResource(), name)
+	}
+	return obj.(*natsv1alpha1.JetStream).DeepCopy(), nil
 }

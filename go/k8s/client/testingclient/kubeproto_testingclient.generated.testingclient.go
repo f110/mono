@@ -60,6 +60,7 @@ var statusSubresourceKinds = map[schema.GroupVersionKind]struct{}{
 	{Group: "minio.f110.dev", Version: "v1alpha1", Kind: "MinIOBucket"}:         {},
 	{Group: "minio.f110.dev", Version: "v1alpha1", Kind: "MinIOCluster"}:        {},
 	{Group: "minio.f110.dev", Version: "v1alpha1", Kind: "MinIOUser"}:           {},
+	{Group: "nats.f110.dev", Version: "v1alpha1", Kind: "JetStream"}:            {},
 }
 
 func NewSet() *Set {
@@ -79,6 +80,7 @@ func NewSet() *Set {
 	s.GrafanaV1alpha1 = client.NewGrafanaV1alpha1Client(&fakerBackend{fake: &s.fake}, nil)
 	s.HarborV1alpha1 = client.NewHarborV1alpha1Client(&fakerBackend{fake: &s.fake}, nil)
 	s.MinioV1alpha1 = client.NewMinioV1alpha1Client(&fakerBackend{fake: &s.fake}, nil)
+	s.NatsV1alpha1 = client.NewNatsV1alpha1Client(&fakerBackend{fake: &s.fake}, nil)
 	return s
 }
 

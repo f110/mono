@@ -18,6 +18,7 @@ crd_proto_manifest(
         "//go/api/grafanav1alpha1:grafana_proto",
         "//go/api/harborv1alpha1:harbor_proto",
         "//go/api/miniov1alpha1:minio_proto",
+        "//go/api/natsv1alpha1:nats_proto",
     ],
     visibility = ["//visibility:public"],
 )

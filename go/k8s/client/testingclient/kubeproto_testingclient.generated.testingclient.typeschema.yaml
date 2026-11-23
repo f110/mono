@@ -638,6 +638,72 @@ types:
     - name: instance
       type:
         scalar: string
+- name: mono.api.natsv1alpha1.JetStream
+  map:
+    fields:
+    - name: kind
+      type:
+        scalar: string
+    - name: apiVersion
+      type:
+        scalar: string
+    - name: metadata
+      type:
+        namedType: k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta
+    - name: spec
+      type:
+        namedType: mono.api.natsv1alpha1.JetStreamSpec
+    - name: status
+      type:
+        namedType: mono.api.natsv1alpha1.JetStreamStatus
+- name: mono.api.natsv1alpha1.JetStreamSpec
+  map:
+    fields:
+    - name: subjects
+      type:
+        list:
+          elementType:
+            scalar: string
+          elementRelationship: atomic
+    - name: description
+      type:
+        scalar: string
+    - name: retention
+      type:
+        scalar: string
+    - name: storage
+      type:
+        scalar: string
+    - name: replicas
+      type:
+        scalar: numeric
+    - name: max_age
+      type:
+        scalar: string
+    - name: max_consumers
+      type:
+        scalar: numeric
+    - name: max_msgs
+      type:
+        scalar: numeric
+    - name: max_bytes
+      type:
+        scalar: numeric
+    - name: finalize_policy
+      type:
+        scalar: string
+- name: mono.api.natsv1alpha1.JetStreamStatus
+  map:
+    fields:
+    - name: phase
+      type:
+        scalar: string
+    - name: observed_generation
+      type:
+        scalar: numeric
+    - name: message
+      type:
+        scalar: string
 - name: __untyped_atomic_
   scalar: untyped
   list:

@@ -11,6 +11,7 @@ import (
 	"go.f110.dev/mono/go/api/grafanav1alpha1"
 	"go.f110.dev/mono/go/api/harborv1alpha1"
 	"go.f110.dev/mono/go/api/miniov1alpha1"
+	"go.f110.dev/mono/go/api/natsv1alpha1"
 	"go.f110.dev/mono/go/k8s/client"
 )
 
@@ -433,4 +434,21 @@ func TotalSize(n int) Trait {
 			obj.Spec.TotalSize = n
 		}
 	}
+}
+
+func JetStreamFactory(base *natsv1alpha1.JetStream, traits ...Trait) *natsv1alpha1.JetStream {
+	var s *natsv1alpha1.JetStream
+	if base == nil {
+		s = &natsv1alpha1.JetStream{}
+	} else {
+		s = base.DeepCopy()
+	}
+
+	setGVK(s, client.Scheme)
+
+	for _, v := range traits {
+		v(s)
+	}
+
+	return s
 }

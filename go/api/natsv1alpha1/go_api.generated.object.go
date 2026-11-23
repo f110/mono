@@ -1,0 +1,195 @@
+package natsv1alpha1
+
+import (
+	"go.f110.dev/kubeproto/go/apis/metav1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+)
+
+const GroupName = "nats.f110.dev"
+
+var (
+	GroupVersion       = metav1.GroupVersion{Group: GroupName, Version: "v1alpha1"}
+	SchemeBuilder      = runtime.NewSchemeBuilder(addKnownTypes)
+	AddToScheme        = SchemeBuilder.AddToScheme
+	SchemaGroupVersion = schema.GroupVersion{Group: GroupName, Version: "v1alpha1"}
+)
+
+func addKnownTypes(scheme *runtime.Scheme) error {
+	scheme.AddKnownTypes(SchemaGroupVersion,
+		&JetStream{},
+		&JetStreamList{},
+	)
+	metav1.AddToGroupVersion(scheme, SchemaGroupVersion)
+	return nil
+}
+
+type FinalizePolicy string
+
+const (
+	FinalizePolicyKeep   FinalizePolicy = "keep"
+	FinalizePolicyDelete FinalizePolicy = "delete"
+)
+
+type JetStreamPhase string
+
+const (
+	JetStreamPhaseReady  JetStreamPhase = "Ready"
+	JetStreamPhaseFailed JetStreamPhase = "Failed"
+)
+
+type RetentionPolicy string
+
+const (
+	RetentionPolicyLimits    RetentionPolicy = "limits"
+	RetentionPolicyInterest  RetentionPolicy = "interest"
+	RetentionPolicyWorkqueue RetentionPolicy = "workqueue"
+)
+
+type StorageType string
+
+const (
+	StorageTypeFile   StorageType = "file"
+	StorageTypeMemory StorageType = "memory"
+)
+
+type JetStream struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata"`
+	Spec              JetStreamSpec   `json:"spec"`
+	Status            JetStreamStatus `json:"status"`
+}
+
+func (in *JetStream) DeepCopyInto(out *JetStream) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	in.Spec.DeepCopyInto(&out.Spec)
+	in.Status.DeepCopyInto(&out.Status)
+}
+
+func (in *JetStream) DeepCopy() *JetStream {
+	if in == nil {
+		return nil
+	}
+	out := new(JetStream)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *JetStream) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+func (in *JetStream) OpenAPIModelName() string {
+	return "mono.api.natsv1alpha1.JetStream"
+}
+
+type JetStreamList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata"`
+	Items           []JetStream `json:"items,omitempty"`
+}
+
+func (in *JetStreamList) DeepCopyInto(out *JetStreamList) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
+	if in.Items != nil {
+		l := make([]JetStream, len(in.Items))
+		for i := range in.Items {
+			in.Items[i].DeepCopyInto(&l[i])
+		}
+		out.Items = l
+	}
+}
+
+func (in *JetStreamList) DeepCopy() *JetStreamList {
+	if in == nil {
+		return nil
+	}
+	out := new(JetStreamList)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *JetStreamList) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+func (in *JetStreamList) OpenAPIModelName() string {
+	return "mono.api.natsv1alpha1.JetStreamList"
+}
+
+type JetStreamSpec struct {
+	// subjects is the list of the subjects which the stream consumes. If it is empty, the subject is the name of the stream.
+	Subjects    []string `json:"subjects,omitempty"`
+	Description string   `json:"description,omitempty"`
+	// retention is the retention policy of the stream. If it is empty, the policy is limits. It can't be changed.
+	Retention RetentionPolicy `json:"retention,omitempty"`
+	// storage is the storage type of the stream. If it is empty, the type is file. It can't be changed.
+	Storage StorageType `json:"storage,omitempty"`
+	// replicas is the number of the replicas. If it is zero, the number is 1.
+	Replicas int `json:"replicas,omitempty"`
+	// max_age is the maximum age of the message. If it is empty, there is no limit.
+	MaxAge *metav1.Duration `json:"max_age,omitempty"`
+	// max_consumers is the maximum number of the consumers. If it is zero, there is no limit. It can't be changed.
+	MaxConsumers int `json:"max_consumers,omitempty"`
+	// max_msgs is the maximum number of the messages. If it is zero, there is no limit.
+	MaxMsgs int64 `json:"max_msgs,omitempty"`
+	// max_bytes is the maximum size of the stream in bytes. If it is zero, there is no limit.
+	MaxBytes int64 `json:"max_bytes,omitempty"`
+	// finalize_policy is the policy when the object is deleted. If it is empty, the stream is kept.
+	FinalizePolicy FinalizePolicy `json:"finalize_policy,omitempty"`
+}
+
+func (in *JetStreamSpec) DeepCopyInto(out *JetStreamSpec) {
+	*out = *in
+	if in.Subjects != nil {
+		t := make([]string, len(in.Subjects))
+		copy(t, in.Subjects)
+		out.Subjects = t
+	}
+	if in.MaxAge != nil {
+		in, out := &in.MaxAge, &out.MaxAge
+		*out = new(metav1.Duration)
+		(*in).DeepCopyInto(*out)
+	}
+}
+
+func (in *JetStreamSpec) DeepCopy() *JetStreamSpec {
+	if in == nil {
+		return nil
+	}
+	out := new(JetStreamSpec)
+	in.DeepCopyInto(out)
+	return out
+}
+
+type JetStreamStatus struct {
+	// phase is Ready when the spec is applied to NATS, and Failed when NATS returns the error.
+	Phase JetStreamPhase `json:"phase,omitempty"`
+	// observed_generation is the generation of the object when the phase is decided.
+	ObservedGeneration int64 `json:"observed_generation,omitempty"`
+	// message is the error returned by NATS when the phase is Failed.
+	Message string `json:"message,omitempty"`
+}
+
+func (in *JetStreamStatus) DeepCopyInto(out *JetStreamStatus) {
+	*out = *in
+}
+
+func (in *JetStreamStatus) DeepCopy() *JetStreamStatus {
+	if in == nil {
+		return nil
+	}
+	out := new(JetStreamStatus)
+	in.DeepCopyInto(out)
+	return out
+}

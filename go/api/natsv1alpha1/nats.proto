@@ -1,0 +1,74 @@
+syntax = "proto3";
+package mono.api.natsv1alpha1;
+option  go_package              = "go.f110.dev/mono/go/api/natsv1alpha1";
+option (dev.f110.kubeproto.k8s) = {
+  domain: "f110.dev",
+  sub_group: "nats",
+  version: "v1alpha1",
+};
+
+import "kube.proto";
+import "k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto";
+
+enum RetentionPolicy {
+  RETENTION_POLICY_LIMITS    = 0 [(dev.f110.kubeproto.value) = { value: "limits" }];
+  RETENTION_POLICY_INTEREST  = 1 [(dev.f110.kubeproto.value) = { value: "interest" }];
+  RETENTION_POLICY_WORKQUEUE = 2 [(dev.f110.kubeproto.value) = { value: "workqueue" }];
+}
+
+enum StorageType {
+  STORAGE_TYPE_FILE   = 0 [(dev.f110.kubeproto.value) = { value: "file" }];
+  STORAGE_TYPE_MEMORY = 1 [(dev.f110.kubeproto.value) = { value: "memory" }];
+}
+
+enum FinalizePolicy {
+  FINALIZE_POLICY_KEEP   = 0 [(dev.f110.kubeproto.value) = { value: "keep" }];
+  FINALIZE_POLICY_DELETE = 1 [(dev.f110.kubeproto.value) = { value: "delete" }];
+}
+
+enum JetStreamPhase {
+  JET_STREAM_PHASE_READY  = 0 [(dev.f110.kubeproto.value) = { value: "Ready" }];
+  JET_STREAM_PHASE_FAILED = 1 [(dev.f110.kubeproto.value) = { value: "Failed" }];
+}
+
+// JetStream is the stream of NATS JetStream. The name of the stream is the name of the object.
+message JetStream {
+  JetStreamSpec   spec   = 1;
+  JetStreamStatus status = 2 [(dev.f110.kubeproto.field) = { sub_resource: true }];
+
+  option (dev.f110.kubeproto.kind) = {
+    additional_printer_columns: { name: "phase", type: "string", json_path: ".status.phase", description: "phase", format: "byte", priority: 0 }
+    additional_printer_columns: { name: "age", type: "date", json_path: ".metadata.creationTimestamp", description: "age", format: "date", priority: 0 }
+  };
+}
+
+message JetStreamSpec {
+  // subjects is the list of the subjects which the stream consumes. If it is empty, the subject is the name of the stream.
+  repeated string subjects = 1;
+  optional string description = 2;
+  // retention is the retention policy of the stream. If it is empty, the policy is limits. It can't be changed.
+  optional RetentionPolicy retention = 3;
+  // storage is the storage type of the stream. If it is empty, the type is file. It can't be changed.
+  optional StorageType storage = 4;
+  // replicas is the number of the replicas. If it is zero, the number is 1.
+  optional int32 replicas = 5;
+  // max_age is the maximum age of the message. If it is empty, there is no limit.
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Duration max_age = 6 [(dev.f110.kubeproto.field) = { api_field_name: "max_age" }];
+  // max_consumers is the maximum number of the consumers. If it is zero, there is no limit. It can't be changed.
+  optional int32 max_consumers = 7 [(dev.f110.kubeproto.field) = { api_field_name: "max_consumers" }];
+  // max_msgs is the maximum number of the messages. If it is zero, there is no limit.
+  optional int64 max_msgs = 8 [(dev.f110.kubeproto.field) = { api_field_name: "max_msgs" }];
+  // max_bytes is the maximum size of the stream in bytes. If it is zero, there is no limit.
+  optional int64 max_bytes = 9 [(dev.f110.kubeproto.field) = { api_field_name: "max_bytes" }];
+  // finalize_policy is the policy when the object is deleted. If it is empty, the stream is kept.
+  optional FinalizePolicy finalize_policy = 10 [(dev.f110.kubeproto.field) = { api_field_name: "finalize_policy" }];
+}
+
+message JetStreamStatus {
+  // phase is Ready when the spec is applied to NATS, and Failed when NATS returns the error.
+  optional JetStreamPhase phase = 1;
+  // observed_generation is the generation of the object when the phase is decided.
+  optional int64 observed_generation = 2 [(dev.f110.kubeproto.field) = { api_field_name: "observed_generation" }];
+  // message is the error returned by NATS when the phase is Failed.
+  optional string message = 3;
+}

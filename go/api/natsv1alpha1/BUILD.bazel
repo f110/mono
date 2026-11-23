@@ -1,0 +1,38 @@
+load("@dev_f110_kubeproto//bazel:def.bzl", "kubeproto_go_api")
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
+load("@rules_go//go:def.bzl", "go_library")
+load("//build/rules:vendor.bzl", "vendor_kubeproto")
+
+proto_library(
+    name = "nats_proto",
+    srcs = ["nats.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@dev_f110_kubeproto//:k8s_proto",
+        "@dev_f110_kubeproto//:kubeproto",
+        "@dev_f110_kubeproto//k8s.io/apimachinery/pkg/apis/meta/v1:metav1_proto",
+    ],
+)
+
+kubeproto_go_api(
+    name = "go_api",
+    srcs = [":nats_proto"],
+    importpath = "go.f110.dev/mono/go/api/natsv1alpha1",
+)
+
+vendor_kubeproto(
+    name = "vendor_go_api",
+    src = ":go_api",
+)
+
+go_library(
+    name = "natsv1alpha1",
+    srcs = ["go_api.generated.object.go"],
+    importpath = "go.f110.dev/mono/go/api/natsv1alpha1",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@dev_f110_kubeproto//go/apis/metav1",
+        "@io_k8s_apimachinery//pkg/runtime",
+        "@io_k8s_apimachinery//pkg/runtime/schema",
+    ],
+)
