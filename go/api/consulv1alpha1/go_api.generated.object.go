@@ -56,10 +56,14 @@ func (in *ConsulBackup) DeepCopyObject() runtime.Object {
 	return nil
 }
 
+func (in *ConsulBackup) OpenAPIModelName() string {
+	return "mono.api.consulv1alpha1.ConsulBackup"
+}
+
 type ConsulBackupList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
-	Items           []ConsulBackup `json:"items"`
+	Items           []ConsulBackup `json:"items,omitempty"`
 }
 
 func (in *ConsulBackupList) DeepCopyInto(out *ConsulBackupList) {
@@ -91,6 +95,10 @@ func (in *ConsulBackupList) DeepCopyObject() runtime.Object {
 	return nil
 }
 
+func (in *ConsulBackupList) OpenAPIModelName() string {
+	return "mono.api.consulv1alpha1.ConsulBackupList"
+}
+
 type ConsulBackupSpec struct {
 	IntervalInSeconds int                         `json:"intervalInSeconds"`
 	MaxBackups        int                         `json:"maxBackups"`
@@ -116,7 +124,7 @@ func (in *ConsulBackupSpec) DeepCopy() *ConsulBackupSpec {
 type ConsulBackupStatus struct {
 	Succeeded           bool                        `json:"succeeded"`
 	LastSucceededTime   *metav1.Time                `json:"lastSucceededTime,omitempty"`
-	BackupStatusHistory []ConsulBackupStatusHistory `json:"backupStatusHistory"`
+	BackupStatusHistory []ConsulBackupStatusHistory `json:"backupStatusHistory,omitempty"`
 }
 
 func (in *ConsulBackupStatus) DeepCopyInto(out *ConsulBackupStatus) {

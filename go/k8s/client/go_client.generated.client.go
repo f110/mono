@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"reflect"
 	"sync"
@@ -14,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
@@ -57,6 +59,8 @@ type Backend interface {
 	Create(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.CreateOptions, result runtime.Object) (runtime.Object, error)
 	Update(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.UpdateOptions, result runtime.Object) (runtime.Object, error)
 	UpdateStatus(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.UpdateOptions, result runtime.Object) (runtime.Object, error)
+	Apply(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.ApplyOptions, result runtime.Object) (runtime.Object, error)
+	ApplyStatus(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.ApplyOptions, result runtime.Object) (runtime.Object, error)
 	Delete(ctx context.Context, gvr schema.GroupVersionResource, namespace, name string, opts metav1.DeleteOptions) error
 	Watch(ctx context.Context, gvr schema.GroupVersionResource, namespace string, opts metav1.ListOptions) (watch.Interface, error)
 	GetClusterScoped(ctx context.Context, resourceName, name string, opts metav1.GetOptions, result runtime.Object) (runtime.Object, error)
@@ -64,6 +68,8 @@ type Backend interface {
 	CreateClusterScoped(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.CreateOptions, result runtime.Object) (runtime.Object, error)
 	UpdateClusterScoped(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.UpdateOptions, result runtime.Object) (runtime.Object, error)
 	UpdateStatusClusterScoped(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.UpdateOptions, result runtime.Object) (runtime.Object, error)
+	ApplyClusterScoped(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.ApplyOptions, result runtime.Object) (runtime.Object, error)
+	ApplyStatusClusterScoped(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.ApplyOptions, result runtime.Object) (runtime.Object, error)
 	DeleteClusterScoped(ctx context.Context, gvr schema.GroupVersionResource, name string, opts metav1.DeleteOptions) error
 	WatchClusterScoped(ctx context.Context, gvr schema.GroupVersionResource, opts metav1.ListOptions) (watch.Interface, error)
 
@@ -203,6 +209,49 @@ func (r *restBackend) UpdateStatus(ctx context.Context, resourceName string, obj
 		Into(result)
 }
 
+func (r *restBackend) Apply(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.ApplyOptions, result runtime.Object) (runtime.Object, error) {
+	m := obj.(metav1.Object)
+	if m == nil {
+		return nil, errors.New("obj is not implement metav1.Object")
+	}
+	meta := m.GetObjectMeta()
+	patch, err := encodeApplyPatch(obj)
+	if err != nil {
+		return nil, err
+	}
+	patchOpts := opts.ToPatchOptions()
+	return result, r.client.Patch(types.ApplyPatchType).
+		Namespace(meta.Namespace).
+		Resource(resourceName).
+		Name(meta.Name).
+		VersionedParams(&patchOpts, ParameterCodec).
+		Body(patch).
+		Do(ctx).
+		Into(result)
+}
+
+func (r *restBackend) ApplyStatus(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.ApplyOptions, result runtime.Object) (runtime.Object, error) {
+	m := obj.(metav1.Object)
+	if m == nil {
+		return nil, errors.New("obj is not implement metav1.Object")
+	}
+	meta := m.GetObjectMeta()
+	patch, err := encodeApplyStatusPatch(obj)
+	if err != nil {
+		return nil, err
+	}
+	patchOpts := opts.ToPatchOptions()
+	return result, r.client.Patch(types.ApplyPatchType).
+		Namespace(meta.Namespace).
+		Resource(resourceName).
+		Name(meta.Name).
+		SubResource("status").
+		VersionedParams(&patchOpts, ParameterCodec).
+		Body(patch).
+		Do(ctx).
+		Into(result)
+}
+
 func (r *restBackend) Delete(ctx context.Context, gvr schema.GroupVersionResource, namespace, name string, opts metav1.DeleteOptions) error {
 	return r.client.Delete().
 		Namespace(namespace).
@@ -289,6 +338,83 @@ func (r *restBackend) UpdateStatusClusterScoped(ctx context.Context, resourceNam
 		Into(result)
 }
 
+func (r *restBackend) ApplyClusterScoped(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.ApplyOptions, result runtime.Object) (runtime.Object, error) {
+	m := obj.(metav1.Object)
+	if m == nil {
+		return nil, errors.New("obj is not implement metav1.Object")
+	}
+	meta := m.GetObjectMeta()
+	patch, err := encodeApplyPatch(obj)
+	if err != nil {
+		return nil, err
+	}
+	patchOpts := opts.ToPatchOptions()
+	return result, r.client.Patch(types.ApplyPatchType).
+		Resource(resourceName).
+		Name(meta.Name).
+		VersionedParams(&patchOpts, ParameterCodec).
+		Body(patch).
+		Do(ctx).
+		Into(result)
+}
+
+func (r *restBackend) ApplyStatusClusterScoped(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.ApplyOptions, result runtime.Object) (runtime.Object, error) {
+	m := obj.(metav1.Object)
+	if m == nil {
+		return nil, errors.New("obj is not implement metav1.Object")
+	}
+	meta := m.GetObjectMeta()
+	patch, err := encodeApplyStatusPatch(obj)
+	if err != nil {
+		return nil, err
+	}
+	patchOpts := opts.ToPatchOptions()
+	return result, r.client.Patch(types.ApplyPatchType).
+		Resource(resourceName).
+		Name(meta.Name).
+		SubResource("status").
+		VersionedParams(&patchOpts, ParameterCodec).
+		Body(patch).
+		Do(ctx).
+		Into(result)
+}
+
+// encodeApplyPatch encodes obj into the body of the apply request.
+// The body is passed as []byte because rest.Request overwrites Content-Type when the body is runtime.Object.
+// The apply request requires apiVersion and kind, so they are set from Scheme.
+func encodeApplyPatch(obj runtime.Object) ([]byte, error) {
+	gvks, _, err := Scheme.ObjectKinds(obj)
+	if err != nil {
+		return nil, err
+	}
+	obj = obj.DeepCopyObject()
+	obj.GetObjectKind().SetGroupVersionKind(gvks[0])
+	return json.Marshal(obj)
+}
+
+// encodeApplyStatusPatch encodes obj into the body of the apply request to the status subresource.
+// The apiserver ignores the fields other than the status, so the body contains only apiVersion, kind, the name, the namespace and the status.
+func encodeApplyStatusPatch(obj runtime.Object) ([]byte, error) {
+	patch, err := encodeApplyPatch(obj)
+	if err != nil {
+		return nil, err
+	}
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(patch, &fields); err != nil {
+		return nil, err
+	}
+	objMeta := obj.(metav1.Object).GetObjectMeta()
+	metadata, err := json.Marshal(&metav1.ObjectMeta{Name: objMeta.Name, Namespace: objMeta.Namespace})
+	if err != nil {
+		return nil, err
+	}
+	statusPatch := map[string]json.RawMessage{"apiVersion": fields["apiVersion"], "kind": fields["kind"], "metadata": metadata}
+	if v, ok := fields["status"]; ok {
+		statusPatch["status"] = v
+	}
+	return json.Marshal(statusPatch)
+}
+
 func (r *restBackend) DeleteClusterScoped(ctx context.Context, gvr schema.GroupVersionResource, name string, opts metav1.DeleteOptions) error {
 	return r.client.Delete().
 		Resource(gvr.Resource).
@@ -356,6 +482,22 @@ func (c *ConsulV1alpha1) UpdateStatusConsulBackup(ctx context.Context, v *consul
 	return result.(*consulv1alpha1.ConsulBackup), nil
 }
 
+func (c *ConsulV1alpha1) ApplyConsulBackup(ctx context.Context, v *consulv1alpha1.ConsulBackup, opts metav1.ApplyOptions) (*consulv1alpha1.ConsulBackup, error) {
+	result, err := c.backend.Apply(ctx, "consulbackups", v, opts, &consulv1alpha1.ConsulBackup{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*consulv1alpha1.ConsulBackup), nil
+}
+
+func (c *ConsulV1alpha1) ApplyStatusConsulBackup(ctx context.Context, v *consulv1alpha1.ConsulBackup, opts metav1.ApplyOptions) (*consulv1alpha1.ConsulBackup, error) {
+	result, err := c.backend.ApplyStatus(ctx, "consulbackups", v, opts, &consulv1alpha1.ConsulBackup{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*consulv1alpha1.ConsulBackup), nil
+}
+
 func (c *ConsulV1alpha1) DeleteConsulBackup(ctx context.Context, namespace, name string, opts metav1.DeleteOptions) error {
 	return c.backend.Delete(ctx, schema.GroupVersionResource{Group: "consul.f110.dev", Version: "v1alpha1", Resource: "consulbackups"}, namespace, name, opts)
 }
@@ -413,6 +555,22 @@ func (c *GrafanaV1alpha1) UpdateStatusGrafana(ctx context.Context, v *grafanav1a
 	return result.(*grafanav1alpha1.Grafana), nil
 }
 
+func (c *GrafanaV1alpha1) ApplyGrafana(ctx context.Context, v *grafanav1alpha1.Grafana, opts metav1.ApplyOptions) (*grafanav1alpha1.Grafana, error) {
+	result, err := c.backend.Apply(ctx, "grafanas", v, opts, &grafanav1alpha1.Grafana{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*grafanav1alpha1.Grafana), nil
+}
+
+func (c *GrafanaV1alpha1) ApplyStatusGrafana(ctx context.Context, v *grafanav1alpha1.Grafana, opts metav1.ApplyOptions) (*grafanav1alpha1.Grafana, error) {
+	result, err := c.backend.ApplyStatus(ctx, "grafanas", v, opts, &grafanav1alpha1.Grafana{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*grafanav1alpha1.Grafana), nil
+}
+
 func (c *GrafanaV1alpha1) DeleteGrafana(ctx context.Context, namespace, name string, opts metav1.DeleteOptions) error {
 	return c.backend.Delete(ctx, schema.GroupVersionResource{Group: "grafana.f110.dev", Version: "v1alpha1", Resource: "grafanas"}, namespace, name, opts)
 }
@@ -455,6 +613,22 @@ func (c *GrafanaV1alpha1) UpdateGrafanaUser(ctx context.Context, v *grafanav1alp
 
 func (c *GrafanaV1alpha1) UpdateStatusGrafanaUser(ctx context.Context, v *grafanav1alpha1.GrafanaUser, opts metav1.UpdateOptions) (*grafanav1alpha1.GrafanaUser, error) {
 	result, err := c.backend.UpdateStatus(ctx, "grafanausers", v, opts, &grafanav1alpha1.GrafanaUser{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*grafanav1alpha1.GrafanaUser), nil
+}
+
+func (c *GrafanaV1alpha1) ApplyGrafanaUser(ctx context.Context, v *grafanav1alpha1.GrafanaUser, opts metav1.ApplyOptions) (*grafanav1alpha1.GrafanaUser, error) {
+	result, err := c.backend.Apply(ctx, "grafanausers", v, opts, &grafanav1alpha1.GrafanaUser{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*grafanav1alpha1.GrafanaUser), nil
+}
+
+func (c *GrafanaV1alpha1) ApplyStatusGrafanaUser(ctx context.Context, v *grafanav1alpha1.GrafanaUser, opts metav1.ApplyOptions) (*grafanav1alpha1.GrafanaUser, error) {
+	result, err := c.backend.ApplyStatus(ctx, "grafanausers", v, opts, &grafanav1alpha1.GrafanaUser{})
 	if err != nil {
 		return nil, err
 	}
@@ -518,6 +692,22 @@ func (c *HarborV1alpha1) UpdateStatusHarborProject(ctx context.Context, v *harbo
 	return result.(*harborv1alpha1.HarborProject), nil
 }
 
+func (c *HarborV1alpha1) ApplyHarborProject(ctx context.Context, v *harborv1alpha1.HarborProject, opts metav1.ApplyOptions) (*harborv1alpha1.HarborProject, error) {
+	result, err := c.backend.Apply(ctx, "harborprojects", v, opts, &harborv1alpha1.HarborProject{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*harborv1alpha1.HarborProject), nil
+}
+
+func (c *HarborV1alpha1) ApplyStatusHarborProject(ctx context.Context, v *harborv1alpha1.HarborProject, opts metav1.ApplyOptions) (*harborv1alpha1.HarborProject, error) {
+	result, err := c.backend.ApplyStatus(ctx, "harborprojects", v, opts, &harborv1alpha1.HarborProject{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*harborv1alpha1.HarborProject), nil
+}
+
 func (c *HarborV1alpha1) DeleteHarborProject(ctx context.Context, namespace, name string, opts metav1.DeleteOptions) error {
 	return c.backend.Delete(ctx, schema.GroupVersionResource{Group: "harbor.f110.dev", Version: "v1alpha1", Resource: "harborprojects"}, namespace, name, opts)
 }
@@ -560,6 +750,22 @@ func (c *HarborV1alpha1) UpdateHarborRobotAccount(ctx context.Context, v *harbor
 
 func (c *HarborV1alpha1) UpdateStatusHarborRobotAccount(ctx context.Context, v *harborv1alpha1.HarborRobotAccount, opts metav1.UpdateOptions) (*harborv1alpha1.HarborRobotAccount, error) {
 	result, err := c.backend.UpdateStatus(ctx, "harborrobotaccounts", v, opts, &harborv1alpha1.HarborRobotAccount{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*harborv1alpha1.HarborRobotAccount), nil
+}
+
+func (c *HarborV1alpha1) ApplyHarborRobotAccount(ctx context.Context, v *harborv1alpha1.HarborRobotAccount, opts metav1.ApplyOptions) (*harborv1alpha1.HarborRobotAccount, error) {
+	result, err := c.backend.Apply(ctx, "harborrobotaccounts", v, opts, &harborv1alpha1.HarborRobotAccount{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*harborv1alpha1.HarborRobotAccount), nil
+}
+
+func (c *HarborV1alpha1) ApplyStatusHarborRobotAccount(ctx context.Context, v *harborv1alpha1.HarborRobotAccount, opts metav1.ApplyOptions) (*harborv1alpha1.HarborRobotAccount, error) {
+	result, err := c.backend.ApplyStatus(ctx, "harborrobotaccounts", v, opts, &harborv1alpha1.HarborRobotAccount{})
 	if err != nil {
 		return nil, err
 	}
@@ -623,6 +829,22 @@ func (c *MinioV1alpha1) UpdateStatusMinIOBucket(ctx context.Context, v *miniov1a
 	return result.(*miniov1alpha1.MinIOBucket), nil
 }
 
+func (c *MinioV1alpha1) ApplyMinIOBucket(ctx context.Context, v *miniov1alpha1.MinIOBucket, opts metav1.ApplyOptions) (*miniov1alpha1.MinIOBucket, error) {
+	result, err := c.backend.Apply(ctx, "miniobuckets", v, opts, &miniov1alpha1.MinIOBucket{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*miniov1alpha1.MinIOBucket), nil
+}
+
+func (c *MinioV1alpha1) ApplyStatusMinIOBucket(ctx context.Context, v *miniov1alpha1.MinIOBucket, opts metav1.ApplyOptions) (*miniov1alpha1.MinIOBucket, error) {
+	result, err := c.backend.ApplyStatus(ctx, "miniobuckets", v, opts, &miniov1alpha1.MinIOBucket{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*miniov1alpha1.MinIOBucket), nil
+}
+
 func (c *MinioV1alpha1) DeleteMinIOBucket(ctx context.Context, namespace, name string, opts metav1.DeleteOptions) error {
 	return c.backend.Delete(ctx, schema.GroupVersionResource{Group: "minio.f110.dev", Version: "v1alpha1", Resource: "miniobuckets"}, namespace, name, opts)
 }
@@ -671,6 +893,22 @@ func (c *MinioV1alpha1) UpdateStatusMinIOCluster(ctx context.Context, v *miniov1
 	return result.(*miniov1alpha1.MinIOCluster), nil
 }
 
+func (c *MinioV1alpha1) ApplyMinIOCluster(ctx context.Context, v *miniov1alpha1.MinIOCluster, opts metav1.ApplyOptions) (*miniov1alpha1.MinIOCluster, error) {
+	result, err := c.backend.Apply(ctx, "minioclusters", v, opts, &miniov1alpha1.MinIOCluster{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*miniov1alpha1.MinIOCluster), nil
+}
+
+func (c *MinioV1alpha1) ApplyStatusMinIOCluster(ctx context.Context, v *miniov1alpha1.MinIOCluster, opts metav1.ApplyOptions) (*miniov1alpha1.MinIOCluster, error) {
+	result, err := c.backend.ApplyStatus(ctx, "minioclusters", v, opts, &miniov1alpha1.MinIOCluster{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*miniov1alpha1.MinIOCluster), nil
+}
+
 func (c *MinioV1alpha1) DeleteMinIOCluster(ctx context.Context, namespace, name string, opts metav1.DeleteOptions) error {
 	return c.backend.Delete(ctx, schema.GroupVersionResource{Group: "minio.f110.dev", Version: "v1alpha1", Resource: "minioclusters"}, namespace, name, opts)
 }
@@ -713,6 +951,22 @@ func (c *MinioV1alpha1) UpdateMinIOUser(ctx context.Context, v *miniov1alpha1.Mi
 
 func (c *MinioV1alpha1) UpdateStatusMinIOUser(ctx context.Context, v *miniov1alpha1.MinIOUser, opts metav1.UpdateOptions) (*miniov1alpha1.MinIOUser, error) {
 	result, err := c.backend.UpdateStatus(ctx, "miniousers", v, opts, &miniov1alpha1.MinIOUser{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*miniov1alpha1.MinIOUser), nil
+}
+
+func (c *MinioV1alpha1) ApplyMinIOUser(ctx context.Context, v *miniov1alpha1.MinIOUser, opts metav1.ApplyOptions) (*miniov1alpha1.MinIOUser, error) {
+	result, err := c.backend.Apply(ctx, "miniousers", v, opts, &miniov1alpha1.MinIOUser{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*miniov1alpha1.MinIOUser), nil
+}
+
+func (c *MinioV1alpha1) ApplyStatusMinIOUser(ctx context.Context, v *miniov1alpha1.MinIOUser, opts metav1.ApplyOptions) (*miniov1alpha1.MinIOUser, error) {
+	result, err := c.backend.ApplyStatus(ctx, "miniousers", v, opts, &miniov1alpha1.MinIOUser{})
 	if err != nil {
 		return nil, err
 	}

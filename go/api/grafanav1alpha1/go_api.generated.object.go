@@ -58,10 +58,14 @@ func (in *Grafana) DeepCopyObject() runtime.Object {
 	return nil
 }
 
+func (in *Grafana) OpenAPIModelName() string {
+	return "mono.api.grafanav1alpha1.Grafana"
+}
+
 type GrafanaList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
-	Items           []Grafana `json:"items"`
+	Items           []Grafana `json:"items,omitempty"`
 }
 
 func (in *GrafanaList) DeepCopyInto(out *GrafanaList) {
@@ -91,6 +95,10 @@ func (in *GrafanaList) DeepCopyObject() runtime.Object {
 		return c
 	}
 	return nil
+}
+
+func (in *GrafanaList) OpenAPIModelName() string {
+	return "mono.api.grafanav1alpha1.GrafanaList"
 }
 
 type GrafanaUser struct {
@@ -124,10 +132,14 @@ func (in *GrafanaUser) DeepCopyObject() runtime.Object {
 	return nil
 }
 
+func (in *GrafanaUser) OpenAPIModelName() string {
+	return "mono.api.grafanav1alpha1.GrafanaUser"
+}
+
 type GrafanaUserList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
-	Items           []GrafanaUser `json:"items"`
+	Items           []GrafanaUser `json:"items,omitempty"`
 }
 
 func (in *GrafanaUserList) DeepCopyInto(out *GrafanaUserList) {
@@ -157,6 +169,10 @@ func (in *GrafanaUserList) DeepCopyObject() runtime.Object {
 		return c
 	}
 	return nil
+}
+
+func (in *GrafanaUserList) OpenAPIModelName() string {
+	return "mono.api.grafanav1alpha1.GrafanaUserList"
 }
 
 type GrafanaSpec struct {

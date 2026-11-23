@@ -6,6 +6,7 @@ import (
 	"go.f110.dev/kubeproto/go/apis/metav1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"maps"
 )
 
 const GroupName = "miniocontroller.min.io"
@@ -65,10 +66,14 @@ func (in *MinIOInstance) DeepCopyObject() runtime.Object {
 	return nil
 }
 
+func (in *MinIOInstance) OpenAPIModelName() string {
+	return "github.com.minio.minio_operator.pkg.apis.miniocontroller.v1beta1.MinIOInstance"
+}
+
 type MinIOInstanceList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
-	Items           []MinIOInstance `json:"items"`
+	Items           []MinIOInstance `json:"items,omitempty"`
 }
 
 func (in *MinIOInstanceList) DeepCopyInto(out *MinIOInstanceList) {
@@ -98,6 +103,10 @@ func (in *MinIOInstanceList) DeepCopyObject() runtime.Object {
 		return c
 	}
 	return nil
+}
+
+func (in *MinIOInstanceList) OpenAPIModelName() string {
+	return "github.com.minio.minio_operator.pkg.apis.miniocontroller.v1beta1.MinIOInstanceList"
 }
 
 type Mirror struct {
@@ -131,10 +140,14 @@ func (in *Mirror) DeepCopyObject() runtime.Object {
 	return nil
 }
 
+func (in *Mirror) OpenAPIModelName() string {
+	return "github.com.minio.minio_operator.pkg.apis.miniocontroller.v1beta1.Mirror"
+}
+
 type MirrorList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
-	Items           []Mirror `json:"items"`
+	Items           []Mirror `json:"items,omitempty"`
 }
 
 func (in *MirrorList) DeepCopyInto(out *MirrorList) {
@@ -164,6 +177,10 @@ func (in *MirrorList) DeepCopyObject() runtime.Object {
 		return c
 	}
 	return nil
+}
+
+func (in *MirrorList) OpenAPIModelName() string {
+	return "github.com.minio.minio_operator.pkg.apis.miniocontroller.v1beta1.MirrorList"
 }
 
 type MinIOInstanceScheduler struct {
@@ -197,7 +214,7 @@ type MinIOInstanceSpec struct {
 	// Otherwise MinIO server creates dynamic credentials printed on MinIO server startup banner
 	CredsSecret *corev1.LocalObjectReference `json:"credsSecret,omitempty"`
 	// If provided, use these environment variables for MinIOInstance resource
-	Env []corev1.EnvVar `json:"env"`
+	Env []corev1.EnvVar `json:"env,omitempty"`
 	// If provided, use these requests and limit for cpu/memory resource allocation
 	Resources *corev1.ResourceRequirements `json:"resources,omitempty"`
 	// VolumeClaimTemplate allows a user to specify how volumes inside a MinIOInstance
@@ -224,7 +241,7 @@ type MinIOInstanceSpec struct {
 	// CertConfig allows users to set entries like CommonName, Organization, etc for the certificate
 	CertConfig *CertificateConfig `json:"certConfig,omitempty"`
 	// Tolerations allows users to set entries like effect, key, operator, value.
-	Tolerations []corev1.Toleration `json:"tolerations"`
+	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
 }
 
 func (in *MinIOInstanceSpec) DeepCopyInto(out *MinIOInstanceSpec) {
@@ -259,9 +276,7 @@ func (in *MinIOInstanceSpec) DeepCopyInto(out *MinIOInstanceSpec) {
 	if in.NodeSelector != nil {
 		in, out := &in.NodeSelector, &out.NodeSelector
 		*out = make(map[string]string, len(*in))
-		for k, v := range *in {
-			(*out)[k] = v
-		}
+		maps.Copy(*out, *in)
 	}
 	if in.Affinity != nil {
 		in, out := &in.Affinity, &out.Affinity
@@ -415,8 +430,8 @@ func (in *LocalCertificateReference) DeepCopy() *LocalCertificateReference {
 
 type CertificateConfig struct {
 	CommonName       string   `json:"commonName,omitempty"`
-	OrganizationName []string `json:"organizationName"`
-	DNSNames         []string `json:"dnsNames"`
+	OrganizationName []string `json:"organizationName,omitempty"`
+	DNSNames         []string `json:"dnsNames,omitempty"`
 }
 
 func (in *CertificateConfig) DeepCopyInto(out *CertificateConfig) {

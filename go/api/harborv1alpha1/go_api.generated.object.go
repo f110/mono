@@ -57,10 +57,14 @@ func (in *HarborProject) DeepCopyObject() runtime.Object {
 	return nil
 }
 
+func (in *HarborProject) OpenAPIModelName() string {
+	return "mono.api.harborv1alpha1.HarborProject"
+}
+
 type HarborProjectList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
-	Items           []HarborProject `json:"items"`
+	Items           []HarborProject `json:"items,omitempty"`
 }
 
 func (in *HarborProjectList) DeepCopyInto(out *HarborProjectList) {
@@ -90,6 +94,10 @@ func (in *HarborProjectList) DeepCopyObject() runtime.Object {
 		return c
 	}
 	return nil
+}
+
+func (in *HarborProjectList) OpenAPIModelName() string {
+	return "mono.api.harborv1alpha1.HarborProjectList"
 }
 
 type HarborRobotAccount struct {
@@ -123,10 +131,14 @@ func (in *HarborRobotAccount) DeepCopyObject() runtime.Object {
 	return nil
 }
 
+func (in *HarborRobotAccount) OpenAPIModelName() string {
+	return "mono.api.harborv1alpha1.HarborRobotAccount"
+}
+
 type HarborRobotAccountList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
-	Items           []HarborRobotAccount `json:"items"`
+	Items           []HarborRobotAccount `json:"items,omitempty"`
 }
 
 func (in *HarborRobotAccountList) DeepCopyInto(out *HarborRobotAccountList) {
@@ -156,6 +168,10 @@ func (in *HarborRobotAccountList) DeepCopyObject() runtime.Object {
 		return c
 	}
 	return nil
+}
+
+func (in *HarborRobotAccountList) OpenAPIModelName() string {
+	return "mono.api.harborv1alpha1.HarborRobotAccountList"
 }
 
 type HarborProjectSpec struct {

@@ -191,7 +191,7 @@ Match:
 					break Match
 				}
 			case ActionUpdate:
-				if reflect.DeepEqual(v.Object, e.Object) {
+				if reflect.DeepEqual(withoutManagedFields(v.Object), withoutManagedFields(e.Object)) {
 					matchObj = true
 					v.Visited = true
 					break Match
@@ -346,6 +346,15 @@ func resourceName(v runtime.Object) string {
 			Name: kind,
 		},
 	})
+}
+
+// withoutManagedFields returns the copy of v without managedFields which the object tracker records like the API server.
+func withoutManagedFields(v runtime.Object) runtime.Object {
+	obj := v.DeepCopyObject()
+	if m, ok := obj.(metav1.Object); ok {
+		m.SetManagedFields(nil)
+	}
+	return obj
 }
 
 type ActionVerb string

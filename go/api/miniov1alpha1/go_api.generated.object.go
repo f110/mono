@@ -82,10 +82,14 @@ func (in *MinIOBucket) DeepCopyObject() runtime.Object {
 	return nil
 }
 
+func (in *MinIOBucket) OpenAPIModelName() string {
+	return "mono.api.miniov1alpha1.MinIOBucket"
+}
+
 type MinIOBucketList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
-	Items           []MinIOBucket `json:"items"`
+	Items           []MinIOBucket `json:"items,omitempty"`
 }
 
 func (in *MinIOBucketList) DeepCopyInto(out *MinIOBucketList) {
@@ -115,6 +119,10 @@ func (in *MinIOBucketList) DeepCopyObject() runtime.Object {
 		return c
 	}
 	return nil
+}
+
+func (in *MinIOBucketList) OpenAPIModelName() string {
+	return "mono.api.miniov1alpha1.MinIOBucketList"
 }
 
 type MinIOCluster struct {
@@ -148,10 +156,14 @@ func (in *MinIOCluster) DeepCopyObject() runtime.Object {
 	return nil
 }
 
+func (in *MinIOCluster) OpenAPIModelName() string {
+	return "mono.api.miniov1alpha1.MinIOCluster"
+}
+
 type MinIOClusterList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
-	Items           []MinIOCluster `json:"items"`
+	Items           []MinIOCluster `json:"items,omitempty"`
 }
 
 func (in *MinIOClusterList) DeepCopyInto(out *MinIOClusterList) {
@@ -181,6 +193,10 @@ func (in *MinIOClusterList) DeepCopyObject() runtime.Object {
 		return c
 	}
 	return nil
+}
+
+func (in *MinIOClusterList) OpenAPIModelName() string {
+	return "mono.api.miniov1alpha1.MinIOClusterList"
 }
 
 type MinIOUser struct {
@@ -214,10 +230,14 @@ func (in *MinIOUser) DeepCopyObject() runtime.Object {
 	return nil
 }
 
+func (in *MinIOUser) OpenAPIModelName() string {
+	return "mono.api.miniov1alpha1.MinIOUser"
+}
+
 type MinIOUserList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
-	Items           []MinIOUser `json:"items"`
+	Items           []MinIOUser `json:"items,omitempty"`
 }
 
 func (in *MinIOUserList) DeepCopyInto(out *MinIOUserList) {
@@ -247,6 +267,10 @@ func (in *MinIOUserList) DeepCopyObject() runtime.Object {
 		return c
 	}
 	return nil
+}
+
+func (in *MinIOUserList) OpenAPIModelName() string {
+	return "mono.api.miniov1alpha1.MinIOUserList"
 }
 
 type MinIOBucketSpec struct {
@@ -301,7 +325,7 @@ type MinIOClusterSpec struct {
 	// total_size is the size of the cluster in Gigabytes.
 	TotalSize        int                  `json:"totalSize"`
 	Nodes            int                  `json:"nodes"`
-	Buckets          []MinIOClusterBucket `json:"buckets"`
+	Buckets          []MinIOClusterBucket `json:"buckets,omitempty"`
 	IdentityProvider *IdentityProvider    `json:"identityProvider,omitempty"`
 	ExternalUrl      string               `json:"externalUrl,omitempty"`
 }
@@ -431,7 +455,7 @@ type IdentityProvider struct {
 	DiscoveryUrl string         `json:"discoveryUrl"`
 	ClientId     string         `json:"clientId"`
 	ClientSecret SecretSelector `json:"clientSecret"`
-	Scopes       []string       `json:"scopes"`
+	Scopes       []string       `json:"scopes,omitempty"`
 	Comment      string         `json:"comment,omitempty"`
 }
 

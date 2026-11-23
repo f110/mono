@@ -64,7 +64,7 @@ require (
 	go.etcd.io/etcd/client/v3 v3.6.11
 	go.f110.dev/githubmock v0.0.0-20261103073433-c7537d30aaea
 	go.f110.dev/go-memcached v0.0.0-20231116161756-526e3f3ea54c
-	go.f110.dev/kubeproto v0.0.0-20260601163938-55a1a18121b9
+	go.f110.dev/kubeproto v0.1.1-0.20261123140935-1633199ac2c2
 	go.f110.dev/notion-api/v3 v3.0.0-20241002160255-a0b86c0350f0
 	go.f110.dev/protoc-ddl v0.0.0-20261117143446-ac92a10aafe3
 	go.f110.dev/xerrors v0.0.0-20260430154500-93b3f86ffe89
@@ -90,6 +90,7 @@ require (
 	oras.land/oras-go/v2 v2.7.0
 	sigs.k8s.io/kind v0.31.0
 	sigs.k8s.io/secrets-store-csi-driver v1.6.0
+	sigs.k8s.io/structured-merge-diff/v6 v6.3.2
 	software.sslmate.com/src/go-pkcs12 v0.7.1
 )
 
@@ -316,7 +317,6 @@ require (
 	k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
-	sigs.k8s.io/structured-merge-diff/v6 v6.3.2 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
