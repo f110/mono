@@ -4,8 +4,8 @@ kustomization(
     name = "prod",
     src = "kustomization.yaml",
     resources = [
-        "//manifests/deploy/controller-manager/base",
         "webhook.yaml",
+        "//manifests/deploy/controller-manager/base",
     ],
     visibility = ["//visibility:public"],
 )
