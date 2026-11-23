@@ -1,0 +1,24 @@
+load("@rules_oci//oci:defs.bzl", "oci_image")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("//build/rules/artifact:def.bzl", "cd_artifact")
+
+pkg_tar(
+    name = "bin",
+    files = {
+        "//go/cmd/image-tag-gc:linux_amd64": "/usr/local/bin/image-tag-gc",
+    },
+    mode = "0755",
+)
+
+oci_image(
+    name = "image",
+    base = "@com_google_distroless_base_linux_amd64",
+    entrypoint = ["/usr/local/bin/image-tag-gc"],
+    tars = [":bin"],
+)
+
+cd_artifact(
+    name = "delivery",
+    images = [":image"],
+    repository = "repo.center.x.f110.dev/tools/image-tag-gc",
+)

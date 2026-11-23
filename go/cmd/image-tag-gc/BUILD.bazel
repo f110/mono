@@ -1,0 +1,58 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_cross_binary", "go_library", "go_test")
+
+go_library(
+    name = "image-tag-gc_lib",
+    srcs = ["main.go"],
+    importpath = "go.f110.dev/mono/go/cmd/image-tag-gc",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//go/build/api",
+        "//go/cli",
+        "//go/logger",
+        "@com_github_google_go_containerregistry//pkg/name",
+        "@com_github_google_go_containerregistry//pkg/v1/remote",
+        "@com_github_google_go_containerregistry//pkg/v1/remote/transport",
+        "@dev_f110_go_xerrors//:xerrors",
+        "@dev_f110_kubeproto//go/apis/corev1",
+        "@dev_f110_kubeproto//go/apis/metav1",
+        "@dev_f110_kubeproto//go/k8sclient",
+        "@io_k8s_client_go//rest",
+        "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_grpc//credentials/insecure",
+    ],
+)
+
+go_binary(
+    name = "image-tag-gc",
+    embed = [":image-tag-gc_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "image-tag-gc_test",
+    srcs = ["main_test.go"],
+    embed = [":image-tag-gc_lib"],
+    deps = [
+        "//go/build/api",
+        "//go/logger",
+        "//go/testing/assertion",
+        "@com_github_google_go_containerregistry//pkg/crane",
+        "@com_github_google_go_containerregistry//pkg/registry",
+        "@com_github_google_go_containerregistry//pkg/v1:pkg",
+        "@com_github_google_go_containerregistry//pkg/v1/random",
+        "@dev_f110_kubeproto//go/apis/appsv1",
+        "@dev_f110_kubeproto//go/apis/batchv1",
+        "@dev_f110_kubeproto//go/apis/corev1",
+        "@dev_f110_kubeproto//go/apis/metav1",
+        "@dev_f110_kubeproto//go/k8stestingclient",
+        "@io_k8s_apimachinery//pkg/runtime",
+        "@org_golang_google_grpc//:grpc",
+    ],
+)
+
+go_cross_binary(
+    name = "linux_amd64",
+    platform = "@rules_go//go/toolchain:linux_amd64",
+    target = ":image-tag-gc",
+    visibility = ["//visibility:public"],
+)
