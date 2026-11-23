@@ -1919,6 +1919,7 @@ type ArtifactInterface interface {
 	SelectMulti(ctx context.Context, id ...int32) ([]*database.Artifact, error)
 	ListByHash(ctx context.Context, hash string, opt ...ListOption) ([]*database.Artifact, error)
 	ListByTaskId(ctx context.Context, taskId int32, opt ...ListOption) ([]*database.Artifact, error)
+	ListUniqContainerImageRepository(ctx context.Context, opt ...ListOption) ([]*database.Artifact, error)
 	Create(ctx context.Context, artifact *database.Artifact, opt ...ExecOption) (*database.Artifact, error)
 	Update(ctx context.Context, artifact *database.Artifact, opt ...ExecOption) error
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
@@ -2093,6 +2094,59 @@ func (d *Artifact) ListByTaskId(ctx context.Context, taskId int32, opt ...ListOp
 	for rows.Next() {
 		r := &database.Artifact{}
 		if err := rows.Scan(&r.Id, &r.TaskId, &r.Type, &r.Hash, &r.Name, &r.Repository, &r.Reference, &r.Size, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		r.ResetMark()
+		res = append(res, r)
+	}
+	if len(res) > 0 {
+		taskPrimaryKeys := make([]int32, len(res))
+		for i, v := range res {
+			taskPrimaryKeys[i] = v.TaskId
+		}
+		taskData := make(map[int32]*database.Task)
+		{
+			rels, _ := d.task.SelectMulti(ctx, taskPrimaryKeys...)
+			for _, v := range rels {
+				taskData[v.Id] = v
+			}
+		}
+		for _, v := range res {
+			v.Task = taskData[v.TaskId]
+		}
+	}
+
+	return res, nil
+}
+
+func (d *Artifact) ListUniqContainerImageRepository(ctx context.Context, opt ...ListOption) ([]*database.Artifact, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT DISTINCT `repository` FROM `artifact` WHERE `type` = 0"
+	orderCol := "`" + listOpts.sort + "`"
+	if listOpts.sort == "" {
+		orderCol = "`id`"
+	}
+	orderDi := "ASC"
+	if listOpts.desc {
+		orderDi = "DESC"
+	}
+	query = query + fmt.Sprintf(" ORDER BY %s %s", orderCol, orderDi)
+	if listOpts.limit > 0 {
+		query = query + fmt.Sprintf(" LIMIT %d", listOpts.limit)
+	}
+	rows, err := d.conn.QueryContext(
+		ctx,
+		query,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	res := make([]*database.Artifact, 0)
+	for rows.Next() {
+		r := &database.Artifact{}
+		if err := rows.Scan(&r.Repository); err != nil {
 			return nil, err
 		}
 		r.ResetMark()

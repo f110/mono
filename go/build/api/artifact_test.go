@@ -68,6 +68,19 @@ func TestListArtifacts(t *testing.T) {
 	})
 }
 
+func TestListContainerImageRepositories(t *testing.T) {
+	m := daotest.NewArtifact()
+	m.RegisterListUniqContainerImageRepository([]*database.Artifact{
+		{Repository: "repo.center.x.f110.dev/build/build"},
+		{Repository: "repo.center.x.f110.dev/issue/server"},
+	}, nil)
+	s := &apiService{dao: dao.Options{Artifact: m}}
+
+	res, err := s.ListContainerImageRepositories(context.Background(), &RequestListContainerImageRepositories{})
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, []string{"repo.center.x.f110.dev/build/build", "repo.center.x.f110.dev/issue/server"}, res.GetRepositories())
+}
+
 func artifactRef(t ArtifactType, hash string) *ArtifactRef {
 	r := &ArtifactRef{}
 	r.SetType(t)

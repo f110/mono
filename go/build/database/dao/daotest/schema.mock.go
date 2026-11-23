@@ -456,6 +456,15 @@ func (d *Artifact) RegisterListByTaskId(taskId int32, value []*database.Artifact
 	d.Register("ListByTaskId", map[string]any{"taskId": taskId}, value, err)
 }
 
+func (d *Artifact) ListUniqContainerImageRepository(ctx context.Context, opt ...dao.ListOption) ([]*database.Artifact, error) {
+	v, err := d.Call("ListUniqContainerImageRepository", map[string]any{})
+	return v.([]*database.Artifact), err
+}
+
+func (d *Artifact) RegisterListUniqContainerImageRepository(value []*database.Artifact, err error) {
+	d.Register("ListUniqContainerImageRepository", map[string]any{}, value, err)
+}
+
 func (d *Artifact) Create(ctx context.Context, artifact *database.Artifact, opt ...dao.ExecOption) (*database.Artifact, error) {
 	_, _ = d.Call("Create", map[string]any{"artifact": artifact})
 	return artifact, nil

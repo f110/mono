@@ -272,6 +272,10 @@ message Artifact {
       name: "ByTaskId"
       query: "SELECT * FROM `:table_name:` WHERE `task_id` = ?"
     }
+    queries: {
+      name: "UniqContainerImageRepository"
+      query: "SELECT DISTINCT `repository` FROM `:table_name:` WHERE `type` = 0"
+    }
   };
 }
 

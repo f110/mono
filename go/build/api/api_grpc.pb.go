@@ -19,21 +19,22 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	API_ListTasks_FullMethodName                   = "/mono.build.api.API/ListTasks"
-	API_ListRepositories_FullMethodName            = "/mono.build.api.API/ListRepositories"
-	API_SaveRepository_FullMethodName              = "/mono.build.api.API/SaveRepository"
-	API_DeleteRepository_FullMethodName            = "/mono.build.api.API/DeleteRepository"
-	API_ListJobs_FullMethodName                    = "/mono.build.api.API/ListJobs"
-	API_InvokeJob_FullMethodName                   = "/mono.build.api.API/InvokeJob"
-	API_ForceStopTask_FullMethodName               = "/mono.build.api.API/ForceStopTask"
-	API_GetServerInfo_FullMethodName               = "/mono.build.api.API/GetServerInfo"
-	API_ListExternalReleaseTriggers_FullMethodName = "/mono.build.api.API/ListExternalReleaseTriggers"
-	API_ListGithubEvents_FullMethodName            = "/mono.build.api.API/ListGithubEvents"
-	API_ListArtifacts_FullMethodName               = "/mono.build.api.API/ListArtifacts"
-	API_GetLogs_FullMethodName                     = "/mono.build.api.API/GetLogs"
-	API_CompleteTask_FullMethodName                = "/mono.build.api.API/CompleteTask"
-	API_SyncArtifacts_FullMethodName               = "/mono.build.api.API/SyncArtifacts"
-	API_UploadArtifact_FullMethodName              = "/mono.build.api.API/UploadArtifact"
+	API_ListTasks_FullMethodName                      = "/mono.build.api.API/ListTasks"
+	API_ListRepositories_FullMethodName               = "/mono.build.api.API/ListRepositories"
+	API_SaveRepository_FullMethodName                 = "/mono.build.api.API/SaveRepository"
+	API_DeleteRepository_FullMethodName               = "/mono.build.api.API/DeleteRepository"
+	API_ListJobs_FullMethodName                       = "/mono.build.api.API/ListJobs"
+	API_InvokeJob_FullMethodName                      = "/mono.build.api.API/InvokeJob"
+	API_ForceStopTask_FullMethodName                  = "/mono.build.api.API/ForceStopTask"
+	API_GetServerInfo_FullMethodName                  = "/mono.build.api.API/GetServerInfo"
+	API_ListExternalReleaseTriggers_FullMethodName    = "/mono.build.api.API/ListExternalReleaseTriggers"
+	API_ListGithubEvents_FullMethodName               = "/mono.build.api.API/ListGithubEvents"
+	API_ListArtifacts_FullMethodName                  = "/mono.build.api.API/ListArtifacts"
+	API_ListContainerImageRepositories_FullMethodName = "/mono.build.api.API/ListContainerImageRepositories"
+	API_GetLogs_FullMethodName                        = "/mono.build.api.API/GetLogs"
+	API_CompleteTask_FullMethodName                   = "/mono.build.api.API/CompleteTask"
+	API_SyncArtifacts_FullMethodName                  = "/mono.build.api.API/SyncArtifacts"
+	API_UploadArtifact_FullMethodName                 = "/mono.build.api.API/UploadArtifact"
 )
 
 // APIClient is the client API for API service.
@@ -51,6 +52,7 @@ type APIClient interface {
 	ListExternalReleaseTriggers(ctx context.Context, in *RequestListExternalReleaseTriggers, opts ...grpc.CallOption) (*ResponseListExternalReleaseTriggers, error)
 	ListGithubEvents(ctx context.Context, in *RequestListGithubEvents, opts ...grpc.CallOption) (*ResponseListGithubEvents, error)
 	ListArtifacts(ctx context.Context, in *RequestListArtifacts, opts ...grpc.CallOption) (*ResponseListArtifacts, error)
+	ListContainerImageRepositories(ctx context.Context, in *RequestListContainerImageRepositories, opts ...grpc.CallOption) (*ResponseListContainerImageRepositories, error)
 	GetLogs(ctx context.Context, in *RequestGetLogs, opts ...grpc.CallOption) (*ResponseGetLogs, error)
 	CompleteTask(ctx context.Context, in *RequestCompleteTask, opts ...grpc.CallOption) (*ResponseCompleteTask, error)
 	SyncArtifacts(ctx context.Context, in *RequestSyncArtifacts, opts ...grpc.CallOption) (*ResponseSyncArtifacts, error)
@@ -175,6 +177,16 @@ func (c *aPIClient) ListArtifacts(ctx context.Context, in *RequestListArtifacts,
 	return out, nil
 }
 
+func (c *aPIClient) ListContainerImageRepositories(ctx context.Context, in *RequestListContainerImageRepositories, opts ...grpc.CallOption) (*ResponseListContainerImageRepositories, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ResponseListContainerImageRepositories)
+	err := c.cc.Invoke(ctx, API_ListContainerImageRepositories_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *aPIClient) GetLogs(ctx context.Context, in *RequestGetLogs, opts ...grpc.CallOption) (*ResponseGetLogs, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ResponseGetLogs)
@@ -233,6 +245,7 @@ type APIServer interface {
 	ListExternalReleaseTriggers(context.Context, *RequestListExternalReleaseTriggers) (*ResponseListExternalReleaseTriggers, error)
 	ListGithubEvents(context.Context, *RequestListGithubEvents) (*ResponseListGithubEvents, error)
 	ListArtifacts(context.Context, *RequestListArtifacts) (*ResponseListArtifacts, error)
+	ListContainerImageRepositories(context.Context, *RequestListContainerImageRepositories) (*ResponseListContainerImageRepositories, error)
 	GetLogs(context.Context, *RequestGetLogs) (*ResponseGetLogs, error)
 	CompleteTask(context.Context, *RequestCompleteTask) (*ResponseCompleteTask, error)
 	SyncArtifacts(context.Context, *RequestSyncArtifacts) (*ResponseSyncArtifacts, error)
@@ -278,6 +291,9 @@ func (UnimplementedAPIServer) ListGithubEvents(context.Context, *RequestListGith
 }
 func (UnimplementedAPIServer) ListArtifacts(context.Context, *RequestListArtifacts) (*ResponseListArtifacts, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListArtifacts not implemented")
+}
+func (UnimplementedAPIServer) ListContainerImageRepositories(context.Context, *RequestListContainerImageRepositories) (*ResponseListContainerImageRepositories, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListContainerImageRepositories not implemented")
 }
 func (UnimplementedAPIServer) GetLogs(context.Context, *RequestGetLogs) (*ResponseGetLogs, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLogs not implemented")
@@ -509,6 +525,24 @@ func _API_ListArtifacts_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _API_ListContainerImageRepositories_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestListContainerImageRepositories)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).ListContainerImageRepositories(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_ListContainerImageRepositories_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).ListContainerImageRepositories(ctx, req.(*RequestListContainerImageRepositories))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _API_GetLogs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RequestGetLogs)
 	if err := dec(in); err != nil {
@@ -620,6 +654,10 @@ var API_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListArtifacts",
 			Handler:    _API_ListArtifacts_Handler,
+		},
+		{
+			MethodName: "ListContainerImageRepositories",
+			Handler:    _API_ListContainerImageRepositories_Handler,
 		},
 		{
 			MethodName: "GetLogs",

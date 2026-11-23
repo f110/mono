@@ -23,6 +23,9 @@ service API {
   // ListArtifacts returns the artifacts recorded for a task (task_id) or for a
   // commit (repository_id + revision, aggregated over that commit's tasks).
   rpc ListArtifacts(RequestListArtifacts) returns (ResponseListArtifacts);
+  // ListContainerImageRepositories returns the repositories to which the
+  // container image artifacts have been pushed, without duplicates.
+  rpc ListContainerImageRepositories(RequestListContainerImageRepositories) returns (ResponseListContainerImageRepositories);
   // GetLogs returns the log of the task. When filter is specified, only the
   // lines which match the regular expression (RE2) are returned.
   rpc GetLogs(RequestGetLogs) returns (ResponseGetLogs);
@@ -200,6 +203,12 @@ message RequestListArtifacts {
 
 message ResponseListArtifacts {
   repeated mono.build.model.Artifact artifacts = 1;
+}
+
+message RequestListContainerImageRepositories {}
+
+message ResponseListContainerImageRepositories {
+  repeated string repositories = 1;
 }
 
 // ArtifactType classifies a deliverable. The values match the DB enum

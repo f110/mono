@@ -706,6 +706,17 @@ func (s *apiService) ListArtifacts(ctx context.Context, req *RequestListArtifact
 	return nil, status.Error(codes.InvalidArgument, "task_id or repository_id+revision must be specified")
 }
 
+func (s *apiService) ListContainerImageRepositories(ctx context.Context, _ *RequestListContainerImageRepositories) (*ResponseListContainerImageRepositories, error) {
+	rows, err := s.dao.Artifact.ListUniqContainerImageRepository(ctx, dao.Sort("repository"))
+	if err != nil {
+		logger.Log.Warn("Failed to list container image repositories", logger.E(err))
+		return nil, status.Error(codes.Internal, "failed to list container image repositories")
+	}
+	return ResponseListContainerImageRepositories_builder{
+		Repositories: enumerable.Map(rows, func(a *database.Artifact) string { return a.Repository }),
+	}.Build(), nil
+}
+
 func (s *apiService) GetLogs(ctx context.Context, req *RequestGetLogs) (*ResponseGetLogs, error) {
 	var filter *regexp.Regexp
 	if req.GetFilter() != "" {
