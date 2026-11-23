@@ -1,6 +1,9 @@
 load("@rules_oci//oci:defs.bzl", "oci_push")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("//build/rules/artifact:def.bzl", "cd_artifact")
 load("//build/rules/container:def.bzl", "container_image")
+
+REPOSITORY = "repo.center.x.f110.dev/tools/controller-manager"
 
 pkg_tar(
     name = "bin",
@@ -21,5 +24,11 @@ oci_push(
     name = "push",
     image = ":image",
     remote_tags = ["latest"],
-    repository = "repo.center.x.f110.dev/tools/controller-manager",
+    repository = REPOSITORY,
+)
+
+cd_artifact(
+    name = "delivery",
+    images = [":image"],
+    repository = REPOSITORY,
 )
