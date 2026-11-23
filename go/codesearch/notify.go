@@ -3,7 +3,6 @@ package codesearch
 import (
 	"context"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -31,15 +30,7 @@ func NewNotify(u, streamName, subject string) (*Notify, error) {
 	}
 	n := &Notify{subject: fmt.Sprintf("%s.%s", streamName, subject), js: js}
 
-	si, err := js.StreamInfo(streamName)
-	if errors.Is(err, nats.ErrStreamNotFound) {
-		if err = n.setupStream(streamName); err != nil {
-			return nil, xerrors.WithStack(err)
-		}
-	} else {
-		logger.Log.Debug("Exist stream", slog.Any("stream_info", si))
-	}
-	if err != nil {
+	if _, err := js.StreamInfo(streamName); err != nil {
 		return nil, xerrors.WithStack(err)
 	}
 
@@ -98,20 +89,6 @@ func (n *Notify) Subscribe(manifestManager *ManifestManager) (*Subscription, err
 	}()
 
 	return subscription, nil
-}
-
-func (n *Notify) setupStream(streamName string) error {
-	logger.Log.Info("Add stream", slog.String("subject", streamName+".*"))
-	_, err := n.js.AddStream(&nats.StreamConfig{
-		Name:      streamName,
-		Subjects:  []string{streamName + ".*"},
-		Retention: nats.InterestPolicy,
-	})
-	if err != nil {
-		return xerrors.WithStack(err)
-	}
-
-	return nil
 }
 
 type Subscription struct {
