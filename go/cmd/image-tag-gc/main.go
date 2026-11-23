@@ -162,9 +162,6 @@ func ImageTagGC() error {
 	cmd := &cli.Command{
 		Use: "image-tag-gc",
 		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
-			if err := logger.Init(); err != nil {
-				return err
-			}
 			conn, err := grpc.NewClient(buildAPI, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return xerrors.WithStack(err)
@@ -185,7 +182,6 @@ func ImageTagGC() error {
 	fs.String("build-api", "The address of the API of Build").Var(&buildAPI).Required()
 	fs.Bool("registry-insecure", "Access the registry over plain HTTP").Var(&registryInsecure)
 	fs.Bool("dry-run", "Show the tags which will be deleted without deleting").Var(&dryRun)
-	logger.Flags(fs)
 
 	return cmd.Execute(os.Args)
 }
