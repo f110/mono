@@ -27,7 +27,7 @@ const diffSection: Section = {
 // screens are the sections of the shortcuts of each route. The repository screen shows all of its views because they
 // share the route.
 const screens: { routeId: string; sections: Section[] }[] = [
-  { routeId: '/agents', sections: [diffSection] },
+  { routeId: '/agents', sections: [{ title: 'Commits', shortcuts: [['v', 'Start the review of the selected commit']] }, diffSection] },
   {
     routeId: '/repositories',
     sections: [

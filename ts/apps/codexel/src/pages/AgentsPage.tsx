@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { createClient } from '@connectrpc/connect'
 import { useMutation, useQuery } from '@connectrpc/connect-query'
 import {
@@ -34,7 +34,7 @@ import { useApprovedCommits } from '../hooks/useApprovedCommits.ts'
 import { useDiffNavigation } from '../hooks/useDiffNavigation.ts'
 import { useOperation } from '../hooks/useOperation.ts'
 import { useTranscript } from '../hooks/useTranscript.ts'
-import { isSubmitKey } from '../lib/keys.ts'
+import { ignoreKey, isSubmitKey } from '../lib/keys.ts'
 import { transport } from '../providers/AppProvider.tsx'
 
 const reviewClient = createClient(ReviewService, transport)
@@ -94,11 +94,14 @@ const RepositoryAgentCommits = ({
   group,
   selected,
   onSelect,
+  onReview,
   refetch,
 }: {
   group: AgentCommitsOfRepository
   selected?: SelectedCommit
   onSelect: (s: SelectedCommit) => void
+  // onReview starts the review of the changes in the repository. The changes are in order from the oldest.
+  onReview: (path: string, changeIds: string[]) => void
   refetch: () => void
 }) => {
   const path = group.repository?.path ?? ''
@@ -107,30 +110,13 @@ const RepositoryAgentCommits = ({
   useEffect(() => {
     refetch()
   }, [operation, refetch])
-  const navigate = useNavigate()
-  const [reviewError, setReviewError] = useState<string>()
-
-  // startReview starts the review of all commits in order from the oldest because the list shows the newest first.
-  const startReview = async () => {
-    try {
-      const res = await reviewClient.start({ path, changeIds: group.commits.map((c) => c.changeId).reverse() })
-      navigate({ to: '/reviews/$reviewId', params: { reviewId: res.review!.id } })
-    } catch (e) {
-      setReviewError(e instanceof Error ? e.message : String(e))
-    }
-  }
 
   return (
     <List dense subheader={<ListSubheader title={path}>{group.repository?.name}</ListSubheader>}>
       <Box sx={{ px: 1, pb: 1 }}>
-        <Button size="small" variant="outlined" fullWidth onClick={startReview}>
+        <Button size="small" variant="outlined" fullWidth onClick={() => onReview(path, group.commits.map((c) => c.changeId).reverse())}>
           Review these commits
         </Button>
-        {reviewError && (
-          <Alert severity="error" onClose={() => setReviewError(undefined)} sx={{ mt: 1 }}>
-            {reviewError}
-          </Alert>
-        )}
       </Box>
       {group.commits.map((c) => (
         <ListItemButton
@@ -175,6 +161,37 @@ const AgentCommits = ({ agent }: { agent: Agent }) => {
   const selectedInGroup = selectedGroup?.commits.find((c) => c.changeId === selectedCommit?.changeId)
   const selectedPath = selectedInGroup ? selectedGroup?.repository?.path : groups[0]?.repository?.path
   const selected = selectedInGroup ?? groups[0]?.commits[0]
+  const navigate = useNavigate()
+  const [reviewError, setReviewError] = useState<string>()
+
+  const startReview = useCallback(
+    async (path: string, changeIds: string[]) => {
+      try {
+        const res = await reviewClient.start({ path, changeIds })
+        navigate({ to: '/reviews/$reviewId', params: { reviewId: res.review!.id } })
+      } catch (e) {
+        setReviewError(e instanceof Error ? e.message : String(e))
+      }
+    },
+    [navigate],
+  )
+  const selectedChangeId = selected?.changeId
+
+  // v starts the review of the selected commit like the log of the repository screen.
+  useEffect(() => {
+    if (!selectedPath || !selectedChangeId) {
+      return
+    }
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'v' || ignoreKey(e)) {
+        return
+      }
+      e.preventDefault()
+      startReview(selectedPath, [selectedChangeId])
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [selectedPath, selectedChangeId, startReview])
 
   if (error) {
     return <Alert severity="error">{error.message}</Alert>
@@ -191,24 +208,39 @@ const AgentCommits = ({ agent }: { agent: Agent }) => {
   }
 
   return (
-    <Stack direction="row" sx={{ height: '100%' }}>
-      {watchCwd && <RefetchOnChange path={cwdPath} refetch={refetch} />}
-      <Box sx={{ width: 360, flexShrink: 0, overflow: 'auto', borderRight: 1, borderColor: 'divider' }}>
-        {groups.map((g) => (
-          <RepositoryAgentCommits
-            key={g.repository?.path}
-            group={g}
-            selected={selected && selectedPath ? { path: selectedPath, changeId: selected.changeId } : undefined}
-            onSelect={setSelectedCommit}
-            refetch={refetch}
-          />
-        ))}
-      </Box>
-      <Box ref={detailRef} sx={{ flex: 1, minWidth: 0, overflow: 'auto' }}>
-        {selectedPath && selected && (
-          <RevisionDetail key={`${selectedPath}/${selected.commitId}`} path={selectedPath} commit={selected} split={split} preview={preview} />
-        )}
-      </Box>
+    <Stack sx={{ height: '100%' }}>
+      {reviewError && (
+        <Alert severity="error" onClose={() => setReviewError(undefined)}>
+          {reviewError}
+        </Alert>
+      )}
+      <Stack direction="row" sx={{ flex: 1, minHeight: 0 }}>
+        {watchCwd && <RefetchOnChange path={cwdPath} refetch={refetch} />}
+        <Box sx={{ width: 360, flexShrink: 0, overflow: 'auto', borderRight: 1, borderColor: 'divider' }}>
+          {groups.map((g) => (
+            <RepositoryAgentCommits
+              key={g.repository?.path}
+              group={g}
+              selected={selected && selectedPath ? { path: selectedPath, changeId: selected.changeId } : undefined}
+              onSelect={setSelectedCommit}
+              onReview={startReview}
+              refetch={refetch}
+            />
+          ))}
+        </Box>
+        <Box ref={detailRef} sx={{ flex: 1, minWidth: 0, overflow: 'auto' }}>
+          {selectedPath && selected && (
+            <RevisionDetail
+              key={`${selectedPath}/${selected.commitId}`}
+              path={selectedPath}
+              commit={selected}
+              split={split}
+              preview={preview}
+              onReview={() => startReview(selectedPath, [selected.changeId])}
+            />
+          )}
+        </Box>
+      </Stack>
     </Stack>
   )
 }
