@@ -1,0 +1,158 @@
+syntax = "proto3";
+
+package git.schema;
+
+import "ddl.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "go.f110.dev/mono/go/git/database;database";
+
+// ObjectType is the type of the git object. The values are the same as plumbing.ObjectType of go-git.
+enum ObjectType {
+  OBJECT_TYPE_INVALID = 0;
+  OBJECT_TYPE_COMMIT  = 1;
+  OBJECT_TYPE_TREE    = 2;
+  OBJECT_TYPE_BLOB    = 3;
+  OBJECT_TYPE_TAG     = 4;
+}
+
+// ObjectEncoding is how the content of Object is stored.
+enum ObjectEncoding {
+  // payload is the whole content compressed by zstd.
+  OBJECT_ENCODING_FULL = 0;
+  // payload is the git delta from the object of base_id compressed by zstd. depth is the length of the chain of the
+  // deltas to the full object.
+  OBJECT_ENCODING_DELTA = 1;
+  // The content is the rows of TreeEntry. payload is empty.
+  OBJECT_ENCODING_TREE = 2;
+  // The object is not stored. It is referenced by the tree of the repository (e.g. the commit of the submodule).
+  // payload is empty.
+  OBJECT_ENCODING_EXTERNAL = 3;
+}
+
+// Repository is the mirrored repository. config is the config of go-git which has the URL of the remote origin.
+// next_object_id is the ID which is assigned to the next object of the repository.
+// cloned_at is the time when the first clone is completed. The repository whose cloned_at is null is cloned again.
+message Repository {
+  int32                     id             = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  string                    name           = 2 [(dev.f110.ddl.column) = { size: 100, unique: true }];
+  string                    config         = 3 [(dev.f110.ddl.column) = { type: "text" }];
+  int64                     next_object_id = 4 [(dev.f110.ddl.column) = { default: "1" }];
+  google.protobuf.Timestamp cloned_at      = 5 [(dev.f110.ddl.column) = { null: true }];
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    with_timestamp: true
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "ByName"
+      query: "SELECT * FROM `:table_name:` WHERE `name` = ?"
+    }
+  };
+}
+
+// Object is the git object of the repository. id is the integer ID of the object in the repository and is referenced
+// by the other tables instead of hash. repository_id is not the reference to Repository so that DAO doesn't read the
+// repository for every object.
+//
+// size is the size of the restored content.
+message Object {
+  int32          repository_id = 1;
+  int64          id            = 2;
+  bytes          hash          = 3 [(dev.f110.ddl.column) = { size: 20 }];
+  ObjectType     type          = 4;
+  ObjectEncoding encoding      = 5;
+  int64          size          = 6;
+  int64          base_id       = 7 [(dev.f110.ddl.column) = { null: true }];
+  int32          depth         = 8;
+  bytes          payload       = 9 [(dev.f110.ddl.column) = { type: "long" }];
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "repository_id"
+    primary_key: "id"
+    indexes: {
+      name: "idx_repository_hash"
+      columns: "repository_id"
+      columns: "hash"
+      unique: true
+    }
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "ByHash"
+      query: "SELECT * FROM `:table_name:` WHERE `repository_id` = ? AND `hash` = ?"
+    }
+    queries: {
+      name: "IdsByHashes"
+      query: "SELECT `id`, `hash`, `encoding`, `size` FROM `:table_name:` WHERE `repository_id` = ? AND `hash` IN (?)"
+    }
+    queries: {
+      name: "HashesByIds"
+      query: "SELECT `id`, `hash` FROM `:table_name:` WHERE `repository_id` = ? AND `id` IN (?)"
+    }
+    queries: {
+      name: "Stored"
+      query: "SELECT `hash` FROM `:table_name:` WHERE `repository_id` = ? AND `encoding` IN (?)"
+    }
+    queries: {
+      name: "StoredByType"
+      query: "SELECT `hash` FROM `:table_name:` WHERE `repository_id` = ? AND `encoding` IN (?) AND `type` = ?"
+    }
+    queries: {
+      name: "Summary"
+      query: "SELECT `id`, `hash`, `type`, `encoding`, `size`, `base_id`, `depth`, LENGTH(`payload`) AS `payload_size` FROM `:table_name:` WHERE `repository_id` = ?"
+    }
+  };
+}
+
+// TreeEntry is the entry of the tree object. The tree object is the entries ordered by position, and each entry is
+// "<mode in octal> <name>\0<hash of child_id>".
+message TreeEntry {
+  int32 repository_id = 1;
+  int64 tree_id       = 2;
+  int32 position      = 3;
+  bytes name          = 4;
+  int32 mode          = 5;
+  int64 child_id      = 6;
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "repository_id"
+    primary_key: "tree_id"
+    primary_key: "position"
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "ByTree"
+      query: "SELECT * FROM `:table_name:` WHERE `repository_id` = ? AND `tree_id` = ?"
+    }
+    queries: {
+      name: "ByRepository"
+      query: "SELECT * FROM `:table_name:` WHERE `repository_id` = ?"
+    }
+  };
+}
+
+// Reference is the reference of the repository. The hash reference has object_id and the symbolic reference has target.
+message Reference {
+  int32  repository_id = 1;
+  string name          = 2;
+  int64  object_id     = 3 [(dev.f110.ddl.column) = { null: true }];
+  string target        = 4 [(dev.f110.ddl.column) = { null: true }];
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "repository_id"
+    primary_key: "name"
+    with_timestamp: true
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "ByRepository"
+      query: "SELECT * FROM `:table_name:` WHERE `repository_id` = ?"
+    }
+  };
+}
