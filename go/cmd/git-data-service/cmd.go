@@ -35,6 +35,7 @@ type gitDataServiceCommand struct {
 	packCache     *git.PackfileCache
 
 	Listen                string
+	DSN                   string
 	RepositoryInitTimeout time.Duration
 	GitHubClient          *github.GitHubClientFactory
 
@@ -88,6 +89,8 @@ func newGitDataServiceCommand() *gitDataServiceCommand {
 
 func (c *gitDataServiceCommand) Flags(fs *flag.FlagSet) {
 	fs.String("listen", "Listen addr").Var(&c.Listen).Default(":8056")
+	fs.String("dsn", "Data source name of the database which stores the repositories. "+
+		"If empty, the repositories are stored in the object storage and the flags of memcached and packfile are used.").Var(&c.DSN)
 	fs.String("storage-endpoint", "The endpoint of the object storage").Var(&c.StorageEndpoint)
 	fs.String("storage-region", "The region name").Var(&c.StorageRegion)
 	fs.String("bucket", "The bucket name that will be used").Var(&c.Bucket)
@@ -151,36 +154,42 @@ func (c *gitDataServiceCommand) init(ctx context.Context) (fsm.State, error) {
 	opt.CACertFile = c.StorageCAFile
 	storageClient := storage.NewS3(c.Bucket, opt)
 
-	var cachePool *client.SinglePool
-	if c.MemcachedEndpoint != "" {
-		cacheServer, err := client.NewServerWithMetaProtocol(ctx, "cache-1", "tcp", c.MemcachedEndpoint)
+	var backend git.Backend
+	if c.DSN != "" {
+		conn, err := git.OpenDatabase(ctx, c.DSN, 5*time.Minute)
 		if err != nil {
 			return fsm.Error(err)
 		}
-		cachePool, err = client.NewSinglePool(cacheServer)
-		if err != nil {
-			return fsm.Error(err)
+		backend = &git.DatabaseBackend{Conn: conn}
+	} else {
+		var cachePool *client.SinglePool
+		if c.MemcachedEndpoint != "" {
+			cacheServer, err := client.NewServerWithMetaProtocol(ctx, "cache-1", "tcp", c.MemcachedEndpoint)
+			if err != nil {
+				return fsm.Error(err)
+			}
+			cachePool, err = client.NewSinglePool(cacheServer)
+			if err != nil {
+				return fsm.Error(err)
+			}
 		}
-	}
-
-	if c.PackfileCacheSize > 0 {
-		c.packCache = git.NewPackfileCache(c.PackfileCacheTTL, c.PackfileCacheTTL/2, c.PackfileCacheSize)
+		if c.PackfileCacheSize > 0 {
+			c.packCache = git.NewPackfileCache(c.PackfileCacheTTL, c.PackfileCacheTTL/2, c.PackfileCacheSize)
+		}
+		backend = &git.ObjectStorageBackend{Client: storageClient, CachePool: cachePool, PackCache: c.packCache, DisableInflatePackFile: c.DisableInflatePackFile}
 	}
 
 	for _, v := range c.repositories {
-		if err := v.Open(ctx, storageClient, cachePool, c.packCache, c.GitHubClient.TokenProvider, c.RepositoryInitTimeout, c.DisableInflatePackFile); err != nil {
+		if err := v.Open(ctx, backend, c.GitHubClient.TokenProvider, c.RepositoryInitTimeout); err != nil {
 			return fsm.Error(err)
 		}
 	}
 
-	service, err := git.NewDataService(storageClient, c.GitHubClient.TokenProvider, git.NewStaticRepositoryProvider(c.repositories))
+	service, err := git.NewDataService(backend, c.GitHubClient.TokenProvider, git.NewStaticRepositoryProvider(c.repositories))
 	if err != nil {
 		return fsm.Error(err)
 	}
-	service.SetCachePool(cachePool).
-		SetPackCache(c.packCache).
-		SetInitTimeout(c.RepositoryInitTimeout).
-		SetDisableInflatePackFile(c.DisableInflatePackFile)
+	service.SetInitTimeout(c.RepositoryInitTimeout)
 	s := grpc.NewServer()
 	git.RegisterGitDataServer(s, service)
 	healthSvc := health.NewServer()
@@ -189,13 +198,10 @@ func (c *gitDataServiceCommand) init(ctx context.Context) (fsm.State, error) {
 	c.grpcServer = s
 
 	if c.RefreshInterval > 0 {
-		c.updater = git.NewUpdater(storageClient, c.GitHubClient.TokenProvider, git.NewStaticRepositoryProvider(c.repositories), c.RefreshWorkers).
+		c.updater = git.NewUpdater(backend, c.GitHubClient.TokenProvider, git.NewStaticRepositoryProvider(c.repositories), c.RefreshWorkers).
 			SetInterval(c.RefreshInterval).
 			SetTimeout(c.RefreshTimeout).
-			SetCachePool(cachePool).
-			SetPackCache(c.packCache).
-			SetInitTimeout(c.RepositoryInitTimeout).
-			SetDisableInflatePackFile(c.DisableInflatePackFile)
+			SetInitTimeout(c.RepositoryInitTimeout)
 		if c.LockFilePath != "" {
 			l, err := leaderelection.NewObjectStorage(storageClient, c.LockFilePath)
 			if err != nil {

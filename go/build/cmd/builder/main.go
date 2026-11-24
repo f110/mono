@@ -467,14 +467,17 @@ func (p *process) startGitDataService(ctx context.Context) (fsm.State, error) {
 		p.gitDataPackCache = git.NewPackfileCache(p.opt.GitDataPackfileCacheTTL, p.opt.GitDataPackfileCacheSweepInterval, p.opt.GitDataPackfileCacheSize)
 	}
 
-	service, err := git.NewDataService(storageClient, tokenProvider, repositoryProvider)
+	backend := &git.ObjectStorageBackend{
+		Client:                 storageClient,
+		CachePool:              cachePool,
+		PackCache:              p.gitDataPackCache,
+		DisableInflatePackFile: p.opt.GitDataDisableInflatePackFile,
+	}
+	service, err := git.NewDataService(backend, tokenProvider, repositoryProvider)
 	if err != nil {
 		return fsm.Error(err)
 	}
-	service.SetCachePool(cachePool).
-		SetPackCache(p.gitDataPackCache).
-		SetInitTimeout(p.opt.GitDataRepositoryInitTimeout).
-		SetDisableInflatePackFile(p.opt.GitDataDisableInflatePackFile)
+	service.SetInitTimeout(p.opt.GitDataRepositoryInitTimeout)
 	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(grpcutil.WithServerLogging()))
 	git.RegisterGitDataServer(grpcServer, service)
 	healthSvc := health.NewServer()
@@ -493,11 +496,8 @@ func (p *process) startGitDataService(ctx context.Context) (fsm.State, error) {
 		}
 	}()
 
-	updater := git.NewUpdater(storageClient, tokenProvider, repositoryProvider, p.opt.GitDataRefreshWorkers).
-		SetCachePool(cachePool).
-		SetPackCache(p.gitDataPackCache).
-		SetInitTimeout(p.opt.GitDataRepositoryInitTimeout).
-		SetDisableInflatePackFile(p.opt.GitDataDisableInflatePackFile)
+	updater := git.NewUpdater(backend, tokenProvider, repositoryProvider, p.opt.GitDataRefreshWorkers).
+		SetInitTimeout(p.opt.GitDataRepositoryInitTimeout)
 	if p.opt.GitDataRefreshInterval > 0 {
 		updater.SetInterval(p.opt.GitDataRefreshInterval).
 			SetTimeout(p.opt.GitDataRefreshTimeout)

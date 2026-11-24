@@ -11,6 +11,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/storer"
+	"github.com/go-git/go-git/v5/storage/filesystem"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -37,7 +38,7 @@ func TestListRepositories(t *testing.T) {
 
 func TestDataServiceRepositoriesFromProvider(t *testing.T) {
 	provider := NewStaticRepositoryProvider(nil)
-	svc, err := NewDataService(storage.NewMock(), nil, provider)
+	svc, err := NewDataService(&ObjectStorageBackend{Client: storage.NewMock()}, nil, provider)
 	require.NoError(t, err)
 
 	_, err = svc.ListReferences(t.Context(), &RequestListReferences{Repo: "test1"})
@@ -308,6 +309,32 @@ func TestStat(t *testing.T) {
 			assert.NotEmpty(t, stat.Hash)
 		})
 	}
+}
+
+func TestDataServiceWithDatabase(t *testing.T) {
+	sourceRepo := makeSourceRepository(t)
+	repoPath := sourceRepo.Storer.(*filesystem.Storage).Filesystem().Root()
+	provider := NewStaticRepositoryProvider([]*RepositoryConfig{{Name: "test1", URL: repoPath}})
+	svc, err := NewDataService(&DatabaseBackend{Conn: newTestDatabase(t)}, nil, provider)
+	require.NoError(t, err)
+
+	res, err := svc.ListRepositories(t.Context(), &RequestListRepositories{})
+	require.NoError(t, err)
+	require.Len(t, res.Repositories, 1)
+	assert.Equal(t, "test1", res.Repositories[0].Name)
+	assert.Equal(t, "master", res.Repositories[0].DefaultBranch)
+
+	file, err := svc.GetFile(t.Context(), &RequestGetFile{Repo: "test1", Ref: plumbing.NewBranchReferenceName("master").String(), Path: "docs/design/README.md"})
+	require.NoError(t, err)
+	assert.Equal(t, "design", string(file.Content))
+
+	tree, err := svc.GetTree(t.Context(), &RequestGetTree{Repo: "test1", Ref: plumbing.NewBranchReferenceName("master").String(), Path: "/", Recursive: true})
+	require.NoError(t, err)
+	var paths []string
+	for _, v := range tree.Tree {
+		paths = append(paths, v.Path)
+	}
+	assert.ElementsMatch(t, []string{"README.md", "docs", "docs/README.md", "docs/design", "docs/design/README.md"}, paths)
 }
 
 func startServer(t *testing.T, st *storage.Mock, repos map[string]*goGit.Repository) *grpc.ClientConn {

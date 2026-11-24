@@ -14,7 +14,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	gitHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/google/go-github/v85/github"
-	"go.f110.dev/go-memcached/client"
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/ctxutil"
@@ -35,50 +34,28 @@ type RepositoryConfig struct {
 	goGit *git.Repository
 }
 
-// Open opens the repository from object storage, cloning from the configured URL if it does not yet exist.
+// Open opens the repository from the backend, cloning from the configured URL if the backend doesn't have it yet.
 // Open does nothing if the repository is already opened. It is safe to call concurrently.
-func (r *RepositoryConfig) Open(ctx context.Context, stClient ObjectStorageInterface, cachePool *client.SinglePool, packCache *PackfileCache, tokenProvider *githubutil.TokenProvider, timeout time.Duration, disableInflatePackFile bool) error {
+func (r *RepositoryConfig) Open(ctx context.Context, backend Backend, tokenProvider *githubutil.TokenProvider, timeout time.Duration) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if r.goGit != nil {
 		return nil
 	}
 
-	storer := NewObjectStorageStorer(stClient, r.Prefix, cachePool, packCache)
-
-	if ok, err := storer.Exist(); !ok && err == nil {
-		initCtx, cancel := ctxutil.WithTimeout(ctx, timeout)
-
-		logger.Log.Info("Init repository", slog.String("name", r.Name), slog.String("url", r.URL), slog.String("prefix", r.Prefix))
-		var auth *gitHttp.BasicAuth
-		if tokenProvider != nil {
-			if v, err := tokenProvider.Token(initCtx); err == nil {
-				auth = &gitHttp.BasicAuth{Username: "octocat", Password: v}
-			}
-		}
-		if _, err := InitObjectStorageRepository(initCtx, stClient, r.URL, r.Prefix, auth); err != nil {
-			cancel()
-			return err
-		}
-		cancel()
-	} else if err != nil {
-		return err
+	gitRepo, err := backend.Open(ctx, r, tokenProvider, timeout)
+	if gitRepo != nil {
+		r.goGit = gitRepo
 	}
+	return err
+}
 
-	gitRepo, err := git.Open(storer, nil)
-	if err != nil {
-		return xerrors.WithStack(err)
-	}
-	r.goGit = gitRepo
-
-	if !disableInflatePackFile && storer.IncludePackFile(ctx) {
-		logger.Log.Info("Inflate packfile", slog.String("name", r.Name))
-		if err := InflatePackFile(ctx, stClient, r.Prefix, gitRepo); err != nil {
-			return err
-		}
-	}
-
-	return nil
+// Backend is the storage of the repositories.
+type Backend interface {
+	// Open opens the repository. If the backend doesn't have the repository, Open clones it from the URL of repo within
+	// initTimeout. If Open returns both the repository and an error, the repository is usable and the error happened
+	// after opening it.
+	Open(ctx context.Context, repo *RepositoryConfig, tokenProvider *githubutil.TokenProvider, initTimeout time.Duration) (*git.Repository, error)
 }
 
 // RepositoryProvider provides the repositories which are refreshed by Updater.
@@ -114,18 +91,15 @@ type Updater struct {
 	timeout  time.Duration
 	parallel int
 
-	storageClient          ObjectStorageInterface
-	cachePool              *client.SinglePool
-	packCache              *PackfileCache
-	tokenProvider          *githubutil.TokenProvider
-	initTimeout            time.Duration
-	disableInflatePackFile bool
-	running                bool
+	backend       Backend
+	tokenProvider *githubutil.TokenProvider
+	initTimeout   time.Duration
+	running       bool
 }
 
-func NewUpdater(stClient ObjectStorageInterface, tokenProvider *githubutil.TokenProvider, repos RepositoryProvider, workers int) *Updater {
+func NewUpdater(backend Backend, tokenProvider *githubutil.TokenProvider, repos RepositoryProvider, workers int) *Updater {
 	return &Updater{
-		storageClient: stClient,
+		backend:       backend,
 		repos:         repos,
 		interval:      1 * time.Hour,
 		timeout:       1 * time.Minute,
@@ -148,23 +122,8 @@ func (u *Updater) SetTimeout(d time.Duration) *Updater {
 	return u
 }
 
-func (u *Updater) SetCachePool(c *client.SinglePool) *Updater {
-	u.cachePool = c
-	return u
-}
-
-func (u *Updater) SetPackCache(c *PackfileCache) *Updater {
-	u.packCache = c
-	return u
-}
-
 func (u *Updater) SetInitTimeout(d time.Duration) *Updater {
 	u.initTimeout = d
-	return u
-}
-
-func (u *Updater) SetDisableInflatePackFile(b bool) *Updater {
-	u.disableInflatePackFile = b
 	return u
 }
 
@@ -206,7 +165,7 @@ func (u *Updater) Sync(ctx context.Context, url string) error {
 }
 
 func (u *Updater) syncRepo(ctx context.Context, repo *RepositoryConfig) error {
-	if err := repo.Open(ctx, u.storageClient, u.cachePool, u.packCache, u.tokenProvider, u.initTimeout, u.disableInflatePackFile); err != nil {
+	if err := repo.Open(ctx, u.backend, u.tokenProvider, u.initTimeout); err != nil {
 		logger.Log.Warn("Failed to open repository", logger.E(err), slog.String("repo", repo.Name))
 		return err
 	}
@@ -273,17 +232,8 @@ func (u *Updater) updateRepo(ctx context.Context, repo *git.Repository) error {
 	timeoutCtx, stop := ctxutil.WithTimeout(ctx, u.timeout)
 	defer stop()
 
-	var auth *gitHttp.BasicAuth
-	if u.tokenProvider != nil {
-		if v, err := u.tokenProvider.Token(ctx); err == nil {
-			auth = &gitHttp.BasicAuth{
-				Username: "octocat",
-				Password: v,
-			}
-		}
-	}
 	err := repo.FetchContext(timeoutCtx, &git.FetchOptions{
-		Auth:       auth,
+		Auth:       basicAuth(ctx, u.tokenProvider),
 		RemoteName: upstreamRemoteName,
 	})
 	if err != nil {
@@ -294,6 +244,23 @@ func (u *Updater) updateRepo(ctx context.Context, repo *git.Repository) error {
 		return xerrors.WithStack(err)
 	}
 
+	return updateBranches(repo)
+}
+
+// basicAuth returns the credential for GitHub. It returns nil if tokenProvider is nil or fails to get the token.
+func basicAuth(ctx context.Context, tokenProvider *githubutil.TokenProvider) *gitHttp.BasicAuth {
+	if tokenProvider == nil {
+		return nil
+	}
+	v, err := tokenProvider.Token(ctx)
+	if err != nil {
+		return nil
+	}
+	return &gitHttp.BasicAuth{Username: "octocat", Password: v}
+}
+
+// updateBranches replaces the branches of repo with the remote branches of origin.
+func updateBranches(repo *git.Repository) error {
 	iter, err := repo.References()
 	if err != nil {
 		logger.Log.Warn("Failed get references", logger.E(err))

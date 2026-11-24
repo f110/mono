@@ -28,7 +28,7 @@ func TestUpdater_UpdateRepo(t *testing.T) {
 	_, err := InitObjectStorageRepository(context.Background(), mockStorage, repoPath, "test", nil)
 	require.NoError(t, err)
 
-	updater := NewUpdater(mockStorage, nil, NewStaticRepositoryProvider(nil), 1)
+	updater := NewUpdater(&ObjectStorageBackend{Client: mockStorage}, nil, NewStaticRepositoryProvider(nil), 1)
 
 	masterRef, err := sourceRepo.Reference(plumbing.NewBranchReferenceName("master"), false)
 	require.NoError(t, err)
@@ -66,7 +66,7 @@ func TestUpdater_Sync(t *testing.T) {
 
 	repo, err := goGit.Open(NewObjectStorageStorer(mockStorage, "test", nil, nil), nil)
 	require.NoError(t, err)
-	updater := NewUpdater(mockStorage, nil, NewStaticRepositoryProvider([]*RepositoryConfig{{Name: "test", URL: repoPath, Prefix: "test", goGit: repo}}), 1)
+	updater := NewUpdater(&ObjectStorageBackend{Client: mockStorage}, nil, NewStaticRepositoryProvider([]*RepositoryConfig{{Name: "test", URL: repoPath, Prefix: "test", goGit: repo}}), 1)
 
 	err = updater.Sync(context.Background(), "https://example.com/unknown.git")
 	assert.ErrorIs(t, err, ErrRepositoryNotTracked)
@@ -84,7 +84,7 @@ func TestUpdater_SyncNotOpenedRepository(t *testing.T) {
 	repoPath := sourceRepo.Storer.(*filesystem.Storage).Filesystem().Root()
 
 	repoConfig := &RepositoryConfig{Name: "test", URL: repoPath, Prefix: "test"}
-	updater := NewUpdater(mockStorage, nil, NewStaticRepositoryProvider([]*RepositoryConfig{repoConfig}), 1)
+	updater := NewUpdater(&ObjectStorageBackend{Client: mockStorage}, nil, NewStaticRepositoryProvider([]*RepositoryConfig{repoConfig}), 1)
 
 	err := updater.Sync(context.Background(), repoPath)
 	require.NoError(t, err)
@@ -114,4 +114,49 @@ func makeUpdaterSourceRepository(t *testing.T) *goGit.Repository {
 	require.NoError(t, err)
 
 	return repo
+}
+
+func TestUpdater_SyncWithDatabase(t *testing.T) {
+	sourceRepo := makeUpdaterSourceRepository(t)
+	repoPath := sourceRepo.Storer.(*filesystem.Storage).Filesystem().Root()
+
+	repoConfig := &RepositoryConfig{Name: "test", URL: repoPath}
+	updater := NewUpdater(&DatabaseBackend{Conn: newTestDatabase(t)}, nil, NewStaticRepositoryProvider([]*RepositoryConfig{repoConfig}), 1)
+
+	err := updater.Sync(context.Background(), repoPath)
+	require.NoError(t, err)
+	require.NotNil(t, repoConfig.goGit)
+	masterRef, err := sourceRepo.Reference(plumbing.NewBranchReferenceName("master"), false)
+	require.NoError(t, err)
+	n, err := repoConfig.goGit.Reference(plumbing.NewBranchReferenceName("master"), false)
+	require.NoError(t, err)
+	assert.Equal(t, masterRef.Hash(), n.Hash())
+
+	wt, err := sourceRepo.Worktree()
+	require.NoError(t, err)
+	err = os.WriteFile(filepath.Join(wt.Filesystem.Root(), "README.md"), []byte("Updated"), 0644)
+	require.NoError(t, err)
+	_, err = wt.Add("README.md")
+	require.NoError(t, err)
+	newCommit, err := wt.Commit("Update", &goGit.CommitOptions{
+		Author: &object.Signature{Name: t.Name(), When: time.Now(), Email: "test@localhost"},
+	})
+	require.NoError(t, err)
+	err = sourceRepo.Storer.SetReference(plumbing.NewHashReference(plumbing.NewBranchReferenceName("foobar"), newCommit))
+	require.NoError(t, err)
+
+	err = updater.Sync(context.Background(), repoPath)
+	require.NoError(t, err)
+	for _, name := range []string{"master", "foobar"} {
+		n, err := repoConfig.goGit.Reference(plumbing.NewBranchReferenceName(name), false)
+		require.NoError(t, err)
+		assert.Equal(t, newCommit, n.Hash(), name)
+	}
+	commit, err := repoConfig.goGit.CommitObject(newCommit)
+	require.NoError(t, err)
+	file, err := commit.File("README.md")
+	require.NoError(t, err)
+	content, err := file.Contents()
+	require.NoError(t, err)
+	assert.Equal(t, "Updated", content)
 }

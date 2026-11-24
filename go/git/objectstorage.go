@@ -33,6 +33,8 @@ import (
 
 	"go.f110.dev/mono/go/collections/dict"
 	"go.f110.dev/mono/go/collections/set"
+	"go.f110.dev/mono/go/ctxutil"
+	githubutil "go.f110.dev/mono/go/github"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )
@@ -164,6 +166,47 @@ func InflatePackFile(ctx context.Context, st ObjectStorageInterface, rootPath st
 	}
 
 	return nil
+}
+
+// ObjectStorageBackend is the Backend which stores the repositories into the object storage by ObjectStorageStorer.
+// The repository is stored under RepositoryConfig.Prefix.
+type ObjectStorageBackend struct {
+	Client    ObjectStorageInterface
+	CachePool *client.SinglePool
+	PackCache *PackfileCache
+	// DisableInflatePackFile disables inflating the packfiles into the loose objects when the repository is opened.
+	DisableInflatePackFile bool
+}
+
+var _ Backend = (*ObjectStorageBackend)(nil)
+
+func (b *ObjectStorageBackend) Open(ctx context.Context, repo *RepositoryConfig, tokenProvider *githubutil.TokenProvider, initTimeout time.Duration) (*git.Repository, error) {
+	storer := NewObjectStorageStorer(b.Client, repo.Prefix, b.CachePool, b.PackCache)
+
+	if ok, err := storer.Exist(); !ok && err == nil {
+		initCtx, cancel := ctxutil.WithTimeout(ctx, initTimeout)
+		logger.Log.Info("Init repository", slog.String("name", repo.Name), slog.String("url", repo.URL), slog.String("prefix", repo.Prefix))
+		_, err := InitObjectStorageRepository(initCtx, b.Client, repo.URL, repo.Prefix, basicAuth(initCtx, tokenProvider))
+		cancel()
+		if err != nil {
+			return nil, err
+		}
+	} else if err != nil {
+		return nil, err
+	}
+
+	gitRepo, err := git.Open(storer, nil)
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+
+	if !b.DisableInflatePackFile && storer.IncludePackFile(ctx) {
+		logger.Log.Info("Inflate packfile", slog.String("name", repo.Name))
+		if err := InflatePackFile(ctx, b.Client, repo.Prefix, gitRepo); err != nil {
+			return gitRepo, err
+		}
+	}
+	return gitRepo, nil
 }
 
 type ObjectStorageStorer struct {

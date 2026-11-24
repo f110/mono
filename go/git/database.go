@@ -6,13 +6,16 @@ import (
 	"database/sql"
 	"errors"
 	"io"
+	"log/slog"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/go-git/go-billy/v5/util"
+	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/cache"
@@ -22,11 +25,16 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/format/packfile"
 	"github.com/go-git/go-git/v5/plumbing/storer"
 	gitStorage "github.com/go-git/go-git/v5/storage"
+	"github.com/go-sql-driver/mysql"
 	"github.com/klauspost/compress/zstd"
+	"go.f110.dev/protoc-ddl/probe"
 	"go.f110.dev/xerrors"
 
+	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/git/database"
 	"go.f110.dev/mono/go/git/database/dao"
+	githubutil "go.f110.dev/mono/go/github"
+	"go.f110.dev/mono/go/logger"
 )
 
 const (
@@ -503,6 +511,119 @@ func (s *DatabaseStorer) newObjectWriter(ctx context.Context) *objectWriter {
 		stored:   make(map[plumbing.Hash]bool),
 		external: make(map[plumbing.Hash]bool),
 	}
+}
+
+// DatabaseBackend is the Backend which stores the repositories into the database by DatabaseStorer.
+// The repository is identified by RepositoryConfig.Name.
+type DatabaseBackend struct {
+	Conn *sql.DB
+}
+
+var _ Backend = (*DatabaseBackend)(nil)
+
+// Open opens the repository. If the clone of the repository is not completed (repository.cloned_at is null), Open
+// clones it again. The objects which are stored by the previous clone are reused.
+func (b *DatabaseBackend) Open(ctx context.Context, repo *RepositoryConfig, tokenProvider *githubutil.TokenProvider, initTimeout time.Duration) (*git.Repository, error) {
+	repositories := dao.NewRepository(b.Conn)
+	row, err := repositories.SelectByName(ctx, repo.Name)
+	if errors.Is(err, sql.ErrNoRows) {
+		row, err = repositories.Create(ctx, &database.Repository{Name: repo.Name, NextObjectId: 1})
+	}
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	s := NewDatabaseStorer(b.Conn, row.Id)
+	if row.ClonedAt != nil {
+		gitRepo, err := git.Open(s, nil)
+		if err != nil {
+			return nil, xerrors.WithStack(err)
+		}
+		return gitRepo, nil
+	}
+
+	logger.Log.Info("Init repository", slog.String("name", repo.Name), slog.String("url", repo.URL))
+	initCtx, cancel := ctxutil.WithTimeout(ctx, initTimeout)
+	defer cancel()
+	gitRepo, err := git.Open(s, nil)
+	if errors.Is(err, git.ErrRepositoryNotExists) {
+		gitRepo, err = git.Init(s, nil)
+	}
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	remote, err := gitRepo.Remote(upstreamRemoteName)
+	if err == nil && remote.Config().URLs[0] != repo.URL {
+		if err := gitRepo.DeleteRemote(upstreamRemoteName); err != nil {
+			return nil, xerrors.WithStack(err)
+		}
+		err = git.ErrRemoteNotFound
+	}
+	if errors.Is(err, git.ErrRemoteNotFound) {
+		remote, err = gitRepo.CreateRemote(&config.RemoteConfig{Name: upstreamRemoteName, URLs: []string{repo.URL}})
+	}
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+
+	auth := basicAuth(initCtx, tokenProvider)
+	err = gitRepo.FetchContext(initCtx, &git.FetchOptions{RemoteName: upstreamRemoteName, Auth: auth})
+	if err != nil && !errors.Is(err, git.NoErrAlreadyUpToDate) {
+		return nil, xerrors.WithMessage(err, "failed to clone the repository")
+	}
+	remoteRefs, err := remote.ListContext(initCtx, &git.ListOptions{Auth: auth})
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	for _, v := range remoteRefs {
+		if v.Name() == plumbing.HEAD && v.Type() == plumbing.SymbolicReference {
+			if err := s.SetReference(v); err != nil {
+				return nil, err
+			}
+		}
+	}
+	if err := updateBranches(gitRepo); err != nil {
+		return nil, err
+	}
+
+	now := time.Now()
+	row.ClonedAt = &now
+	if err := repositories.Update(ctx, row); err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	return gitRepo, nil
+}
+
+// OpenDatabase opens the MySQL database for DatabaseBackend and waits for the schema of go/git/database to be migrated
+// up to timeout.
+func OpenDatabase(ctx context.Context, dsn string, timeout time.Duration) (*sql.DB, error) {
+	cfg, err := mysql.ParseDSN(dsn)
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	cfg.ParseTime = true
+	cfg.Loc = time.Local
+	conn, err := sql.Open("mysql", cfg.FormatDSN())
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+
+	p := probe.NewProbe(conn)
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+	timeoutCh := time.After(timeout)
+	for !p.Ready(ctx, database.SchemaHash) {
+		logger.Log.Info("Waiting for the migration of git-data")
+		select {
+		case <-ticker.C:
+		case <-timeoutCh:
+			conn.Close()
+			return nil, xerrors.Define("waiting for the migration of git-data was timed out").WithStack()
+		case <-ctx.Done():
+			conn.Close()
+			return nil, ctx.Err()
+		}
+	}
+	return conn, nil
 }
 
 // databasePackfileWriter buffers the received packfile on the local disk, then on Close stores all objects in it.

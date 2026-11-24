@@ -392,6 +392,42 @@ func TestDatabaseStorerConfig(t *testing.T) {
 	assert.Equal(t, []string{"https://github.com/f110/test-repo.git"}, conf.Remotes["origin"].URLs)
 }
 
+func TestDatabaseBackendOpen(t *testing.T) {
+	originalRepo := makeSourceRepository(t)
+	repoPath := originalRepo.Storer.(*filesystem.Storage).Filesystem().Root()
+	backend := &DatabaseBackend{Conn: newTestDatabase(t)}
+
+	repo, err := backend.Open(context.Background(), &RepositoryConfig{Name: "test", URL: repoPath}, nil, 10*time.Second)
+	require.NoError(t, err)
+	head, err := repo.Head()
+	require.NoError(t, err)
+	originalHead, err := originalRepo.Head()
+	require.NoError(t, err)
+	assert.Equal(t, originalHead.Hash(), head.Hash())
+
+	// The repository which is already stored is opened without cloning.
+	repo, err = backend.Open(context.Background(), &RepositoryConfig{Name: "test", URL: "/not/exist"}, nil, 10*time.Second)
+	require.NoError(t, err)
+	head, err = repo.Head()
+	require.NoError(t, err)
+	assert.Equal(t, originalHead.Hash(), head.Hash())
+
+	// The repository which failed to clone is cloned again by the next Open.
+	_, err = backend.Open(context.Background(), &RepositoryConfig{Name: "retry", URL: filepath.Join(t.TempDir(), "not-exist")}, nil, 10*time.Second)
+	require.Error(t, err)
+	row, err := dao.NewRepository(backend.Conn).SelectByName(context.Background(), "retry")
+	require.NoError(t, err)
+	assert.Nil(t, row.ClonedAt)
+	repo, err = backend.Open(context.Background(), &RepositoryConfig{Name: "retry", URL: repoPath}, nil, 10*time.Second)
+	require.NoError(t, err)
+	head, err = repo.Head()
+	require.NoError(t, err)
+	assert.Equal(t, originalHead.Hash(), head.Hash())
+	row, err = dao.NewRepository(backend.Conn).SelectByName(context.Background(), "retry")
+	require.NoError(t, err)
+	assert.NotNil(t, row.ClonedAt)
+}
+
 func runWithMySQL(m *testing.M) int {
 	if !dbtestutil.CanUseTemporaryMySQL() {
 		return m.Run()
@@ -412,7 +448,7 @@ func runWithMySQL(m *testing.M) int {
 	return m.Run()
 }
 
-func newDatabaseStorer(t *testing.T) *DatabaseStorer {
+func newTestDatabase(t *testing.T) *sql.DB {
 	t.Helper()
 	if mysqlPort == 0 {
 		t.Skip("mysqld is not found")
@@ -428,7 +464,12 @@ func newDatabaseStorer(t *testing.T) *DatabaseStorer {
 	t.Cleanup(func() { conn.Close() })
 	_, err = conn.Exec(database.Schema)
 	require.NoError(t, err)
+	return conn
+}
 
+func newDatabaseStorer(t *testing.T) *DatabaseStorer {
+	t.Helper()
+	conn := newTestDatabase(t)
 	repo, err := dao.NewRepository(conn).Create(context.Background(), &database.Repository{Name: t.Name(), NextObjectId: 1})
 	require.NoError(t, err)
 	return NewDatabaseStorer(conn, repo.Id)

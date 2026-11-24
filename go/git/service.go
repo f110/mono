@@ -16,7 +16,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"go.f110.dev/go-memcached/client"
 	"go.f110.dev/xerrors"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
@@ -31,13 +30,10 @@ import (
 // The repositories are fetched from the provider when the requested repository is not known,
 // and are opened when they are used.
 type DataService struct {
-	repos                  RepositoryProvider
-	storageClient          ObjectStorageInterface
-	cachePool              *client.SinglePool
-	packCache              *PackfileCache
-	tokenProvider          *githubutil.TokenProvider
-	initTimeout            time.Duration
-	disableInflatePackFile bool
+	repos         RepositoryProvider
+	backend       Backend
+	tokenProvider *githubutil.TokenProvider
+	initTimeout   time.Duration
 
 	mu   sync.RWMutex
 	repo map[string]*RepositoryConfig
@@ -45,10 +41,10 @@ type DataService struct {
 
 var _ GitDataServer = &DataService{}
 
-func NewDataService(stClient ObjectStorageInterface, tokenProvider *githubutil.TokenProvider, repos RepositoryProvider) (*DataService, error) {
+func NewDataService(backend Backend, tokenProvider *githubutil.TokenProvider, repos RepositoryProvider) (*DataService, error) {
 	return &DataService{
 		repos:         repos,
-		storageClient: stClient,
+		backend:       backend,
 		tokenProvider: tokenProvider,
 		initTimeout:   5 * time.Minute,
 		repo:          make(map[string]*RepositoryConfig),
@@ -63,23 +59,8 @@ func NewDataServiceWithGoGit(repo map[string]*goGit.Repository) (*DataService, e
 	return NewDataService(nil, nil, NewStaticRepositoryProvider(repos))
 }
 
-func (g *DataService) SetCachePool(c *client.SinglePool) *DataService {
-	g.cachePool = c
-	return g
-}
-
-func (g *DataService) SetPackCache(c *PackfileCache) *DataService {
-	g.packCache = c
-	return g
-}
-
 func (g *DataService) SetInitTimeout(d time.Duration) *DataService {
 	g.initTimeout = d
-	return g
-}
-
-func (g *DataService) SetDisableInflatePackFile(b bool) *DataService {
-	g.disableInflatePackFile = b
 	return g
 }
 
@@ -100,7 +81,7 @@ func (g *DataService) refresh(ctx context.Context) ([]*RepositoryConfig, error) 
 }
 
 func (g *DataService) openRepository(ctx context.Context, repo *RepositoryConfig) (*goGit.Repository, error) {
-	if err := repo.Open(ctx, g.storageClient, g.cachePool, g.packCache, g.tokenProvider, g.initTimeout, g.disableInflatePackFile); err != nil {
+	if err := repo.Open(ctx, g.backend, g.tokenProvider, g.initTimeout); err != nil {
 		return nil, err
 	}
 	return repo.goGit, nil
