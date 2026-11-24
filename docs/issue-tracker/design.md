@@ -446,6 +446,11 @@ GitHub App の認証情報（Makefile の `GITHUB`）を渡す。change-id は B
 
 - イメージは `containers/issue` で作り、マニフェストはビルド時にイメージの digest で参照する（`kustomization` の `images`）
 - ops の overlay では、namespace、Web UI の URL、heimdallr の公開鍵・Build の API・git-data-service のアドレス、GitHub App の認証情報を与える
+  - リソース名は `namePrefix`（`dev-` / `prod-`）で環境名を付ける。名前が変わるので、server と migrate の `--dsn` の MySQL のホストも
+    patch で置き換える
+  - `app.kubernetes.io/instance` ラベルは patch で付ける。`labels` は StatefulSet の `volumeClaimTemplates` にもラベルを付け、
+    既存の StatefulSet と食い違う（`volumeClaimTemplates` は変更できない）
+  - StorageClass とサーバーの `TZ` も overlay で与える
 - heimdallr の `Backend` も ops に置く。パスで振り分け、`/mono.issue.Issue/`・`/mcp`・`/webhook` を issue-server に、それ以外を
   Web UI に向ける。GitHub の webhook の登録も `Backend` で行う
 - migrate の Job は、`kustomization` が名前の末尾にイメージの digest の先頭 6 文字を付け、イメージごとに別の Job にする（ops の
