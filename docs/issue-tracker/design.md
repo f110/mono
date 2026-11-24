@@ -444,7 +444,12 @@ GitHub App の認証情報（Makefile の `GITHUB`）を渡す。change-id は B
 | `base` | issue-server・Web UI（`simple-http-server`）・MariaDB の StatefulSet・migrate の Job。`cd_artifact` で zot に保存する |
 | `local` | heimdallr・Build・git-data-service・GitHub のないクラスタ（kind など）向け。それらのフラグを渡さずに動かす（§9.1） |
 
-- イメージは `containers/issue` で作り、マニフェストはビルド時にイメージの digest で参照する（`kustomization` の `images`）
+- イメージは `containers/issue` で作る。`base` はイメージを digest なしで参照し（`repo.center.x.f110.dev/issue/server` と
+  `.../frontend`）、migrate の Job の名前も `issue-migrate` に固定する。dev と prod が同じ `base` を参照しても、環境ごとに
+  違うイメージを使えるようにするため
+- `local` はビルド時にイメージの digest で参照し（`kustomization` の `images`）、migrate の Job の名前の末尾に digest の
+  先頭 6 文字を付ける。Job の template は変更できないので、イメージごとに別の Job にして、そのまま apply し直せるようにする
+- ops の overlay では、イメージの digest を kustomize の `images:` で与える。server・Web UI・migrate のイメージが置き換わる
 - ops の overlay では、namespace、Web UI の URL、heimdallr の公開鍵・Build の API・git-data-service のアドレス、GitHub App の認証情報を与える
   - リソース名は `namePrefix`（`dev-` / `prod-`）で環境名を付ける。名前が変わるので、server と migrate の `--dsn` の MySQL のホストも
     patch で置き換える
@@ -453,8 +458,12 @@ GitHub App の認証情報（Makefile の `GITHUB`）を渡す。change-id は B
   - StorageClass とサーバーの `TZ` も overlay で与える
 - heimdallr の `Backend` も ops に置く。パスで振り分け、`/mono.issue.Issue/`・`/mcp`・`/webhook` を issue-server に、それ以外を
   Web UI に向ける。GitHub の webhook の登録も `Backend` で行う
-- migrate の Job は、`kustomization` が名前の末尾にイメージの digest の先頭 6 文字を付け、イメージごとに別の Job にする（ops の
-  Build と同じ）。終わった Job は `ttlSecondsAfterFinished` で消える
+- migrate の Job は、ops の overlay で ArgoCD の Sync hook（`argocd.argoproj.io/hook: Sync`、
+  `argocd.argoproj.io/hook-delete-policy: BeforeHookCreation`）にする。sync のたびに前の Job を消して作り直すので、名前は
+  固定でよい。hook の annotation は `base` には入れず、`base` を ArgoCD に依存させない
+  - issue-server の `/_readyz` は `database.SchemaHash` とスキーマが一致するかを確かめる。migrate と Pod の入れ替えが同時に
+    始まっても、スキーマが合うまで新しい Pod は Ready にならない
+  - 終わった Job は `ttlSecondsAfterFinished` で消える
 
 ## 10. 実装順序
 
