@@ -3,6 +3,8 @@ package server
 import (
 	"context"
 	"errors"
+	"path"
+	"regexp"
 	"slices"
 	"strings"
 	"time"
@@ -433,8 +435,8 @@ func (h *ReviewHandler) RoundDiff(ctx context.Context, req *connect.Request[api.
 }
 
 // generatedFiles returns the paths of the generated files like GitHub. linguist-generated of .gitattributes at the root
-// of the commit is used if it is specified, otherwise the heuristics of Linguist are used. Only the top-level
-// .gitattributes is read. The deleted files and the binary files are judged only by the path.
+// of the commit is used if it is specified, otherwise the heuristics of Linguist are used. The content of the Go files
+// is judged by the convention of Go instead of Linguist. Only the top-level .gitattributes is read. The deleted files and the binary files are judged only by the path.
 func generatedFiles(ctx context.Context, repo *jujutsu.Repository, commit string, files []*jujutsu.FileDiff) ([]string, error) {
 	content, err := repo.File(ctx, commit, ".gitattributes")
 	if _, ok := errors.AsType[*jujutsu.Error](err); ok {
@@ -457,6 +459,12 @@ func generatedFiles(ctx context.Context, repo *jujutsu.Repository, commit string
 			if err != nil {
 				return nil, toJujutsuError(err)
 			}
+		}
+		if path.Ext(v.Path) == ".go" {
+			if enry.IsGenerated(v.Path, nil) || generatedGoRegexp.Match(data) {
+				generated = append(generated, v.Path)
+			}
+			continue
 		}
 		if enry.IsGenerated(v.Path, data) {
 			generated = append(generated, v.Path)
@@ -487,6 +495,9 @@ var reviewStates = map[review.State]api.ReviewState{
 	review.StateApproved:  api.ReviewState_REVIEW_STATE_APPROVED,
 	review.StateDiscarded: api.ReviewState_REVIEW_STATE_DISCARDED,
 }
+
+// generatedGoRegexp is the header of the generated Go files defined at https://go.dev/s/generatedcode
+var generatedGoRegexp = regexp.MustCompile(`(?m)^// Code generated .* DO NOT EDIT\.$`)
 
 var diffSides = map[review.Side]api.DiffSide{
 	review.SideNew: api.DiffSide_DIFF_SIDE_NEW,
