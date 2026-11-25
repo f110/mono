@@ -69,6 +69,58 @@ type execConn interface {
 	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
 }
 
+const (
+	// maxPlaceholders is the maximum number of the placeholders in a statement. It is the limit of SQLite which is
+	// lower than the limit of MySQL.
+	maxPlaceholders = 32766
+	// maxStatementSize is the maximum size of a statement. It is the default of max_allowed_packet of MySQL 5.7
+	// which is the smallest among the defaults of MySQL and MariaDB.
+	maxStatementSize = 4 << 20
+)
+
+// insertMulti executes INSERT of the rows. query is the statement until VALUES and placeholder is the placeholders
+// of a row. The rows are split into the statements so that each statement does not exceed maxPlaceholders and
+// maxStatementSize. The string and the binary count twice their length because the driver may escape them.
+func insertMulti(ctx context.Context, conn execConn, query, placeholder string, rows [][]any) error {
+	values := make([]string, 0)
+	args := make([]any, 0)
+	size := len(query)
+	for _, row := range rows {
+		rowSize := len(placeholder) + 2
+		for _, v := range row {
+			switch v := v.(type) {
+			case string:
+				rowSize += 2*len(v) + 10
+			case []byte:
+				rowSize += 2*len(v) + 10
+			case *string:
+				if v != nil {
+					rowSize += 2*len(*v) + 10
+				}
+			case *[]byte:
+				if v != nil {
+					rowSize += 2*len(*v) + 10
+				}
+			default:
+				rowSize += 32
+			}
+		}
+		if len(values) > 0 && (len(args)+len(row) > maxPlaceholders || size+rowSize > maxStatementSize) {
+			if _, err := conn.ExecContext(ctx, query+strings.Join(values, ", "), args...); err != nil {
+				return err
+			}
+			values = make([]string, 0)
+			args = make([]any, 0)
+			size = len(query)
+		}
+		values = append(values, placeholder)
+		args = append(args, row...)
+		size += rowSize
+	}
+	_, err := conn.ExecContext(ctx, query+strings.Join(values, ", "), args...)
+	return err
+}
+
 type Actor struct {
 	conn *sql.DB
 }
@@ -82,6 +134,7 @@ type ActorInterface interface {
 	SelectByOwner(ctx context.Context, ownerId int32) (*database.Actor, error)
 	ListByKind(ctx context.Context, kind uint32, opt ...ListOption) ([]*database.Actor, error)
 	Create(ctx context.Context, actor *database.Actor, opt ...ExecOption) (*database.Actor, error)
+	CreateMulti(ctx context.Context, actor []*database.Actor, opt ...ExecOption) error
 	Update(ctx context.Context, actor *database.Actor, opt ...ExecOption) error
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
@@ -289,6 +342,25 @@ func (d *Actor) Create(ctx context.Context, actor *database.Actor, opt ...ExecOp
 	return actor, nil
 }
 
+func (d *Actor) CreateMulti(ctx context.Context, actor []*database.Actor, opt ...ExecOption) error {
+	if len(actor) == 0 {
+		return nil
+	}
+	execOpts := newExecOpt(opt...)
+	if execOpts.tx == nil {
+		return d.Tx(ctx, func(tx *sql.Tx) error {
+			return d.CreateMulti(ctx, actor, append(opt, WithTx(tx))...)
+		})
+	}
+
+	now := time.Now()
+	rows := make([][]any, len(actor))
+	for i, v := range actor {
+		rows[i] = []any{v.Kind, v.Name, v.OwnerId, v.Subject, now}
+	}
+	return insertMulti(ctx, execOpts.tx, "INSERT INTO `actor` (`kind`, `name`, `owner_id`, `subject`, `created_at`) VALUES ", "(?, ?, ?, ?, ?)", rows)
+}
+
 func (d *Actor) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
 	execOpts := newExecOpt(opt...)
 	var conn execConn
@@ -364,6 +436,7 @@ type ComponentInterface interface {
 	SelectMulti(ctx context.Context, id ...int32) ([]*database.Component, error)
 	ListAll(ctx context.Context, opt ...ListOption) ([]*database.Component, error)
 	Create(ctx context.Context, component *database.Component, opt ...ExecOption) (*database.Component, error)
+	CreateMulti(ctx context.Context, component []*database.Component, opt ...ExecOption) error
 	Update(ctx context.Context, component *database.Component, opt ...ExecOption) error
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
@@ -503,6 +576,25 @@ func (d *Component) Create(ctx context.Context, component *database.Component, o
 	return component, nil
 }
 
+func (d *Component) CreateMulti(ctx context.Context, component []*database.Component, opt ...ExecOption) error {
+	if len(component) == 0 {
+		return nil
+	}
+	execOpts := newExecOpt(opt...)
+	if execOpts.tx == nil {
+		return d.Tx(ctx, func(tx *sql.Tx) error {
+			return d.CreateMulti(ctx, component, append(opt, WithTx(tx))...)
+		})
+	}
+
+	now := time.Now()
+	rows := make([][]any, len(component))
+	for i, v := range component {
+		rows[i] = []any{v.Name, now}
+	}
+	return insertMulti(ctx, execOpts.tx, "INSERT INTO `component` (`name`, `created_at`) VALUES ", "(?, ?)", rows)
+}
+
 func (d *Component) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
 	execOpts := newExecOpt(opt...)
 	var conn execConn
@@ -578,6 +670,7 @@ type TicketTemplateInterface interface {
 	SelectMulti(ctx context.Context, id ...int32) ([]*database.TicketTemplate, error)
 	ListAll(ctx context.Context, opt ...ListOption) ([]*database.TicketTemplate, error)
 	Create(ctx context.Context, ticketTemplate *database.TicketTemplate, opt ...ExecOption) (*database.TicketTemplate, error)
+	CreateMulti(ctx context.Context, ticketTemplate []*database.TicketTemplate, opt ...ExecOption) error
 	Update(ctx context.Context, ticketTemplate *database.TicketTemplate, opt ...ExecOption) error
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
@@ -717,6 +810,25 @@ func (d *TicketTemplate) Create(ctx context.Context, ticketTemplate *database.Ti
 	return ticketTemplate, nil
 }
 
+func (d *TicketTemplate) CreateMulti(ctx context.Context, ticketTemplate []*database.TicketTemplate, opt ...ExecOption) error {
+	if len(ticketTemplate) == 0 {
+		return nil
+	}
+	execOpts := newExecOpt(opt...)
+	if execOpts.tx == nil {
+		return d.Tx(ctx, func(tx *sql.Tx) error {
+			return d.CreateMulti(ctx, ticketTemplate, append(opt, WithTx(tx))...)
+		})
+	}
+
+	now := time.Now()
+	rows := make([][]any, len(ticketTemplate))
+	for i, v := range ticketTemplate {
+		rows[i] = []any{v.Title, v.Body, v.ComponentId, now}
+	}
+	return insertMulti(ctx, execOpts.tx, "INSERT INTO `ticket_template` (`title`, `body`, `component_id`, `created_at`) VALUES ", "(?, ?, ?, ?)", rows)
+}
+
 func (d *TicketTemplate) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
 	execOpts := newExecOpt(opt...)
 	var conn execConn
@@ -793,6 +905,7 @@ type TicketInterface interface {
 	Select(ctx context.Context, id int32) (*database.Ticket, error)
 	SelectMulti(ctx context.Context, id ...int32) ([]*database.Ticket, error)
 	Create(ctx context.Context, ticket *database.Ticket, opt ...ExecOption) (*database.Ticket, error)
+	CreateMulti(ctx context.Context, ticket []*database.Ticket, opt ...ExecOption) error
 	Update(ctx context.Context, ticket *database.Ticket, opt ...ExecOption) error
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
@@ -918,6 +1031,25 @@ func (d *Ticket) Create(ctx context.Context, ticket *database.Ticket, opt ...Exe
 	return ticket, nil
 }
 
+func (d *Ticket) CreateMulti(ctx context.Context, ticket []*database.Ticket, opt ...ExecOption) error {
+	if len(ticket) == 0 {
+		return nil
+	}
+	execOpts := newExecOpt(opt...)
+	if execOpts.tx == nil {
+		return d.Tx(ctx, func(tx *sql.Tx) error {
+			return d.CreateMulti(ctx, ticket, append(opt, WithTx(tx))...)
+		})
+	}
+
+	now := time.Now()
+	rows := make([][]any, len(ticket))
+	for i, v := range ticket {
+		rows[i] = []any{v.Title, v.Body, v.Status, v.Priority, v.ComponentId, v.AssigneeId, v.ReporterId, v.LastActivityAt, v.Type, now}
+	}
+	return insertMulti(ctx, execOpts.tx, "INSERT INTO `ticket` (`title`, `body`, `status`, `priority`, `component_id`, `assignee_id`, `reporter_id`, `last_activity_at`, `type`, `created_at`) VALUES ", "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", rows)
+}
+
 func (d *Ticket) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
 	execOpts := newExecOpt(opt...)
 	var conn execConn
@@ -995,6 +1127,7 @@ type TicketBodyRevisionInterface interface {
 	SelectMulti(ctx context.Context, id ...int32) ([]*database.TicketBodyRevision, error)
 	ListByTicketId(ctx context.Context, ticketId int32, opt ...ListOption) ([]*database.TicketBodyRevision, error)
 	Create(ctx context.Context, ticketBodyRevision *database.TicketBodyRevision, opt ...ExecOption) (*database.TicketBodyRevision, error)
+	CreateMulti(ctx context.Context, ticketBodyRevision []*database.TicketBodyRevision, opt ...ExecOption) error
 	Update(ctx context.Context, ticketBodyRevision *database.TicketBodyRevision, opt ...ExecOption) error
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
@@ -1174,6 +1307,25 @@ func (d *TicketBodyRevision) Create(ctx context.Context, ticketBodyRevision *dat
 	return ticketBodyRevision, nil
 }
 
+func (d *TicketBodyRevision) CreateMulti(ctx context.Context, ticketBodyRevision []*database.TicketBodyRevision, opt ...ExecOption) error {
+	if len(ticketBodyRevision) == 0 {
+		return nil
+	}
+	execOpts := newExecOpt(opt...)
+	if execOpts.tx == nil {
+		return d.Tx(ctx, func(tx *sql.Tx) error {
+			return d.CreateMulti(ctx, ticketBodyRevision, append(opt, WithTx(tx))...)
+		})
+	}
+
+	now := time.Now()
+	rows := make([][]any, len(ticketBodyRevision))
+	for i, v := range ticketBodyRevision {
+		rows[i] = []any{v.TicketId, v.Patch, now}
+	}
+	return insertMulti(ctx, execOpts.tx, "INSERT INTO `ticket_body_revision` (`ticket_id`, `patch`, `created_at`) VALUES ", "(?, ?, ?)", rows)
+}
+
 func (d *TicketBodyRevision) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
 	execOpts := newExecOpt(opt...)
 	var conn execConn
@@ -1253,6 +1405,7 @@ type RelationInterface interface {
 	ListByToId(ctx context.Context, toId int32, opt ...ListOption) ([]*database.Relation, error)
 	SelectByFromIdAndRelationTypeAndToId(ctx context.Context, fromId int32, relationType uint32, toId int32) (*database.Relation, error)
 	Create(ctx context.Context, relation *database.Relation, opt ...ExecOption) (*database.Relation, error)
+	CreateMulti(ctx context.Context, relation []*database.Relation, opt ...ExecOption) error
 	Update(ctx context.Context, relation *database.Relation, opt ...ExecOption) error
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
@@ -1549,6 +1702,25 @@ func (d *Relation) Create(ctx context.Context, relation *database.Relation, opt 
 	return relation, nil
 }
 
+func (d *Relation) CreateMulti(ctx context.Context, relation []*database.Relation, opt ...ExecOption) error {
+	if len(relation) == 0 {
+		return nil
+	}
+	execOpts := newExecOpt(opt...)
+	if execOpts.tx == nil {
+		return d.Tx(ctx, func(tx *sql.Tx) error {
+			return d.CreateMulti(ctx, relation, append(opt, WithTx(tx))...)
+		})
+	}
+
+	now := time.Now()
+	rows := make([][]any, len(relation))
+	for i, v := range relation {
+		rows[i] = []any{v.FromId, v.RelationType, v.ToId, now}
+	}
+	return insertMulti(ctx, execOpts.tx, "INSERT INTO `relation` (`from_id`, `relation_type`, `to_id`, `created_at`) VALUES ", "(?, ?, ?, ?)", rows)
+}
+
 func (d *Relation) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
 	execOpts := newExecOpt(opt...)
 	var conn execConn
@@ -1627,6 +1799,7 @@ type MentionInterface interface {
 	ListByFromId(ctx context.Context, fromId int32, opt ...ListOption) ([]*database.Mention, error)
 	ListByToId(ctx context.Context, toId int32, opt ...ListOption) ([]*database.Mention, error)
 	Create(ctx context.Context, mention *database.Mention, opt ...ExecOption) (*database.Mention, error)
+	CreateMulti(ctx context.Context, mention []*database.Mention, opt ...ExecOption) error
 	Update(ctx context.Context, mention *database.Mention, opt ...ExecOption) error
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
@@ -1895,6 +2068,25 @@ func (d *Mention) Create(ctx context.Context, mention *database.Mention, opt ...
 	return mention, nil
 }
 
+func (d *Mention) CreateMulti(ctx context.Context, mention []*database.Mention, opt ...ExecOption) error {
+	if len(mention) == 0 {
+		return nil
+	}
+	execOpts := newExecOpt(opt...)
+	if execOpts.tx == nil {
+		return d.Tx(ctx, func(tx *sql.Tx) error {
+			return d.CreateMulti(ctx, mention, append(opt, WithTx(tx))...)
+		})
+	}
+
+	now := time.Now()
+	rows := make([][]any, len(mention))
+	for i, v := range mention {
+		rows[i] = []any{v.FromId, v.ToId, now}
+	}
+	return insertMulti(ctx, execOpts.tx, "INSERT INTO `mention` (`from_id`, `to_id`, `created_at`) VALUES ", "(?, ?, ?)", rows)
+}
+
 func (d *Mention) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
 	execOpts := newExecOpt(opt...)
 	var conn execConn
@@ -1973,6 +2165,7 @@ type CommentInterface interface {
 	SelectMulti(ctx context.Context, id ...int32) ([]*database.Comment, error)
 	ListByTicketId(ctx context.Context, ticketId int32, opt ...ListOption) ([]*database.Comment, error)
 	Create(ctx context.Context, comment *database.Comment, opt ...ExecOption) (*database.Comment, error)
+	CreateMulti(ctx context.Context, comment []*database.Comment, opt ...ExecOption) error
 	Update(ctx context.Context, comment *database.Comment, opt ...ExecOption) error
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
@@ -2178,6 +2371,25 @@ func (d *Comment) Create(ctx context.Context, comment *database.Comment, opt ...
 	return comment, nil
 }
 
+func (d *Comment) CreateMulti(ctx context.Context, comment []*database.Comment, opt ...ExecOption) error {
+	if len(comment) == 0 {
+		return nil
+	}
+	execOpts := newExecOpt(opt...)
+	if execOpts.tx == nil {
+		return d.Tx(ctx, func(tx *sql.Tx) error {
+			return d.CreateMulti(ctx, comment, append(opt, WithTx(tx))...)
+		})
+	}
+
+	now := time.Now()
+	rows := make([][]any, len(comment))
+	for i, v := range comment {
+		rows[i] = []any{v.TicketId, v.ActorId, v.Body, v.DeletedAt, now}
+	}
+	return insertMulti(ctx, execOpts.tx, "INSERT INTO `comment` (`ticket_id`, `actor_id`, `body`, `deleted_at`, `created_at`) VALUES ", "(?, ?, ?, ?, ?)", rows)
+}
+
 func (d *Comment) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
 	execOpts := newExecOpt(opt...)
 	var conn execConn
@@ -2255,6 +2467,7 @@ type CommentRevisionInterface interface {
 	SelectMulti(ctx context.Context, id ...int32) ([]*database.CommentRevision, error)
 	ListByCommentId(ctx context.Context, commentId int32, opt ...ListOption) ([]*database.CommentRevision, error)
 	Create(ctx context.Context, commentRevision *database.CommentRevision, opt ...ExecOption) (*database.CommentRevision, error)
+	CreateMulti(ctx context.Context, commentRevision []*database.CommentRevision, opt ...ExecOption) error
 	Update(ctx context.Context, commentRevision *database.CommentRevision, opt ...ExecOption) error
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
@@ -2434,6 +2647,25 @@ func (d *CommentRevision) Create(ctx context.Context, commentRevision *database.
 	return commentRevision, nil
 }
 
+func (d *CommentRevision) CreateMulti(ctx context.Context, commentRevision []*database.CommentRevision, opt ...ExecOption) error {
+	if len(commentRevision) == 0 {
+		return nil
+	}
+	execOpts := newExecOpt(opt...)
+	if execOpts.tx == nil {
+		return d.Tx(ctx, func(tx *sql.Tx) error {
+			return d.CreateMulti(ctx, commentRevision, append(opt, WithTx(tx))...)
+		})
+	}
+
+	now := time.Now()
+	rows := make([][]any, len(commentRevision))
+	for i, v := range commentRevision {
+		rows[i] = []any{v.CommentId, v.Patch, now}
+	}
+	return insertMulti(ctx, execOpts.tx, "INSERT INTO `comment_revision` (`comment_id`, `patch`, `created_at`) VALUES ", "(?, ?, ?)", rows)
+}
+
 func (d *CommentRevision) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
 	execOpts := newExecOpt(opt...)
 	var conn execConn
@@ -2512,6 +2744,7 @@ type ActivityInterface interface {
 	SelectMulti(ctx context.Context, id ...int32) ([]*database.Activity, error)
 	ListByTicketId(ctx context.Context, ticketId int32, opt ...ListOption) ([]*database.Activity, error)
 	Create(ctx context.Context, activity *database.Activity, opt ...ExecOption) (*database.Activity, error)
+	CreateMulti(ctx context.Context, activity []*database.Activity, opt ...ExecOption) error
 	Update(ctx context.Context, activity *database.Activity, opt ...ExecOption) error
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
@@ -2717,6 +2950,25 @@ func (d *Activity) Create(ctx context.Context, activity *database.Activity, opt 
 	return activity, nil
 }
 
+func (d *Activity) CreateMulti(ctx context.Context, activity []*database.Activity, opt ...ExecOption) error {
+	if len(activity) == 0 {
+		return nil
+	}
+	execOpts := newExecOpt(opt...)
+	if execOpts.tx == nil {
+		return d.Tx(ctx, func(tx *sql.Tx) error {
+			return d.CreateMulti(ctx, activity, append(opt, WithTx(tx))...)
+		})
+	}
+
+	now := time.Now()
+	rows := make([][]any, len(activity))
+	for i, v := range activity {
+		rows[i] = []any{v.TicketId, v.ActorId, v.Kind, v.FromValue, v.ToValue, v.RefId, now}
+	}
+	return insertMulti(ctx, execOpts.tx, "INSERT INTO `activity` (`ticket_id`, `actor_id`, `kind`, `from_value`, `to_value`, `ref_id`, `created_at`) VALUES ", "(?, ?, ?, ?, ?, ?, ?)", rows)
+}
+
 func (d *Activity) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
 	execOpts := newExecOpt(opt...)
 	var conn execConn
@@ -2796,6 +3048,7 @@ type CommitLinkInterface interface {
 	SelectByTicketIdAndRepositoryIdAndSha(ctx context.Context, ticketId int32, repositoryId int32, sha string) (*database.CommitLink, error)
 	ListWithoutChangeId(ctx context.Context, opt ...ListOption) ([]*database.CommitLink, error)
 	Create(ctx context.Context, commitLink *database.CommitLink, opt ...ExecOption) (*database.CommitLink, error)
+	CreateMulti(ctx context.Context, commitLink []*database.CommitLink, opt ...ExecOption) error
 	Update(ctx context.Context, commitLink *database.CommitLink, opt ...ExecOption) error
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
@@ -3051,6 +3304,25 @@ func (d *CommitLink) Create(ctx context.Context, commitLink *database.CommitLink
 	return commitLink, nil
 }
 
+func (d *CommitLink) CreateMulti(ctx context.Context, commitLink []*database.CommitLink, opt ...ExecOption) error {
+	if len(commitLink) == 0 {
+		return nil
+	}
+	execOpts := newExecOpt(opt...)
+	if execOpts.tx == nil {
+		return d.Tx(ctx, func(tx *sql.Tx) error {
+			return d.CreateMulti(ctx, commitLink, append(opt, WithTx(tx))...)
+		})
+	}
+
+	now := time.Now()
+	rows := make([][]any, len(commitLink))
+	for i, v := range commitLink {
+		rows[i] = []any{v.TicketId, v.RepositoryId, v.Sha, v.ChangeId, v.Subject, v.Author, v.Trailer, v.CommittedAt, now}
+	}
+	return insertMulti(ctx, execOpts.tx, "INSERT INTO `commit_link` (`ticket_id`, `repository_id`, `sha`, `change_id`, `subject`, `author`, `trailer`, `committed_at`, `created_at`) VALUES ", "(?, ?, ?, ?, ?, ?, ?, ?, ?)", rows)
+}
+
 func (d *CommitLink) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
 	execOpts := newExecOpt(opt...)
 	var conn execConn
@@ -3129,6 +3401,7 @@ type PullRequestLinkInterface interface {
 	ListByTicketId(ctx context.Context, ticketId int32, opt ...ListOption) ([]*database.PullRequestLink, error)
 	ListByRepositoryIdAndNumber(ctx context.Context, repositoryId int32, number int32, opt ...ListOption) ([]*database.PullRequestLink, error)
 	Create(ctx context.Context, pullRequestLink *database.PullRequestLink, opt ...ExecOption) (*database.PullRequestLink, error)
+	CreateMulti(ctx context.Context, pullRequestLink []*database.PullRequestLink, opt ...ExecOption) error
 	Update(ctx context.Context, pullRequestLink *database.PullRequestLink, opt ...ExecOption) error
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
@@ -3363,6 +3636,25 @@ func (d *PullRequestLink) Create(ctx context.Context, pullRequestLink *database.
 	return pullRequestLink, nil
 }
 
+func (d *PullRequestLink) CreateMulti(ctx context.Context, pullRequestLink []*database.PullRequestLink, opt ...ExecOption) error {
+	if len(pullRequestLink) == 0 {
+		return nil
+	}
+	execOpts := newExecOpt(opt...)
+	if execOpts.tx == nil {
+		return d.Tx(ctx, func(tx *sql.Tx) error {
+			return d.CreateMulti(ctx, pullRequestLink, append(opt, WithTx(tx))...)
+		})
+	}
+
+	now := time.Now()
+	rows := make([][]any, len(pullRequestLink))
+	for i, v := range pullRequestLink {
+		rows[i] = []any{v.TicketId, v.RepositoryId, v.Number, v.Title, v.Author, v.State, v.HeadSha, now}
+	}
+	return insertMulti(ctx, execOpts.tx, "INSERT INTO `pull_request_link` (`ticket_id`, `repository_id`, `number`, `title`, `author`, `state`, `head_sha`, `created_at`) VALUES ", "(?, ?, ?, ?, ?, ?, ?, ?)", rows)
+}
+
 func (d *PullRequestLink) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
 	execOpts := newExecOpt(opt...)
 	var conn execConn
@@ -3438,6 +3730,7 @@ type GithubEventInterface interface {
 	SelectMulti(ctx context.Context, id ...int32) ([]*database.GithubEvent, error)
 	ListByState(ctx context.Context, state uint32, opt ...ListOption) ([]*database.GithubEvent, error)
 	Create(ctx context.Context, githubEvent *database.GithubEvent, opt ...ExecOption) (*database.GithubEvent, error)
+	CreateMulti(ctx context.Context, githubEvent []*database.GithubEvent, opt ...ExecOption) error
 	Update(ctx context.Context, githubEvent *database.GithubEvent, opt ...ExecOption) error
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
@@ -3576,6 +3869,25 @@ func (d *GithubEvent) Create(ctx context.Context, githubEvent *database.GithubEv
 
 	githubEvent.ResetMark()
 	return githubEvent, nil
+}
+
+func (d *GithubEvent) CreateMulti(ctx context.Context, githubEvent []*database.GithubEvent, opt ...ExecOption) error {
+	if len(githubEvent) == 0 {
+		return nil
+	}
+	execOpts := newExecOpt(opt...)
+	if execOpts.tx == nil {
+		return d.Tx(ctx, func(tx *sql.Tx) error {
+			return d.CreateMulti(ctx, githubEvent, append(opt, WithTx(tx))...)
+		})
+	}
+
+	now := time.Now()
+	rows := make([][]any, len(githubEvent))
+	for i, v := range githubEvent {
+		rows[i] = []any{v.DeliveryId, v.EventType, v.Action, v.Payload, v.State, v.Status, v.LastError, now}
+	}
+	return insertMulti(ctx, execOpts.tx, "INSERT INTO `github_event` (`delivery_id`, `event_type`, `action`, `payload`, `state`, `status`, `last_error`, `created_at`) VALUES ", "(?, ?, ?, ?, ?, ?, ?, ?)", rows)
 }
 
 func (d *GithubEvent) Delete(ctx context.Context, id int32, opt ...ExecOption) error {

@@ -69,6 +69,58 @@ type execConn interface {
 	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
 }
 
+const (
+	// maxPlaceholders is the maximum number of the placeholders in a statement. It is the limit of SQLite which is
+	// lower than the limit of MySQL.
+	maxPlaceholders = 32766
+	// maxStatementSize is the maximum size of a statement. It is the default of max_allowed_packet of MySQL 5.7
+	// which is the smallest among the defaults of MySQL and MariaDB.
+	maxStatementSize = 4 << 20
+)
+
+// insertMulti executes INSERT of the rows. query is the statement until VALUES and placeholder is the placeholders
+// of a row. The rows are split into the statements so that each statement does not exceed maxPlaceholders and
+// maxStatementSize. The string and the binary count twice their length because the driver may escape them.
+func insertMulti(ctx context.Context, conn execConn, query, placeholder string, rows [][]any) error {
+	values := make([]string, 0)
+	args := make([]any, 0)
+	size := len(query)
+	for _, row := range rows {
+		rowSize := len(placeholder) + 2
+		for _, v := range row {
+			switch v := v.(type) {
+			case string:
+				rowSize += 2*len(v) + 10
+			case []byte:
+				rowSize += 2*len(v) + 10
+			case *string:
+				if v != nil {
+					rowSize += 2*len(*v) + 10
+				}
+			case *[]byte:
+				if v != nil {
+					rowSize += 2*len(*v) + 10
+				}
+			default:
+				rowSize += 32
+			}
+		}
+		if len(values) > 0 && (len(args)+len(row) > maxPlaceholders || size+rowSize > maxStatementSize) {
+			if _, err := conn.ExecContext(ctx, query+strings.Join(values, ", "), args...); err != nil {
+				return err
+			}
+			values = make([]string, 0)
+			args = make([]any, 0)
+			size = len(query)
+		}
+		values = append(values, placeholder)
+		args = append(args, row...)
+		size += rowSize
+	}
+	_, err := conn.ExecContext(ctx, query+strings.Join(values, ", "), args...)
+	return err
+}
+
 type SourceRepository struct {
 	conn *sql.DB
 }
@@ -80,6 +132,7 @@ type SourceRepositoryInterface interface {
 	ListAll(ctx context.Context, opt ...ListOption) ([]*database.SourceRepository, error)
 	ListByUrl(ctx context.Context, url string, opt ...ListOption) ([]*database.SourceRepository, error)
 	Create(ctx context.Context, sourceRepository *database.SourceRepository, opt ...ExecOption) (*database.SourceRepository, error)
+	CreateMulti(ctx context.Context, sourceRepository []*database.SourceRepository, opt ...ExecOption) error
 	Update(ctx context.Context, sourceRepository *database.SourceRepository, opt ...ExecOption) error
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
@@ -257,6 +310,25 @@ func (d *SourceRepository) Create(ctx context.Context, sourceRepository *databas
 	return sourceRepository, nil
 }
 
+func (d *SourceRepository) CreateMulti(ctx context.Context, sourceRepository []*database.SourceRepository, opt ...ExecOption) error {
+	if len(sourceRepository) == 0 {
+		return nil
+	}
+	execOpts := newExecOpt(opt...)
+	if execOpts.tx == nil {
+		return d.Tx(ctx, func(tx *sql.Tx) error {
+			return d.CreateMulti(ctx, sourceRepository, append(opt, WithTx(tx))...)
+		})
+	}
+
+	now := time.Now()
+	rows := make([][]any, len(sourceRepository))
+	for i, v := range sourceRepository {
+		rows[i] = []any{v.Url, v.CloneUrl, v.Name, v.Private, v.DefaultBranch, v.BazelVersion, now}
+	}
+	return insertMulti(ctx, execOpts.tx, "INSERT INTO `source_repository` (`url`, `clone_url`, `name`, `private`, `default_branch`, `bazel_version`, `created_at`) VALUES ", "(?, ?, ?, ?, ?, ?, ?)", rows)
+}
+
 func (d *SourceRepository) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
 	execOpts := newExecOpt(opt...)
 	var conn execConn
@@ -340,6 +412,7 @@ type TaskInterface interface {
 	ListUniqJobName(ctx context.Context, repositoryId int32, opt ...ListOption) ([]*database.Task, error)
 	ListByRevision(ctx context.Context, repositoryId int32, revision string, opt ...ListOption) ([]*database.Task, error)
 	Create(ctx context.Context, task *database.Task, opt ...ExecOption) (*database.Task, error)
+	CreateMulti(ctx context.Context, task []*database.Task, opt ...ExecOption) error
 	Update(ctx context.Context, task *database.Task, opt ...ExecOption) error
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
@@ -843,6 +916,25 @@ func (d *Task) Create(ctx context.Context, task *database.Task, opt ...ExecOptio
 	return task, nil
 }
 
+func (d *Task) CreateMulti(ctx context.Context, task []*database.Task, opt ...ExecOption) error {
+	if len(task) == 0 {
+		return nil
+	}
+	execOpts := newExecOpt(opt...)
+	if execOpts.tx == nil {
+		return d.Tx(ctx, func(tx *sql.Tx) error {
+			return d.CreateMulti(ctx, task, append(opt, WithTx(tx))...)
+		})
+	}
+
+	now := time.Now()
+	rows := make([][]any, len(task))
+	for i, v := range task {
+		rows[i] = []any{v.RepositoryId, v.JobName, v.JobConfiguration, v.ParsedJobConfiguration, v.Revision, v.IsTrunk, v.BazelVersion, v.Success, v.LogFile, v.Command, v.Target, v.Targets, v.Platform, v.Via, v.ConfigName, v.Node, v.JobObjectName, v.Manifest, v.Container, v.ExecutedTestsCount, v.SucceededTestsCount, v.StartAt, v.FinishedAt, now}
+	}
+	return insertMulti(ctx, execOpts.tx, "INSERT INTO `task` (`repository_id`, `job_name`, `job_configuration`, `parsed_job_configuration`, `revision`, `is_trunk`, `bazel_version`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `job_object_name`, `manifest`, `container`, `executed_tests_count`, `succeeded_tests_count`, `start_at`, `finished_at`, `created_at`) VALUES ", "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", rows)
+}
+
 func (d *Task) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
 	execOpts := newExecOpt(opt...)
 	var conn execConn
@@ -919,6 +1011,7 @@ type TrustedUserInterface interface {
 	ListAll(ctx context.Context, opt ...ListOption) ([]*database.TrustedUser, error)
 	ListByGithubId(ctx context.Context, githubId int64, opt ...ListOption) ([]*database.TrustedUser, error)
 	Create(ctx context.Context, trustedUser *database.TrustedUser, opt ...ExecOption) (*database.TrustedUser, error)
+	CreateMulti(ctx context.Context, trustedUser []*database.TrustedUser, opt ...ExecOption) error
 	Update(ctx context.Context, trustedUser *database.TrustedUser, opt ...ExecOption) error
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
@@ -1096,6 +1189,25 @@ func (d *TrustedUser) Create(ctx context.Context, trustedUser *database.TrustedU
 	return trustedUser, nil
 }
 
+func (d *TrustedUser) CreateMulti(ctx context.Context, trustedUser []*database.TrustedUser, opt ...ExecOption) error {
+	if len(trustedUser) == 0 {
+		return nil
+	}
+	execOpts := newExecOpt(opt...)
+	if execOpts.tx == nil {
+		return d.Tx(ctx, func(tx *sql.Tx) error {
+			return d.CreateMulti(ctx, trustedUser, append(opt, WithTx(tx))...)
+		})
+	}
+
+	now := time.Now()
+	rows := make([][]any, len(trustedUser))
+	for i, v := range trustedUser {
+		rows[i] = []any{v.GithubId, v.Username, now}
+	}
+	return insertMulti(ctx, execOpts.tx, "INSERT INTO `trusted_user` (`github_id`, `username`, `created_at`) VALUES ", "(?, ?, ?)", rows)
+}
+
 func (d *TrustedUser) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
 	execOpts := newExecOpt(opt...)
 	var conn execConn
@@ -1171,6 +1283,7 @@ type PermitPullRequestInterface interface {
 	SelectMulti(ctx context.Context, id ...int32) ([]*database.PermitPullRequest, error)
 	ListByRepositoryAndNumber(ctx context.Context, repository string, number int32, opt ...ListOption) ([]*database.PermitPullRequest, error)
 	Create(ctx context.Context, permitPullRequest *database.PermitPullRequest, opt ...ExecOption) (*database.PermitPullRequest, error)
+	CreateMulti(ctx context.Context, permitPullRequest []*database.PermitPullRequest, opt ...ExecOption) error
 	Update(ctx context.Context, permitPullRequest *database.PermitPullRequest, opt ...ExecOption) error
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
@@ -1312,6 +1425,25 @@ func (d *PermitPullRequest) Create(ctx context.Context, permitPullRequest *datab
 	return permitPullRequest, nil
 }
 
+func (d *PermitPullRequest) CreateMulti(ctx context.Context, permitPullRequest []*database.PermitPullRequest, opt ...ExecOption) error {
+	if len(permitPullRequest) == 0 {
+		return nil
+	}
+	execOpts := newExecOpt(opt...)
+	if execOpts.tx == nil {
+		return d.Tx(ctx, func(tx *sql.Tx) error {
+			return d.CreateMulti(ctx, permitPullRequest, append(opt, WithTx(tx))...)
+		})
+	}
+
+	now := time.Now()
+	rows := make([][]any, len(permitPullRequest))
+	for i, v := range permitPullRequest {
+		rows[i] = []any{v.Repository, v.Number, now}
+	}
+	return insertMulti(ctx, execOpts.tx, "INSERT INTO `permit_pull_request` (`repository`, `number`, `created_at`) VALUES ", "(?, ?, ?)", rows)
+}
+
 func (d *PermitPullRequest) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
 	execOpts := newExecOpt(opt...)
 	var conn execConn
@@ -1390,6 +1522,7 @@ type TestReportInterface interface {
 	SelectMulti(ctx context.Context, id ...int32) ([]*database.TestReport, error)
 	ListByTaskId(ctx context.Context, taskId int32, opt ...ListOption) ([]*database.TestReport, error)
 	Create(ctx context.Context, testReport *database.TestReport, opt ...ExecOption) (*database.TestReport, error)
+	CreateMulti(ctx context.Context, testReport []*database.TestReport, opt ...ExecOption) error
 	Update(ctx context.Context, testReport *database.TestReport, opt ...ExecOption) error
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
@@ -1595,6 +1728,24 @@ func (d *TestReport) Create(ctx context.Context, testReport *database.TestReport
 	return testReport, nil
 }
 
+func (d *TestReport) CreateMulti(ctx context.Context, testReport []*database.TestReport, opt ...ExecOption) error {
+	if len(testReport) == 0 {
+		return nil
+	}
+	execOpts := newExecOpt(opt...)
+	if execOpts.tx == nil {
+		return d.Tx(ctx, func(tx *sql.Tx) error {
+			return d.CreateMulti(ctx, testReport, append(opt, WithTx(tx))...)
+		})
+	}
+
+	rows := make([][]any, len(testReport))
+	for i, v := range testReport {
+		rows[i] = []any{v.RepositoryId, v.TaskId, v.Label, v.Status, v.Duration, v.StartAt}
+	}
+	return insertMulti(ctx, execOpts.tx, "INSERT INTO `test_report` (`repository_id`, `task_id`, `label`, `status`, `duration`, `start_at`) VALUES ", "(?, ?, ?, ?, ?, ?)", rows)
+}
+
 func (d *TestReport) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
 	execOpts := newExecOpt(opt...)
 	var conn execConn
@@ -1670,6 +1821,7 @@ type BuildMetricsInterface interface {
 	SelectMulti(ctx context.Context, taskId ...int32) ([]*database.BuildMetrics, error)
 	ListByTaskId(ctx context.Context, taskId int32, opt ...ListOption) ([]*database.BuildMetrics, error)
 	Create(ctx context.Context, buildMetrics *database.BuildMetrics, opt ...ExecOption) (*database.BuildMetrics, error)
+	CreateMulti(ctx context.Context, buildMetrics []*database.BuildMetrics, opt ...ExecOption) error
 	Update(ctx context.Context, buildMetrics *database.BuildMetrics, opt ...ExecOption) error
 	Delete(ctx context.Context, taskId int32, opt ...ExecOption) error
 }
@@ -1844,6 +1996,24 @@ func (d *BuildMetrics) Create(ctx context.Context, buildMetrics *database.BuildM
 	return buildMetrics, nil
 }
 
+func (d *BuildMetrics) CreateMulti(ctx context.Context, buildMetrics []*database.BuildMetrics, opt ...ExecOption) error {
+	if len(buildMetrics) == 0 {
+		return nil
+	}
+	execOpts := newExecOpt(opt...)
+	if execOpts.tx == nil {
+		return d.Tx(ctx, func(tx *sql.Tx) error {
+			return d.CreateMulti(ctx, buildMetrics, append(opt, WithTx(tx))...)
+		})
+	}
+
+	rows := make([][]any, len(buildMetrics))
+	for i, v := range buildMetrics {
+		rows[i] = []any{v.TaskId, v.RemoteCacheHits, v.WallTimeMs, v.CpuTimeMs, v.AnalysisPhaseTimeMs, v.ExecutionPhaseTimeMs, v.ActionsCreated, v.ActionsExecuted, v.GraphActionCount, v.OutputArtifactCount, v.SkyframeNodeCount, v.TargetsConfigured, v.PackagesLoaded, v.SourceArtifactsReadBytes, v.SourceArtifactsReadCount, v.OutputArtifactsSeenBytes, v.OutputArtifactsSeenCount, v.OutputArtifactsFromCacheBytes, v.OutputArtifactsFromCacheCount}
+	}
+	return insertMulti(ctx, execOpts.tx, "INSERT INTO `build_metrics` (`task_id`, `remote_cache_hits`, `wall_time_ms`, `cpu_time_ms`, `analysis_phase_time_ms`, `execution_phase_time_ms`, `actions_created`, `actions_executed`, `graph_action_count`, `output_artifact_count`, `skyframe_node_count`, `targets_configured`, `packages_loaded`, `source_artifacts_read_bytes`, `source_artifacts_read_count`, `output_artifacts_seen_bytes`, `output_artifacts_seen_count`, `output_artifacts_from_cache_bytes`, `output_artifacts_from_cache_count`) VALUES ", "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", rows)
+}
+
 func (d *BuildMetrics) Delete(ctx context.Context, taskId int32, opt ...ExecOption) error {
 	execOpts := newExecOpt(opt...)
 	var conn execConn
@@ -1921,6 +2091,7 @@ type ArtifactInterface interface {
 	ListByTaskId(ctx context.Context, taskId int32, opt ...ListOption) ([]*database.Artifact, error)
 	ListUniqContainerImageRepository(ctx context.Context, opt ...ListOption) ([]*database.Artifact, error)
 	Create(ctx context.Context, artifact *database.Artifact, opt ...ExecOption) (*database.Artifact, error)
+	CreateMulti(ctx context.Context, artifact []*database.Artifact, opt ...ExecOption) error
 	Update(ctx context.Context, artifact *database.Artifact, opt ...ExecOption) error
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
@@ -2207,6 +2378,25 @@ func (d *Artifact) Create(ctx context.Context, artifact *database.Artifact, opt 
 	return artifact, nil
 }
 
+func (d *Artifact) CreateMulti(ctx context.Context, artifact []*database.Artifact, opt ...ExecOption) error {
+	if len(artifact) == 0 {
+		return nil
+	}
+	execOpts := newExecOpt(opt...)
+	if execOpts.tx == nil {
+		return d.Tx(ctx, func(tx *sql.Tx) error {
+			return d.CreateMulti(ctx, artifact, append(opt, WithTx(tx))...)
+		})
+	}
+
+	now := time.Now()
+	rows := make([][]any, len(artifact))
+	for i, v := range artifact {
+		rows[i] = []any{v.TaskId, v.Type, v.Hash, v.Name, v.Repository, v.Reference, v.Size, now}
+	}
+	return insertMulti(ctx, execOpts.tx, "INSERT INTO `artifact` (`task_id`, `type`, `hash`, `name`, `repository`, `reference`, `size`, `created_at`) VALUES ", "(?, ?, ?, ?, ?, ?, ?, ?)", rows)
+}
+
 func (d *Artifact) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
 	execOpts := newExecOpt(opt...)
 	var conn execConn
@@ -2283,6 +2473,7 @@ type JobInterface interface {
 	Select(ctx context.Context, repositoryId int32, name string) (*database.Job, error)
 	ListByRepositoryId(ctx context.Context, repositoryId int32, opt ...ListOption) ([]*database.Job, error)
 	Create(ctx context.Context, job *database.Job, opt ...ExecOption) (*database.Job, error)
+	CreateMulti(ctx context.Context, job []*database.Job, opt ...ExecOption) error
 	Update(ctx context.Context, job *database.Job, opt ...ExecOption) error
 	Delete(ctx context.Context, repositoryId int32, name string, opt ...ExecOption) error
 }
@@ -2417,6 +2608,24 @@ func (d *Job) Create(ctx context.Context, job *database.Job, opt ...ExecOption) 
 	return job, nil
 }
 
+func (d *Job) CreateMulti(ctx context.Context, job []*database.Job, opt ...ExecOption) error {
+	if len(job) == 0 {
+		return nil
+	}
+	execOpts := newExecOpt(opt...)
+	if execOpts.tx == nil {
+		return d.Tx(ctx, func(tx *sql.Tx) error {
+			return d.CreateMulti(ctx, job, append(opt, WithTx(tx))...)
+		})
+	}
+
+	rows := make([][]any, len(job))
+	for i, v := range job {
+		rows[i] = []any{v.RepositoryId, v.Name, v.Configuration}
+	}
+	return insertMulti(ctx, execOpts.tx, "INSERT INTO `job` (`repository_id`, `name`, `configuration`) VALUES ", "(?, ?, ?)", rows)
+}
+
 func (d *Job) Delete(ctx context.Context, repositoryId int32, name string, opt ...ExecOption) error {
 	execOpts := newExecOpt(opt...)
 	var conn execConn
@@ -2493,6 +2702,7 @@ type ExternalReleaseTriggerInterface interface {
 	ListAll(ctx context.Context, opt ...ListOption) ([]*database.ExternalReleaseTrigger, error)
 	ListByRepositoryId(ctx context.Context, repositoryId int32, opt ...ListOption) ([]*database.ExternalReleaseTrigger, error)
 	Create(ctx context.Context, externalReleaseTrigger *database.ExternalReleaseTrigger, opt ...ExecOption) (*database.ExternalReleaseTrigger, error)
+	CreateMulti(ctx context.Context, externalReleaseTrigger []*database.ExternalReleaseTrigger, opt ...ExecOption) error
 	Update(ctx context.Context, externalReleaseTrigger *database.ExternalReleaseTrigger, opt ...ExecOption) error
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
@@ -2725,6 +2935,25 @@ func (d *ExternalReleaseTrigger) Create(ctx context.Context, externalReleaseTrig
 	return externalReleaseTrigger, nil
 }
 
+func (d *ExternalReleaseTrigger) CreateMulti(ctx context.Context, externalReleaseTrigger []*database.ExternalReleaseTrigger, opt ...ExecOption) error {
+	if len(externalReleaseTrigger) == 0 {
+		return nil
+	}
+	execOpts := newExecOpt(opt...)
+	if execOpts.tx == nil {
+		return d.Tx(ctx, func(tx *sql.Tx) error {
+			return d.CreateMulti(ctx, externalReleaseTrigger, append(opt, WithTx(tx))...)
+		})
+	}
+
+	now := time.Now()
+	rows := make([][]any, len(externalReleaseTrigger))
+	for i, v := range externalReleaseTrigger {
+		rows[i] = []any{v.RepositoryId, v.JobName, v.Provider, v.ExternalRepo, v.Kind, v.TagPattern, v.IncludePrerelease, now}
+	}
+	return insertMulti(ctx, execOpts.tx, "INSERT INTO `external_release_trigger` (`repository_id`, `job_name`, `provider`, `external_repo`, `kind`, `tag_pattern`, `include_prerelease`, `created_at`) VALUES ", "(?, ?, ?, ?, ?, ?, ?, ?)", rows)
+}
+
 func (d *ExternalReleaseTrigger) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
 	execOpts := newExecOpt(opt...)
 	var conn execConn
@@ -2802,6 +3031,7 @@ type GithubEventInterface interface {
 	SelectByDeliveryId(ctx context.Context, deliveryId string) (*database.GithubEvent, error)
 	ListByState(ctx context.Context, state uint32, opt ...ListOption) ([]*database.GithubEvent, error)
 	Create(ctx context.Context, githubEvent *database.GithubEvent, opt ...ExecOption) (*database.GithubEvent, error)
+	CreateMulti(ctx context.Context, githubEvent []*database.GithubEvent, opt ...ExecOption) error
 	Update(ctx context.Context, githubEvent *database.GithubEvent, opt ...ExecOption) error
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
@@ -2994,6 +3224,25 @@ func (d *GithubEvent) Create(ctx context.Context, githubEvent *database.GithubEv
 	return githubEvent, nil
 }
 
+func (d *GithubEvent) CreateMulti(ctx context.Context, githubEvent []*database.GithubEvent, opt ...ExecOption) error {
+	if len(githubEvent) == 0 {
+		return nil
+	}
+	execOpts := newExecOpt(opt...)
+	if execOpts.tx == nil {
+		return d.Tx(ctx, func(tx *sql.Tx) error {
+			return d.CreateMulti(ctx, githubEvent, append(opt, WithTx(tx))...)
+		})
+	}
+
+	now := time.Now()
+	rows := make([][]any, len(githubEvent))
+	for i, v := range githubEvent {
+		rows[i] = []any{v.DeliveryId, v.EventType, v.Action, v.Payload, v.State, v.Status, v.LastError, now}
+	}
+	return insertMulti(ctx, execOpts.tx, "INSERT INTO `github_event` (`delivery_id`, `event_type`, `action`, `payload`, `state`, `status`, `last_error`, `created_at`) VALUES ", "(?, ?, ?, ?, ?, ?, ?, ?)", rows)
+}
+
 func (d *GithubEvent) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
 	execOpts := newExecOpt(opt...)
 	var conn execConn
@@ -3072,6 +3321,7 @@ type ExternalReleaseHistoryInterface interface {
 	ListByRepositoryAndJob(ctx context.Context, repositoryId int32, jobName string, opt ...ListOption) ([]*database.ExternalReleaseHistory, error)
 	SelectProcessed(ctx context.Context, repositoryId int32, jobName string, externalRepo string, tag string) (*database.ExternalReleaseHistory, error)
 	Create(ctx context.Context, externalReleaseHistory *database.ExternalReleaseHistory, opt ...ExecOption) (*database.ExternalReleaseHistory, error)
+	CreateMulti(ctx context.Context, externalReleaseHistory []*database.ExternalReleaseHistory, opt ...ExecOption) error
 	Update(ctx context.Context, externalReleaseHistory *database.ExternalReleaseHistory, opt ...ExecOption) error
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
@@ -3274,6 +3524,24 @@ func (d *ExternalReleaseHistory) Create(ctx context.Context, externalReleaseHist
 
 	externalReleaseHistory.ResetMark()
 	return externalReleaseHistory, nil
+}
+
+func (d *ExternalReleaseHistory) CreateMulti(ctx context.Context, externalReleaseHistory []*database.ExternalReleaseHistory, opt ...ExecOption) error {
+	if len(externalReleaseHistory) == 0 {
+		return nil
+	}
+	execOpts := newExecOpt(opt...)
+	if execOpts.tx == nil {
+		return d.Tx(ctx, func(tx *sql.Tx) error {
+			return d.CreateMulti(ctx, externalReleaseHistory, append(opt, WithTx(tx))...)
+		})
+	}
+
+	rows := make([][]any, len(externalReleaseHistory))
+	for i, v := range externalReleaseHistory {
+		rows[i] = []any{v.RepositoryId, v.JobName, v.ExternalRepo, v.Tag, v.TaskId, v.ProcessedAt}
+	}
+	return insertMulti(ctx, execOpts.tx, "INSERT INTO `external_release_history` (`repository_id`, `job_name`, `external_repo`, `tag`, `task_id`, `processed_at`) VALUES ", "(?, ?, ?, ?, ?, ?)", rows)
 }
 
 func (d *ExternalReleaseHistory) Delete(ctx context.Context, id int32, opt ...ExecOption) error {

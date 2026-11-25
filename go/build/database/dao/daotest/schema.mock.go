@@ -65,6 +65,11 @@ func (d *SourceRepository) Create(ctx context.Context, sourceRepository *databas
 	return sourceRepository, nil
 }
 
+func (d *SourceRepository) CreateMulti(ctx context.Context, sourceRepository []*database.SourceRepository, opt ...dao.ExecOption) error {
+	_, _ = d.Call("CreateMulti", map[string]any{"sourceRepository": sourceRepository})
+	return nil
+}
+
 func (d *SourceRepository) Delete(ctx context.Context, id int32, opt ...dao.ExecOption) error {
 	_, _ = d.Call("Delete", map[string]any{"id": id})
 	return nil
@@ -173,6 +178,11 @@ func (d *Task) Create(ctx context.Context, task *database.Task, opt ...dao.ExecO
 	return task, nil
 }
 
+func (d *Task) CreateMulti(ctx context.Context, task []*database.Task, opt ...dao.ExecOption) error {
+	_, _ = d.Call("CreateMulti", map[string]any{"task": task})
+	return nil
+}
+
 func (d *Task) Delete(ctx context.Context, id int32, opt ...dao.ExecOption) error {
 	_, _ = d.Call("Delete", map[string]any{"id": id})
 	return nil
@@ -236,6 +246,11 @@ func (d *TrustedUser) Create(ctx context.Context, trustedUser *database.TrustedU
 	return trustedUser, nil
 }
 
+func (d *TrustedUser) CreateMulti(ctx context.Context, trustedUser []*database.TrustedUser, opt ...dao.ExecOption) error {
+	_, _ = d.Call("CreateMulti", map[string]any{"trustedUser": trustedUser})
+	return nil
+}
+
 func (d *TrustedUser) Delete(ctx context.Context, id int32, opt ...dao.ExecOption) error {
 	_, _ = d.Call("Delete", map[string]any{"id": id})
 	return nil
@@ -288,6 +303,11 @@ func (d *PermitPullRequest) RegisterListByRepositoryAndNumber(repository string,
 func (d *PermitPullRequest) Create(ctx context.Context, permitPullRequest *database.PermitPullRequest, opt ...dao.ExecOption) (*database.PermitPullRequest, error) {
 	_, _ = d.Call("Create", map[string]any{"permitPullRequest": permitPullRequest})
 	return permitPullRequest, nil
+}
+
+func (d *PermitPullRequest) CreateMulti(ctx context.Context, permitPullRequest []*database.PermitPullRequest, opt ...dao.ExecOption) error {
+	_, _ = d.Call("CreateMulti", map[string]any{"permitPullRequest": permitPullRequest})
+	return nil
 }
 
 func (d *PermitPullRequest) Delete(ctx context.Context, id int32, opt ...dao.ExecOption) error {
@@ -344,6 +364,11 @@ func (d *TestReport) Create(ctx context.Context, testReport *database.TestReport
 	return testReport, nil
 }
 
+func (d *TestReport) CreateMulti(ctx context.Context, testReport []*database.TestReport, opt ...dao.ExecOption) error {
+	_, _ = d.Call("CreateMulti", map[string]any{"testReport": testReport})
+	return nil
+}
+
 func (d *TestReport) Delete(ctx context.Context, id int32, opt ...dao.ExecOption) error {
 	_, _ = d.Call("Delete", map[string]any{"id": id})
 	return nil
@@ -396,6 +421,11 @@ func (d *BuildMetrics) RegisterListByTaskId(taskId int32, value []*database.Buil
 func (d *BuildMetrics) Create(ctx context.Context, buildMetrics *database.BuildMetrics, opt ...dao.ExecOption) (*database.BuildMetrics, error) {
 	_, _ = d.Call("Create", map[string]any{"buildMetrics": buildMetrics})
 	return buildMetrics, nil
+}
+
+func (d *BuildMetrics) CreateMulti(ctx context.Context, buildMetrics []*database.BuildMetrics, opt ...dao.ExecOption) error {
+	_, _ = d.Call("CreateMulti", map[string]any{"buildMetrics": buildMetrics})
+	return nil
 }
 
 func (d *BuildMetrics) Delete(ctx context.Context, taskId int32, opt ...dao.ExecOption) error {
@@ -470,6 +500,11 @@ func (d *Artifact) Create(ctx context.Context, artifact *database.Artifact, opt 
 	return artifact, nil
 }
 
+func (d *Artifact) CreateMulti(ctx context.Context, artifact []*database.Artifact, opt ...dao.ExecOption) error {
+	_, _ = d.Call("CreateMulti", map[string]any{"artifact": artifact})
+	return nil
+}
+
 func (d *Artifact) Delete(ctx context.Context, id int32, opt ...dao.ExecOption) error {
 	_, _ = d.Call("Delete", map[string]any{"id": id})
 	return nil
@@ -513,6 +548,11 @@ func (d *Job) RegisterListByRepositoryId(repositoryId int32, value []*database.J
 func (d *Job) Create(ctx context.Context, job *database.Job, opt ...dao.ExecOption) (*database.Job, error) {
 	_, _ = d.Call("Create", map[string]any{"job": job})
 	return job, nil
+}
+
+func (d *Job) CreateMulti(ctx context.Context, job []*database.Job, opt ...dao.ExecOption) error {
+	_, _ = d.Call("CreateMulti", map[string]any{"job": job})
+	return nil
 }
 
 func (d *Job) Delete(ctx context.Context, repositoryId int32, name string, opt ...dao.ExecOption) error {
@@ -576,6 +616,11 @@ func (d *ExternalReleaseTrigger) RegisterListByRepositoryId(repositoryId int32, 
 func (d *ExternalReleaseTrigger) Create(ctx context.Context, externalReleaseTrigger *database.ExternalReleaseTrigger, opt ...dao.ExecOption) (*database.ExternalReleaseTrigger, error) {
 	_, _ = d.Call("Create", map[string]any{"externalReleaseTrigger": externalReleaseTrigger})
 	return externalReleaseTrigger, nil
+}
+
+func (d *ExternalReleaseTrigger) CreateMulti(ctx context.Context, externalReleaseTrigger []*database.ExternalReleaseTrigger, opt ...dao.ExecOption) error {
+	_, _ = d.Call("CreateMulti", map[string]any{"externalReleaseTrigger": externalReleaseTrigger})
+	return nil
 }
 
 func (d *ExternalReleaseTrigger) Delete(ctx context.Context, id int32, opt ...dao.ExecOption) error {
@@ -650,6 +695,11 @@ func (d *GithubEvent) Create(ctx context.Context, githubEvent *database.GithubEv
 	return githubEvent, nil
 }
 
+func (d *GithubEvent) CreateMulti(ctx context.Context, githubEvent []*database.GithubEvent, opt ...dao.ExecOption) error {
+	_, _ = d.Call("CreateMulti", map[string]any{"githubEvent": githubEvent})
+	return nil
+}
+
 func (d *GithubEvent) Delete(ctx context.Context, id int32, opt ...dao.ExecOption) error {
 	_, _ = d.Call("Delete", map[string]any{"id": id})
 	return nil
@@ -711,6 +761,11 @@ func (d *ExternalReleaseHistory) RegisterSelectProcessed(repositoryId int32, job
 func (d *ExternalReleaseHistory) Create(ctx context.Context, externalReleaseHistory *database.ExternalReleaseHistory, opt ...dao.ExecOption) (*database.ExternalReleaseHistory, error) {
 	_, _ = d.Call("Create", map[string]any{"externalReleaseHistory": externalReleaseHistory})
 	return externalReleaseHistory, nil
+}
+
+func (d *ExternalReleaseHistory) CreateMulti(ctx context.Context, externalReleaseHistory []*database.ExternalReleaseHistory, opt ...dao.ExecOption) error {
+	_, _ = d.Call("CreateMulti", map[string]any{"externalReleaseHistory": externalReleaseHistory})
+	return nil
 }
 
 func (d *ExternalReleaseHistory) Delete(ctx context.Context, id int32, opt ...dao.ExecOption) error {
