@@ -2,6 +2,7 @@ package git
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -14,6 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"go.f110.dev/mono/go/git/database"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )
@@ -159,4 +161,34 @@ func TestUpdater_SyncWithDatabase(t *testing.T) {
 	content, err := file.Contents()
 	require.NoError(t, err)
 	assert.Equal(t, "Updated", content)
+}
+
+func TestUpdater_RepackWithDatabase(t *testing.T) {
+	sourceRepo := makeUpdaterSourceRepository(t)
+	repoPath := sourceRepo.Storer.(*filesystem.Storage).Filesystem().Root()
+	wt, err := sourceRepo.Worktree()
+	require.NoError(t, err)
+	var content string
+	for i := range 50 {
+		content += fmt.Sprintf("Line %d of README.md\n", i)
+	}
+	for _, v := range []string{content, content + "The last line\n"} {
+		err = os.WriteFile(filepath.Join(wt.Filesystem.Root(), "README.md"), []byte(v), 0644)
+		require.NoError(t, err)
+		_, err = wt.Add("README.md")
+		require.NoError(t, err)
+		_, err = wt.Commit("Update", &goGit.CommitOptions{Author: &object.Signature{Name: t.Name(), When: time.Now(), Email: "test@localhost"}})
+		require.NoError(t, err)
+	}
+
+	repoConfig := &RepositoryConfig{Name: "test", URL: repoPath}
+	updater := NewUpdater(&DatabaseBackend{Conn: newTestDatabase(t)}, nil, NewStaticRepositoryProvider([]*RepositoryConfig{repoConfig}), 1)
+	require.NoError(t, updater.Sync(context.Background(), repoPath))
+
+	updater.repack(context.Background())
+
+	s := repoConfig.goGit.Storer.(*DatabaseStorer)
+	encoding, depth, _ := storedObject(t, s, plumbing.ComputeHash(plumbing.BlobObject, []byte(content)))
+	assert.Equal(t, database.ObjectEncodingDelta, encoding)
+	assert.EqualValues(t, 1, depth)
 }

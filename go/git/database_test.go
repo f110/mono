@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -260,6 +261,72 @@ func TestDatabaseStorerTree(t *testing.T) {
 	assert.Equal(t, database.ObjectEncodingFull, encoding)
 	s.cache.Clear()
 	assertObject(t, s, padded, plumbing.TreeObject)
+}
+
+func TestDatabaseStorerRepack(t *testing.T) {
+	// README.md has 13 versions. The objects are stored as full before repacking. After repacking, the newest version
+	// is full and the older versions are the deltas from the next newer version up to maxDeltaDepth.
+	repoDir := t.TempDir()
+	sourceRepo, err := git.PlainInit(repoDir, false)
+	require.NoError(t, err)
+	wt, err := sourceRepo.Worktree()
+	require.NoError(t, err)
+	var content []byte
+	var versions []plumbing.Hash
+	for i := range 13 {
+		content = append(content, fmt.Sprintf("line %d of README.md which is appended by every commit\n", i)...)
+		require.NoError(t, os.WriteFile(filepath.Join(repoDir, "README.md"), content, 0644))
+		_, err = wt.Add("README.md")
+		require.NoError(t, err)
+		_, err = wt.Commit(fmt.Sprintf("Commit %d", i), &git.CommitOptions{
+			Author: &object.Signature{Name: t.Name(), When: time.Unix(int64(1700000000+i), 0), Email: "test@localhost"},
+		})
+		require.NoError(t, err)
+		versions = append(versions, plumbing.ComputeHash(plumbing.BlobObject, content))
+	}
+	s := newDatabaseStorer(t)
+	copyRepository(t, sourceRepo, s)
+
+	// The object which is not reachable and depends on the repacked object keeps the delta with the new depth.
+	unreachable := append(bytes.Clone(content[:len(content)/2]), "unreachable\n"...)
+	unreachableHash := plumbing.ComputeHash(plumbing.BlobObject, unreachable)
+	ctx := context.Background()
+	w := s.newObjectWriter(ctx)
+	require.NoError(t, w.prepare([]plumbing.Hash{versions[0], unreachableHash}))
+	firstLine := content[:len("line 0 of README.md which is appended by every commit\n")]
+	require.NoError(t, w.addDelta(unreachableHash, plumbing.BlobObject, int64(len(unreachable)), w.ids[versions[0]], 1, packfile.DiffDelta(firstLine, unreachable)))
+	require.NoError(t, w.flush())
+	before := payloadSize(t, s)
+
+	require.NoError(t, s.Repack(ctx))
+	s.cache.Clear()
+
+	for i, h := range slices.Backward(versions) {
+		encoding, depth, baseID := storedObject(t, s, h)
+		n := len(versions) - 1 - i
+		switch {
+		case n == 0 || n == maxDeltaDepth+1:
+			assert.Equal(t, database.ObjectEncodingFull, encoding, "version %d", i)
+		default:
+			assert.Equal(t, database.ObjectEncodingDelta, encoding, "version %d", i)
+			assert.EqualValues(t, n%(maxDeltaDepth+1), depth, "version %d", i)
+			bases, err := s.dao.Object.ListHashesByIds(ctx, s.repositoryID, []int64{baseID.Int64})
+			require.NoError(t, err)
+			require.Len(t, bases, 1)
+			assert.Equal(t, versions[i+1][:], bases[0].Hash, "version %d", i)
+		}
+		assertObject(t, s, h, plumbing.BlobObject)
+	}
+	encoding, depth, _ := storedObject(t, s, unreachableHash)
+	assert.Equal(t, database.ObjectEncodingDelta, encoding)
+	assert.EqualValues(t, 2, depth)
+	assertObject(t, s, unreachableHash, plumbing.BlobObject)
+	after := payloadSize(t, s)
+	assert.Less(t, after, before)
+
+	// Repacking again doesn't change the objects.
+	require.NoError(t, s.Repack(ctx))
+	assert.Equal(t, after, payloadSize(t, s))
 }
 
 func TestDatabaseStorerPackfileWriterEmpty(t *testing.T) {
@@ -595,4 +662,20 @@ func payloadSize(t *testing.T, s *DatabaseStorer) int64 {
 		size += v.PayloadSize
 	}
 	return size
+}
+
+// copyRepository stores the objects and the references of src into s one by one. All objects are stored as full.
+func copyRepository(t *testing.T, src *git.Repository, s *DatabaseStorer) {
+	t.Helper()
+	iter, err := src.Storer.IterEncodedObjects(plumbing.AnyObject)
+	require.NoError(t, err)
+	require.NoError(t, iter.ForEach(func(obj plumbing.EncodedObject) error {
+		_, err := s.SetEncodedObject(obj)
+		return err
+	}))
+	refs, err := src.References()
+	require.NoError(t, err)
+	require.NoError(t, refs.ForEach(func(ref *plumbing.Reference) error {
+		return s.SetReference(ref)
+	}))
 }

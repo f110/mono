@@ -2,12 +2,15 @@ package git
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"database/sql"
 	"errors"
 	"io"
 	"log/slog"
 	"os"
+	"path"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -23,6 +26,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/format/idxfile"
 	"github.com/go-git/go-git/v5/plumbing/format/index"
 	"github.com/go-git/go-git/v5/plumbing/format/packfile"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/storer"
 	gitStorage "github.com/go-git/go-git/v5/storage"
 	"github.com/go-sql-driver/mysql"
@@ -342,6 +346,206 @@ func (s *DatabaseStorer) SetConfig(conf *config.Config) error {
 
 func (s *DatabaseStorer) Module(_ string) (gitStorage.Storer, error) {
 	return nil, xerrors.Define("git: the submodules are not supported").WithStack()
+}
+
+// Repack stores the blobs again as the deltas between the versions of the same path to reduce the size.
+//
+// The trees of the commits which are reachable from the references are walked from the newest commit, and the blob is
+// grouped by the path where it is found first. For each blob, the smallest of the current representation, the full
+// object and the delta from the next newer blob of the same path is chosen. The tree which is stored as the full
+// object is not walked. After choosing, the delta which makes a cycle or whose depth exceeds maxDeltaDepth is stored
+// as the full object, and the depths of the other deltas are updated.
+//
+// The changed objects are written one by one in the order of the depth, so the base is always written before the delta
+// and the objects are readable while repacking.
+func (s *DatabaseStorer) Repack(ctx context.Context) error {
+	rows, err := s.dao.Object.ListSummary(ctx, s.repositoryID)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	objects := make(map[int64]*database.ObjectSummaryRow, len(rows))
+	ids := make(map[plumbing.Hash]int64, len(rows))
+	for _, v := range rows {
+		objects[v.Id] = v
+		var h plumbing.Hash
+		copy(h[:], v.Hash)
+		ids[h] = v.Id
+	}
+	entryRows, err := s.dao.TreeEntry.ListByRepository(ctx, s.repositoryID)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	entries := make(map[int64][]*database.TreeEntry)
+	for _, v := range entryRows {
+		entries[v.TreeId] = append(entries[v.TreeId], v)
+	}
+
+	repo, err := git.Open(s, nil)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	iter, err := repo.Log(&git.LogOptions{All: true})
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	var commits []*object.Commit
+	if err := iter.ForEach(func(c *object.Commit) error {
+		commits = append(commits, c)
+		return nil
+	}); err != nil {
+		return xerrors.WithStack(err)
+	}
+	slices.SortStableFunc(commits, func(a, b *object.Commit) int { return b.Committer.When.Compare(a.Committer.When) })
+
+	var paths []string
+	versions := make(map[string][]int64)
+	assigned := make(map[int64]struct{})
+	walked := make(map[int64]struct{})
+	var walk func(treeID int64, dir string)
+	walk = func(treeID int64, dir string) {
+		if _, ok := walked[treeID]; ok {
+			return
+		}
+		walked[treeID] = struct{}{}
+		for _, e := range entries[treeID] {
+			p := path.Join(dir, string(e.Name))
+			switch filemode.FileMode(e.Mode) {
+			case filemode.Dir:
+				walk(e.ChildId, p)
+			case filemode.Submodule:
+			default:
+				if _, ok := assigned[e.ChildId]; ok {
+					continue
+				}
+				o, ok := objects[e.ChildId]
+				if !ok || o.Type != database.ObjectTypeBlob || (o.Encoding != database.ObjectEncodingFull && o.Encoding != database.ObjectEncodingDelta) {
+					continue
+				}
+				assigned[e.ChildId] = struct{}{}
+				if _, ok := versions[p]; !ok {
+					paths = append(paths, p)
+				}
+				versions[p] = append(versions[p], e.ChildId)
+			}
+		}
+	}
+	for _, c := range commits {
+		if id, ok := ids[c.TreeHash]; ok {
+			walk(id, "")
+		}
+	}
+
+	// planned is the new representation of the objects. payloads is the new payload of the objects whose
+	// representation is changed.
+	planned := make(map[int64]*database.ObjectSummaryRow, len(objects))
+	for id, o := range objects {
+		v := *o
+		planned[id] = &v
+	}
+	payloads := make(map[int64][]byte)
+	for _, p := range paths {
+		var prevContent []byte
+		var prevID int64
+		for i, id := range versions[p] {
+			o := planned[id]
+			var h plumbing.Hash
+			copy(h[:], o.Hash)
+			content, err := s.objectContent(h)
+			if err != nil {
+				return err
+			}
+			best := o.PayloadSize
+			if full := zstdEncoder.EncodeAll(content, nil); int64(len(full)) < best {
+				o.Encoding, o.BaseId, payloads[id], best = database.ObjectEncodingFull, nil, full, int64(len(full))
+			}
+			if i > 0 {
+				if delta := zstdEncoder.EncodeAll(packfile.DiffDelta(prevContent, content), nil); int64(len(delta)) < best {
+					baseID := prevID
+					o.Encoding, o.BaseId, payloads[id] = database.ObjectEncodingDelta, &baseID, delta
+				}
+			}
+			prevContent, prevID = content, id
+		}
+	}
+
+	// depths is the depth of the deltas after repacking. The delta which is in a cycle or is too deep becomes full.
+	depths := make(map[int64]int32)
+	visiting := make(map[int64]struct{})
+	var depthOf func(id int64) (int32, error)
+	depthOf = func(id int64) (int32, error) {
+		if d, ok := depths[id]; ok {
+			return d, nil
+		}
+		o := planned[id]
+		var d int32
+		if o.Encoding == database.ObjectEncodingDelta {
+			visiting[id] = struct{}{}
+			var baseDepth int32
+			_, cycle := visiting[*o.BaseId]
+			if !cycle {
+				var err error
+				if baseDepth, err = depthOf(*o.BaseId); err != nil {
+					return 0, err
+				}
+			}
+			delete(visiting, id)
+			if cycle || baseDepth+1 > maxDeltaDepth {
+				var h plumbing.Hash
+				copy(h[:], o.Hash)
+				content, err := s.objectContent(h)
+				if err != nil {
+					return 0, err
+				}
+				o.Encoding, o.BaseId, payloads[id] = database.ObjectEncodingFull, nil, zstdEncoder.EncodeAll(content, nil)
+			} else {
+				d = baseDepth + 1
+			}
+		}
+		depths[id] = d
+		return d, nil
+	}
+	var changed []int64
+	for id, o := range planned {
+		if o.Encoding != database.ObjectEncodingFull && o.Encoding != database.ObjectEncodingDelta {
+			continue
+		}
+		d, err := depthOf(id)
+		if err != nil {
+			return err
+		}
+		if _, ok := payloads[id]; ok || d != o.Depth {
+			changed = append(changed, id)
+		}
+	}
+	slices.SortFunc(changed, func(a, b int64) int {
+		if depths[a] != depths[b] {
+			return int(depths[a] - depths[b])
+		}
+		return cmp.Compare(a, b)
+	})
+
+	for _, id := range changed {
+		old, o := objects[id], planned[id]
+		row := &database.Object{RepositoryId: s.repositoryID, Id: id, Hash: old.Hash, Type: old.Type, Encoding: old.Encoding, Size: old.Size, BaseId: old.BaseId, Depth: old.Depth}
+		row.ResetMark()
+		row.Encoding, row.BaseId, row.Depth = o.Encoding, o.BaseId, depths[id]
+		if payload, ok := payloads[id]; ok {
+			row.Payload = payload
+		}
+		// The row whose values are not changed is not counted as the affected row.
+		if err := s.dao.Object.Update(ctx, row); err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return xerrors.WithStack(err)
+		}
+	}
+	return nil
+}
+
+func (s *DatabaseStorer) objectContent(h plumbing.Hash) ([]byte, error) {
+	obj, err := s.EncodedObject(plumbing.AnyObject, h)
+	if err != nil {
+		return nil, err
+	}
+	return readContent(obj)
 }
 
 // restoreDelta follows the chain of the deltas from row one object at a time until the full object or the object in

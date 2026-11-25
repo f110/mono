@@ -55,6 +55,7 @@ type gitDataServiceCommand struct {
 	RefreshInterval        time.Duration
 	RefreshTimeout         time.Duration
 	RefreshWorkers         int
+	RepackInterval         time.Duration
 	DisableInflatePackFile bool
 
 	PackfileCacheSize int64
@@ -110,6 +111,8 @@ func (c *gitDataServiceCommand) Flags(fs *flag.FlagSet) {
 		"If set zero, interval updating is disabled.").Var(&c.RefreshInterval)
 	fs.Duration("refresh-timeout", "The duration for timeout to updating repository").Var(&c.RefreshTimeout).Default(1 * time.Minute)
 	fs.Int("refresh-workers", "The number of workers for updating repository").Var(&c.RefreshWorkers).Default(1)
+	fs.Duration("repack-interval", "The interval for repacking the repositories which are stored in the database (--dsn). "+
+		"If set zero, the repack is disabled.").Var(&c.RepackInterval).Default(24 * time.Hour)
 	fs.Bool("disable-inflate-packfile", "Disable inflating packfile").Var(&c.DisableInflatePackFile)
 
 	fs.Int64("packfile-cache-size", "Maximum total bytes of packfiles cached in process memory. "+
@@ -201,7 +204,8 @@ func (c *gitDataServiceCommand) init(ctx context.Context) (fsm.State, error) {
 		c.updater = git.NewUpdater(backend, c.GitHubClient.TokenProvider, git.NewStaticRepositoryProvider(c.repositories), c.RefreshWorkers).
 			SetInterval(c.RefreshInterval).
 			SetTimeout(c.RefreshTimeout).
-			SetInitTimeout(c.RepositoryInitTimeout)
+			SetInitTimeout(c.RepositoryInitTimeout).
+			SetRepackInterval(c.RepackInterval)
 		if c.LockFilePath != "" {
 			l, err := leaderelection.NewObjectStorage(storageClient, c.LockFilePath)
 			if err != nil {

@@ -95,6 +95,8 @@ type Updater struct {
 	tokenProvider *githubutil.TokenProvider
 	initTimeout   time.Duration
 	running       bool
+	// repackInterval is the interval of the repack of the repositories whose storer has Repack. Zero disables the repack.
+	repackInterval time.Duration
 }
 
 func NewUpdater(backend Backend, tokenProvider *githubutil.TokenProvider, repos RepositoryProvider, workers int) *Updater {
@@ -127,16 +129,33 @@ func (u *Updater) SetInitTimeout(d time.Duration) *Updater {
 	return u
 }
 
-// Run executes the periodic refresh loop. It blocks until ctx is cancelled.
+func (u *Updater) SetRepackInterval(d time.Duration) *Updater {
+	if u.running {
+		panic("cannot set repack interval. Updater is already running")
+	}
+	u.repackInterval = d
+	return u
+}
+
+// Run executes the periodic refresh loop and the periodic repack. It blocks until ctx is cancelled.
 func (u *Updater) Run(ctx context.Context) {
-	logger.Log.Info("Start updater", slog.Duration("refresh_interval", u.interval), slog.Int("workers", u.parallel))
+	logger.Log.Info("Start updater", slog.Duration("refresh_interval", u.interval), slog.Duration("repack_interval", u.repackInterval),
+		slog.Int("workers", u.parallel))
 	u.running = true
 	timer := time.NewTicker(u.interval)
 	defer timer.Stop()
+	var repackCh <-chan time.Time
+	if u.repackInterval > 0 {
+		repackTimer := time.NewTicker(u.repackInterval)
+		defer repackTimer.Stop()
+		repackCh = repackTimer.C
+	}
 	for {
 		select {
 		case <-timer.C:
 			u.update(ctx)
+		case <-repackCh:
+			u.repack(ctx)
 		case <-ctx.Done():
 			return
 		}
@@ -225,6 +244,31 @@ func (u *Updater) update(ctx context.Context) {
 		if done == len(repos) {
 			break
 		}
+	}
+}
+
+// repack repacks the repositories whose storer has Repack (e.g. DatabaseStorer).
+func (u *Updater) repack(ctx context.Context) {
+	repos, err := u.repos.Repositories(ctx)
+	if err != nil {
+		logger.Log.Warn("Failed to get the repositories", logger.E(err))
+		return
+	}
+	for _, repo := range repos {
+		if err := repo.Open(ctx, u.backend, u.tokenProvider, u.initTimeout); err != nil {
+			logger.Log.Warn("Failed to open repository", logger.E(err), slog.String("repo", repo.Name))
+			continue
+		}
+		r, ok := repo.goGit.Storer.(interface{ Repack(context.Context) error })
+		if !ok {
+			continue
+		}
+		start := time.Now()
+		if err := r.Repack(ctx); err != nil {
+			logger.Log.Warn("Failed to repack repository", logger.E(err), slog.String("repo", repo.Name))
+			continue
+		}
+		logger.Log.Info("Repacked repository", slog.String("repo", repo.Name), slog.Duration("elapsed", time.Since(start)))
 	}
 }
 
