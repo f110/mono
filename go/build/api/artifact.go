@@ -4,23 +4,29 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/layout"
+	"github.com/nats-io/nats.go"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"go.f110.dev/xerrors"
+	"google.golang.org/protobuf/proto"
 	"oras.land/oras-go/v2"
 	orascontent "oras.land/oras-go/v2/content"
 	"oras.land/oras-go/v2/registry/remote"
 	"oras.land/oras-go/v2/registry/remote/auth"
 	"oras.land/oras-go/v2/registry/remote/retry"
+
+	"go.f110.dev/mono/go/build/model"
 )
 
 // ArtifactRegistry stores build artifacts in an OCI registry (zot). The builder
@@ -37,6 +43,12 @@ type ArtifactRegistry interface {
 	// mediaType. The artifact is tagged with tag so that the registry does not
 	// garbage-collect it. Returns the manifest digest.
 	PushFile(ctx context.Context, repository, tag, artifactType, mediaType, filename string, content []byte) (string, error)
+}
+
+// ArtifactEventPublisher publishes the events about the artifacts stored by the builder.
+type ArtifactEventPublisher interface {
+	// PublishArtifactPublished publishes ev which notifies that a new artifact has been stored in the registry.
+	PublishArtifactPublished(ctx context.Context, ev *model.ArtifactPublishedEvent) error
 }
 
 // craneArtifactRegistry is an ArtifactRegistry backed by go-containerregistry for
@@ -117,6 +129,42 @@ func (r *craneArtifactRegistry) PushFile(ctx context.Context, repository, tag, a
 		return "", xerrors.WithStack(err)
 	}
 	return manifest.Digest.String(), nil
+}
+
+// natsArtifactEventPublisher is an ArtifactEventPublisher backed by NATS JetStream.
+// It does not create the stream: the stream is managed outside the builder.
+type natsArtifactEventPublisher struct {
+	subject string
+
+	js nats.JetStreamContext
+}
+
+// NewNATSArtifactEventPublisher connects to the NATS server at u and returns an ArtifactEventPublisher which publishes
+// the events to the subject "<streamName>.<subject>". It fails if the stream does not exist.
+func NewNATSArtifactEventPublisher(u, streamName, subject string) (ArtifactEventPublisher, error) {
+	nc, err := nats.Connect(u, nats.RetryOnFailedConnect(true), nats.PingInterval(30*time.Second))
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	js, err := nc.JetStream()
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	if _, err := js.StreamInfo(streamName); err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	return &natsArtifactEventPublisher{subject: fmt.Sprintf("%s.%s", streamName, subject), js: js}, nil
+}
+
+func (p *natsArtifactEventPublisher) PublishArtifactPublished(ctx context.Context, ev *model.ArtifactPublishedEvent) error {
+	data, err := proto.Marshal(ev)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	if _, err := p.js.Publish(p.subject, data, nats.Context(ctx)); err != nil {
+		return xerrors.WithStack(err)
+	}
+	return nil
 }
 
 // keychainCredential resolves the credential for hostport from the default keychain

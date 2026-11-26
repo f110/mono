@@ -41,15 +41,16 @@ import (
 )
 
 type apiService struct {
-	builder           Builder
-	dao               dao.Options
-	githubClient      *github.Client
-	gitDataClient     git.GitDataClient
-	stClient          *storage.S3
-	logStorage        LogStorage
-	bazelMirrorPrefix string
-	serverConfig      *ServerConfig
-	artifactRegistry  ArtifactRegistry
+	builder                Builder
+	dao                    dao.Options
+	githubClient           *github.Client
+	gitDataClient          git.GitDataClient
+	stClient               *storage.S3
+	logStorage             LogStorage
+	bazelMirrorPrefix      string
+	serverConfig           *ServerConfig
+	artifactRegistry       ArtifactRegistry
+	artifactEventPublisher ArtifactEventPublisher
 }
 
 // maxArtifactSize caps the total bytes accepted for a single artifact upload.
@@ -57,8 +58,8 @@ const maxArtifactSize = 2 << 30 // 2 GiB
 
 var _ APIServer = (*apiService)(nil)
 
-func newAPIService(builder Builder, dao dao.Options, githubClient *github.Client, gitDataClient git.GitDataClient, stClient, logStorage *storage.S3, bazelMirrorPrefix string, serverConfig *ServerConfig, artifactRegistry ArtifactRegistry) *apiService {
-	return &apiService{builder: builder, dao: dao, githubClient: githubClient, gitDataClient: gitDataClient, stClient: stClient, logStorage: logStorage, bazelMirrorPrefix: bazelMirrorPrefix, serverConfig: serverConfig, artifactRegistry: artifactRegistry}
+func newAPIService(builder Builder, dao dao.Options, githubClient *github.Client, gitDataClient git.GitDataClient, stClient, logStorage *storage.S3, bazelMirrorPrefix string, serverConfig *ServerConfig, artifactRegistry ArtifactRegistry, artifactEventPublisher ArtifactEventPublisher) *apiService {
+	return &apiService{builder: builder, dao: dao, githubClient: githubClient, gitDataClient: gitDataClient, stClient: stClient, logStorage: logStorage, bazelMirrorPrefix: bazelMirrorPrefix, serverConfig: serverConfig, artifactRegistry: artifactRegistry, artifactEventPublisher: artifactEventPublisher}
 }
 
 func (s *apiService) ListRepositories(ctx context.Context, req *RequestListRepositories) (*ResponseListRepositories, error) {
@@ -854,7 +855,7 @@ func (s *apiService) storeArtifact(ctx context.Context, meta *ArtifactUploadMeta
 		return nil, status.Error(codes.Internal, "failed to store artifact")
 	}
 
-	if _, err := s.dao.Artifact.Create(ctx, &database.Artifact{
+	artifact, err := s.dao.Artifact.Create(ctx, &database.Artifact{
 		TaskId:     meta.GetTaskId(),
 		Type:       database.ArtifactType(ref.GetType()),
 		Hash:       ref.GetHash(),
@@ -862,7 +863,8 @@ func (s *apiService) storeArtifact(ctx context.Context, meta *ArtifactUploadMeta
 		Repository: ref.GetRepository(),
 		Reference:  reference,
 		Size:       int64(len(data)),
-	}); err != nil {
+	})
+	if err != nil {
 		// A retry races on the unique (task, hash) index. Treat a duplicate as
 		// success: the content is stored either way.
 		if rows, e := s.dao.Artifact.ListByHash(ctx, ref.GetHash()); e == nil && len(rows) > 0 {
@@ -870,6 +872,12 @@ func (s *apiService) storeArtifact(ctx context.Context, meta *ArtifactUploadMeta
 		}
 		logger.Log.Warn("Failed to record artifact", logger.E(err))
 		return nil, status.Error(codes.Internal, "failed to record artifact")
+	}
+	if s.artifactEventPublisher != nil {
+		ev := model.ArtifactPublishedEvent_builder{ArtifactId: new(artifact.Id), TaskId: new(artifact.TaskId)}.Build()
+		if err := s.artifactEventPublisher.PublishArtifactPublished(ctx, ev); err != nil {
+			logger.Log.Warn("Failed to publish the event of the artifact", logger.E(err), slog.Int("artifact_id", int(artifact.Id)))
+		}
 	}
 	return ResponseUploadArtifact_builder{Repository: new(ref.GetRepository()), Reference: new(reference)}.Build(), nil
 }

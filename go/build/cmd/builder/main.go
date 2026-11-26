@@ -102,6 +102,9 @@ type Options struct {
 	ArtifactUpload                 bool   // Upload collected build artifacts to the OCI registry named in their repository.
 	ArtifactRegistryInsecure       bool   // Allow accessing the artifact registries over plain HTTP.
 	ArtifactBuilderAddr            string // gRPC address of the builder API the collect sidecar uploads to.
+	NATSURL                        string // URL of the NATS server to publish the events of the artifacts. When empty, no event is published.
+	NATSStreamName                 string
+	NATSSubject                    string
 	SidecarImage                   string
 	CLIImage                       string
 	PublicKeyURL                   string // URL of the public key of heimdallr. When empty, MCP is not served.
@@ -538,6 +541,14 @@ func (p *process) startApiServer(ctx context.Context) (fsm.State, error) {
 	if p.opt.ArtifactUpload {
 		artifactRegistry = api.NewCraneArtifactRegistry(p.opt.ArtifactRegistryInsecure)
 	}
+	var artifactEventPublisher api.ArtifactEventPublisher
+	if p.opt.ArtifactUpload && p.opt.NATSURL != "" {
+		pub, err := api.NewNATSArtifactEventPublisher(p.opt.NATSURL, p.opt.NATSStreamName, p.opt.NATSSubject)
+		if err != nil {
+			return fsm.Error(err)
+		}
+		artifactEventPublisher = pub
+	}
 	var newMCPHandler func(api.APIServer) http.Handler
 	if p.opt.PublicKeyURL != "" {
 		publicKey, err := authproxy.FetchPublicKey(ctx, p.opt.PublicKeyURL)
@@ -562,6 +573,7 @@ func (p *process) startApiServer(ctx context.Context) (fsm.State, error) {
 		p.eventProcessor,
 		buildServerConfig(p.opt),
 		artifactRegistry,
+		artifactEventPublisher,
 		newMCPHandler,
 	)
 	if err != nil {
@@ -904,6 +916,9 @@ func AddCommand(rootCmd *cli.Command) {
 	fs.Bool("artifact-upload", "Upload collected build artifacts to the OCI registry named in the repository of cd_artifact").Var(&opt.ArtifactUpload)
 	fs.Bool("artifact-registry-insecure", "Allow accessing the artifact registries over plain HTTP").Var(&opt.ArtifactRegistryInsecure)
 	fs.String("artifact-builder-addr", "gRPC address of the builder API the collect sidecar uploads to. When empty, artifact collection is disabled").Var(&opt.ArtifactBuilderAddr)
+	fs.String("nats-url", "The URL for nats-server to publish the events of the uploaded artifacts. If empty, no event is published").Var(&opt.NATSURL)
+	fs.String("nats-stream-name", "The name of stream for JetStream").Var(&opt.NATSStreamName).Default("build")
+	fs.String("nats-subject", "The subject of stream").Var(&opt.NATSSubject).Default("artifact.published")
 	fs.String("sidecar-image", "Sidecar container image").Var(&opt.SidecarImage).Default("registry.f110.dev/build/sidecar")
 	fs.String("ctl-image", "CLI container image").Var(&opt.CLIImage).Default("registry.f110.dev/build/buildctl")
 	fs.String("public-key-url", "URL of the public key of heimdallr to verify the token of the requests to /mcp. It is /internal/publickey of the internal API. If not specified, MCP is not served").Var(&opt.PublicKeyURL)

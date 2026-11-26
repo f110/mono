@@ -174,6 +174,10 @@ write-back bot など成果物の更新を受けたいものが subscribe する
 - payload は成果物を識別する `artifact_id` と `task_id` だけを持つ。成果物の type、hash（digest）、Bazel の label（`name`）、
   repository、reference（タグ）は `ListArtifacts`（`task_id` 指定）、元のリポジトリとコミットは `ListTasks` で引く。
   成果物の数や情報が増えても payload の大きさは変わらない。
+- publish するのは `--artifact-upload` と `--nats-url` を指定したときだけ。stream 名と subject は `--nats-stream-name`
+  （既定 `build`）と `--nats-subject`（既定 `artifact.published`）で変えられ、`<stream 名>.<subject>` に publish する。
+- 起動時に stream が無ければ builder の起動に失敗する。
+- publish に失敗してもアップロードは失敗にしない（成果物は保存済み）。ログに警告を出すだけで、再送はしない。
 
 ## Job の構造とビルド結果の収集
 

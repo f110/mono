@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http/httptest"
 	"strings"
@@ -19,6 +20,7 @@ import (
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/database/dao/daotest"
 	"go.f110.dev/mono/go/build/model"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/testing/assertion"
 )
 
@@ -113,7 +115,8 @@ func TestSyncArtifacts(t *testing.T) {
 		t.Parallel()
 		m := daotest.NewArtifact()
 		m.RegisterListByHash("aaa", []*database.Artifact{{Repository: "example.com/foo", Reference: "sha256:x", Size: 42}}, nil)
-		s := &apiService{dao: dao.Options{Artifact: m}}
+		pub := &fakePublisher{}
+		s := &apiService{dao: dao.Options{Artifact: m}, artifactEventPublisher: pub}
 
 		ref := artifactRef(ArtifactType_ARTIFACT_TYPE_BINARY, "aaa")
 		ref.SetName("foo")
@@ -133,7 +136,18 @@ func TestSyncArtifacts(t *testing.T) {
 		assertion.Equal(t, "example.com/foo", stored.Repository)
 		assertion.Equal(t, "sha256:x", stored.Reference) // copied from existing content
 		assertion.Equal(t, int64(42), stored.Size)
+		assertion.Len(t, pub.events, 0) // already stored content is not published again
 	})
+}
+
+type fakePublisher struct {
+	events []*model.ArtifactPublishedEvent
+	err    error
+}
+
+func (f *fakePublisher) PublishArtifactPublished(_ context.Context, ev *model.ArtifactPublishedEvent) error {
+	f.events = append(f.events, ev)
+	return f.err
 }
 
 // fakeRegistry records the last push so tests can assert on it.
@@ -167,7 +181,8 @@ func TestStoreArtifact(t *testing.T) {
 	t.Run("binary success records a row", func(t *testing.T) {
 		reg := &fakeRegistry{fileRef: "sha256:stored"}
 		m := daotest.NewArtifact()
-		s := &apiService{dao: dao.Options{Artifact: m}, artifactRegistry: reg}
+		pub := &fakePublisher{}
+		s := &apiService{dao: dao.Options{Artifact: m}, artifactRegistry: reg, artifactEventPublisher: pub}
 
 		sum := sha256.Sum256(content)
 		hash := hex.EncodeToString(sum[:])
@@ -189,6 +204,26 @@ func TestStoreArtifact(t *testing.T) {
 		assertion.Equal(t, hash, stored.Hash)
 		assertion.Equal(t, int32(7), stored.TaskId)
 		assertion.Equal(t, database.ArtifactTypeBinary, stored.Type)
+
+		assertion.Len(t, pub.events, 1)
+		assertion.Equal(t, stored.Id, pub.events[0].GetArtifactId())
+		assertion.Equal(t, int32(7), pub.events[0].GetTaskId())
+	})
+
+	t.Run("failure of publishing the event does not fail the upload", func(t *testing.T) {
+		logger.Init()
+		reg := &fakeRegistry{fileRef: "sha256:stored"}
+		m := daotest.NewArtifact()
+		pub := &fakePublisher{err: errors.New("nats: timeout")}
+		s := &apiService{dao: dao.Options{Artifact: m}, artifactRegistry: reg, artifactEventPublisher: pub}
+
+		sum := sha256.Sum256(content)
+		ref := artifactRef(ArtifactType_ARTIFACT_TYPE_BINARY, hex.EncodeToString(sum[:]))
+		ref.SetRepository("example.com/foo")
+		res, err := s.storeArtifact(context.Background(), uploadMeta(7, ref), content)
+		assertion.MustNoError(t, err)
+		assertion.Equal(t, "sha256:stored", res.GetReference())
+		assertion.Len(t, pub.events, 1)
 	})
 
 	t.Run("container image is tagged with the task id", func(t *testing.T) {
@@ -207,13 +242,15 @@ func TestStoreArtifact(t *testing.T) {
 	t.Run("hash mismatch is rejected", func(t *testing.T) {
 		reg := &fakeRegistry{fileRef: "sha256:stored"}
 		m := daotest.NewArtifact()
-		s := &apiService{dao: dao.Options{Artifact: m}, artifactRegistry: reg}
+		pub := &fakePublisher{}
+		s := &apiService{dao: dao.Options{Artifact: m}, artifactRegistry: reg, artifactEventPublisher: pub}
 
 		ref := artifactRef(ArtifactType_ARTIFACT_TYPE_BINARY, "deadbeef")
 		ref.SetRepository("example.com/foo")
 		_, err := s.storeArtifact(context.Background(), uploadMeta(7, ref), content)
 		assertion.Error(t, err)
 		assertion.Len(t, m.Called("Create"), 0) // nothing recorded
+		assertion.Len(t, pub.events, 0)
 	})
 }
 
