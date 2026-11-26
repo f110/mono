@@ -94,6 +94,17 @@ message Artifact {
   google.protobuf.Timestamp created_at = 9;
 }
 
+// ArtifactPublishedEvent is published to the NATS JetStream subject
+// `build.artifact.published` (stream `build`) when the builder has uploaded a new
+// artifact to the OCI registry. It only identifies the artifact: subscribers look
+// up the details with the API (ListArtifacts by task_id for the type, hash, Bazel
+// label, repository and reference, ListTasks for the source repository and
+// revision). See docs/build.md.
+message ArtifactPublishedEvent {
+  int32 artifact_id = 1;
+  int32 task_id     = 2;
+}
+
 message TestReport {
   string     label    = 1;
   TestStatus status   = 2;

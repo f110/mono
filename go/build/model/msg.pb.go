@@ -1844,6 +1844,111 @@ func (b0 Artifact_builder) Build() *Artifact {
 	return m0
 }
 
+type ArtifactPublishedEvent struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_ArtifactId  int32                  `protobuf:"varint,1,opt,name=artifact_id,json=artifactId"`
+	xxx_hidden_TaskId      int32                  `protobuf:"varint,2,opt,name=task_id,json=taskId"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *ArtifactPublishedEvent) Reset() {
+	*x = ArtifactPublishedEvent{}
+	mi := &file_proto_build_model_msg_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ArtifactPublishedEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ArtifactPublishedEvent) ProtoMessage() {}
+
+func (x *ArtifactPublishedEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_build_model_msg_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ArtifactPublishedEvent) GetArtifactId() int32 {
+	if x != nil {
+		return x.xxx_hidden_ArtifactId
+	}
+	return 0
+}
+
+func (x *ArtifactPublishedEvent) GetTaskId() int32 {
+	if x != nil {
+		return x.xxx_hidden_TaskId
+	}
+	return 0
+}
+
+func (x *ArtifactPublishedEvent) SetArtifactId(v int32) {
+	x.xxx_hidden_ArtifactId = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 2)
+}
+
+func (x *ArtifactPublishedEvent) SetTaskId(v int32) {
+	x.xxx_hidden_TaskId = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
+}
+
+func (x *ArtifactPublishedEvent) HasArtifactId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *ArtifactPublishedEvent) HasTaskId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *ArtifactPublishedEvent) ClearArtifactId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_ArtifactId = 0
+}
+
+func (x *ArtifactPublishedEvent) ClearTaskId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_TaskId = 0
+}
+
+type ArtifactPublishedEvent_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	ArtifactId *int32
+	TaskId     *int32
+}
+
+func (b0 ArtifactPublishedEvent_builder) Build() *ArtifactPublishedEvent {
+	m0 := &ArtifactPublishedEvent{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.ArtifactId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 2)
+		x.xxx_hidden_ArtifactId = *b.ArtifactId
+	}
+	if b.TaskId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		x.xxx_hidden_TaskId = *b.TaskId
+	}
+	return m0
+}
+
 type TestReport struct {
 	state                  protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Label       *string                `protobuf:"bytes,1,opt,name=label"`
@@ -1857,7 +1962,7 @@ type TestReport struct {
 
 func (x *TestReport) Reset() {
 	*x = TestReport{}
-	mi := &file_proto_build_model_msg_proto_msgTypes[5]
+	mi := &file_proto_build_model_msg_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1869,7 +1974,7 @@ func (x *TestReport) String() string {
 func (*TestReport) ProtoMessage() {}
 
 func (x *TestReport) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_model_msg_proto_msgTypes[5]
+	mi := &file_proto_build_model_msg_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2012,7 +2117,7 @@ type BuildMetrics struct {
 
 func (x *BuildMetrics) Reset() {
 	*x = BuildMetrics{}
-	mi := &file_proto_build_model_msg_proto_msgTypes[6]
+	mi := &file_proto_build_model_msg_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2024,7 +2129,7 @@ func (x *BuildMetrics) String() string {
 func (*BuildMetrics) ProtoMessage() {}
 
 func (x *BuildMetrics) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_model_msg_proto_msgTypes[6]
+	mi := &file_proto_build_model_msg_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2590,7 +2695,7 @@ type GithubEvent struct {
 
 func (x *GithubEvent) Reset() {
 	*x = GithubEvent{}
-	mi := &file_proto_build_model_msg_proto_msgTypes[7]
+	mi := &file_proto_build_model_msg_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2602,7 +2707,7 @@ func (x *GithubEvent) String() string {
 func (*GithubEvent) ProtoMessage() {}
 
 func (x *GithubEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_model_msg_proto_msgTypes[7]
+	mi := &file_proto_build_model_msg_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2979,7 +3084,7 @@ type ExternalReleaseTrigger struct {
 
 func (x *ExternalReleaseTrigger) Reset() {
 	*x = ExternalReleaseTrigger{}
-	mi := &file_proto_build_model_msg_proto_msgTypes[8]
+	mi := &file_proto_build_model_msg_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2991,7 +3096,7 @@ func (x *ExternalReleaseTrigger) String() string {
 func (*ExternalReleaseTrigger) ProtoMessage() {}
 
 func (x *ExternalReleaseTrigger) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_model_msg_proto_msgTypes[8]
+	mi := &file_proto_build_model_msg_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3425,7 +3530,11 @@ const file_proto_build_model_msg_proto_rawDesc = "" +
 	"\treference\x18\a \x01(\tR\treference\x12\x12\n" +
 	"\x04size\x18\b \x01(\x03R\x04size\x129\n" +
 	"\n" +
-	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"t\n" +
+	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"R\n" +
+	"\x16ArtifactPublishedEvent\x12\x1f\n" +
+	"\vartifact_id\x18\x01 \x01(\x05R\n" +
+	"artifactId\x12\x17\n" +
+	"\atask_id\x18\x02 \x01(\x05R\x06taskId\"t\n" +
 	"\n" +
 	"TestReport\x12\x14\n" +
 	"\x05label\x18\x01 \x01(\tR\x05label\x124\n" +
@@ -3497,7 +3606,7 @@ const file_proto_build_model_msg_proto_rawDesc = "" +
 	"\x1aARTIFACT_TYPE_K8S_MANIFEST\x10\x02B)Z\x1fgo.f110.dev/mono/go/build/model\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
 
 var file_proto_build_model_msg_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_proto_build_model_msg_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_proto_build_model_msg_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_proto_build_model_msg_proto_goTypes = []any{
 	(TestStatus)(0),                // 0: mono.build.model.TestStatus
 	(ArtifactType)(0),              // 1: mono.build.model.ArtifactType
@@ -3506,25 +3615,26 @@ var file_proto_build_model_msg_proto_goTypes = []any{
 	(*Job)(nil),                    // 4: mono.build.model.Job
 	(*JobParam)(nil),               // 5: mono.build.model.JobParam
 	(*Artifact)(nil),               // 6: mono.build.model.Artifact
-	(*TestReport)(nil),             // 7: mono.build.model.TestReport
-	(*BuildMetrics)(nil),           // 8: mono.build.model.BuildMetrics
-	(*GithubEvent)(nil),            // 9: mono.build.model.GithubEvent
-	(*ExternalReleaseTrigger)(nil), // 10: mono.build.model.ExternalReleaseTrigger
-	(*timestamppb.Timestamp)(nil),  // 11: google.protobuf.Timestamp
+	(*ArtifactPublishedEvent)(nil), // 7: mono.build.model.ArtifactPublishedEvent
+	(*TestReport)(nil),             // 8: mono.build.model.TestReport
+	(*BuildMetrics)(nil),           // 9: mono.build.model.BuildMetrics
+	(*GithubEvent)(nil),            // 10: mono.build.model.GithubEvent
+	(*ExternalReleaseTrigger)(nil), // 11: mono.build.model.ExternalReleaseTrigger
+	(*timestamppb.Timestamp)(nil),  // 12: google.protobuf.Timestamp
 }
 var file_proto_build_model_msg_proto_depIdxs = []int32{
-	11, // 0: mono.build.model.Task.start_at:type_name -> google.protobuf.Timestamp
-	11, // 1: mono.build.model.Task.finished_at:type_name -> google.protobuf.Timestamp
-	11, // 2: mono.build.model.Task.created_at:type_name -> google.protobuf.Timestamp
-	11, // 3: mono.build.model.Task.updated_at:type_name -> google.protobuf.Timestamp
-	7,  // 4: mono.build.model.Task.test_reports:type_name -> mono.build.model.TestReport
-	8,  // 5: mono.build.model.Task.build_metrics:type_name -> mono.build.model.BuildMetrics
+	12, // 0: mono.build.model.Task.start_at:type_name -> google.protobuf.Timestamp
+	12, // 1: mono.build.model.Task.finished_at:type_name -> google.protobuf.Timestamp
+	12, // 2: mono.build.model.Task.created_at:type_name -> google.protobuf.Timestamp
+	12, // 3: mono.build.model.Task.updated_at:type_name -> google.protobuf.Timestamp
+	8,  // 4: mono.build.model.Task.test_reports:type_name -> mono.build.model.TestReport
+	9,  // 5: mono.build.model.Task.build_metrics:type_name -> mono.build.model.BuildMetrics
 	5,  // 6: mono.build.model.Job.params:type_name -> mono.build.model.JobParam
 	1,  // 7: mono.build.model.Artifact.type:type_name -> mono.build.model.ArtifactType
-	11, // 8: mono.build.model.Artifact.created_at:type_name -> google.protobuf.Timestamp
+	12, // 8: mono.build.model.Artifact.created_at:type_name -> google.protobuf.Timestamp
 	0,  // 9: mono.build.model.TestReport.status:type_name -> mono.build.model.TestStatus
-	11, // 10: mono.build.model.GithubEvent.created_at:type_name -> google.protobuf.Timestamp
-	11, // 11: mono.build.model.GithubEvent.updated_at:type_name -> google.protobuf.Timestamp
+	12, // 10: mono.build.model.GithubEvent.created_at:type_name -> google.protobuf.Timestamp
+	12, // 11: mono.build.model.GithubEvent.updated_at:type_name -> google.protobuf.Timestamp
 	12, // [12:12] is the sub-list for method output_type
 	12, // [12:12] is the sub-list for method input_type
 	12, // [12:12] is the sub-list for extension type_name
@@ -3543,7 +3653,7 @@ func file_proto_build_model_msg_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_build_model_msg_proto_rawDesc), len(file_proto_build_model_msg_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   9,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -326,6 +326,34 @@ export declare type Artifact = Message<"mono.build.model.Artifact"> & {
 export declare const ArtifactSchema: GenMessage<Artifact>;
 
 /**
+ * ArtifactPublishedEvent is published to the NATS JetStream subject
+ * `build.artifact.published` (stream `build`) when the builder has uploaded a new
+ * artifact to the OCI registry. It only identifies the artifact: subscribers look
+ * up the details with the API (ListArtifacts by task_id for the type, hash, Bazel
+ * label, repository and reference, ListTasks for the source repository and
+ * revision). See docs/build.md.
+ *
+ * @generated from message mono.build.model.ArtifactPublishedEvent
+ */
+export declare type ArtifactPublishedEvent = Message<"mono.build.model.ArtifactPublishedEvent"> & {
+  /**
+   * @generated from field: int32 artifact_id = 1;
+   */
+  artifactId: number;
+
+  /**
+   * @generated from field: int32 task_id = 2;
+   */
+  taskId: number;
+};
+
+/**
+ * Describes the message mono.build.model.ArtifactPublishedEvent.
+ * Use `create(ArtifactPublishedEventSchema)` to create a new message.
+ */
+export declare const ArtifactPublishedEventSchema: GenMessage<ArtifactPublishedEvent>;
+
+/**
  * @generated from message mono.build.model.TestReport
  */
 export declare type TestReport = Message<"mono.build.model.TestReport"> & {

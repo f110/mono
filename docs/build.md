@@ -159,6 +159,22 @@ build システムでは 2 通りの使われ方をする。
 - **MinIO (S3)**: ビルドログ（`logs` バケット）と Bazel バイナリ / Central Registry のミラー。
 - **Vault**: ジョブが参照するシークレット（`secrets-store-csi-driver` 経由で Job にマウント）。
 
+### 成果物の publish イベント
+
+`UploadArtifact` が新しい成果物を zot に push して `artifact` 行を作ったら、NATS JetStream にイベントを publish する。
+`SyncArtifacts` で保存済みと判定された成果物（content hash が既にある）では publish しない。
+write-back bot など成果物の更新を受けたいものが subscribe する。
+
+| 項目 | 値 |
+| --- | --- |
+| subject | `build.artifact.published` |
+| payload | `mono.build.model.ArtifactPublishedEvent`（`proto/build/model/msg.proto`）を protobuf の wire format でエンコードしたもの |
+| stream | `build`（subjects: `build.artifact.published`、retention: limits、max_age: 168h、max_bytes: 64MiB） |
+
+- payload は成果物を識別する `artifact_id` と `task_id` だけを持つ。成果物の type、hash（digest）、Bazel の label（`name`）、
+  repository、reference（タグ）は `ListArtifacts`（`task_id` 指定）、元のリポジトリとコミットは `ListTasks` で引く。
+  成果物の数や情報が増えても payload の大きさは変わらない。
+
 ## Job の構造とビルド結果の収集
 
 1 つの Task = 1 つの Kubernetes Job。Job のマニフェストは `coordinator/job.go` の `JobBuilder` が組み立て、
@@ -240,7 +256,7 @@ TypeScript の両方を生成する（BUILD.bazel の `proto_library` + `go` 生
 
 | proto | パッケージ | 用途 | 生成先 |
 | --- | --- | --- | --- |
-| `model/msg.proto` | `mono.build.model` | 共有ドメイン型（`Repository`, `Task`, `Job`, `TestReport`, `GithubEvent`, `ExternalReleaseTrigger` と enum） | `go/build/model`, `ts/apps/build/src/model` |
+| `model/msg.proto` | `mono.build.model` | 共有ドメイン型（`Repository`, `Task`, `Job`, `TestReport`, `GithubEvent`, `ExternalReleaseTrigger`, `Artifact` と enum）と成果物の publish イベント（`ArtifactPublishedEvent`） | `go/build/model`, `ts/apps/build/src/model` |
 | `api/api.proto` | `mono.build.api` | builder の内部 gRPC `API` サービス | `go/build/api` |
 | `bff/bff.proto` | `mono.build.bff` | ブラウザ向け Connect `BFF` サービス | `go/build/bff`, `ts/apps/build/src/connect` |
 
