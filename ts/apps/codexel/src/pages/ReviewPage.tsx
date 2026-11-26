@@ -351,7 +351,7 @@ export const ReviewPage = () => {
           return
         }
         const names = res.notifiedAgents.map((a) => `${a.kind} (${a.workspaceLabel || a.paneId})`)
-        setMessage({ text: names.length > 0 ? `Notified ${names.join(', ')}` : 'No running agent created these changes', error: false })
+        setMessage({ text: names.length > 0 ? `Notified ${names.join(', ')}` : 'No agent created these changes', error: false })
       }).catch(() => {}),
     [reviewId, run],
   )

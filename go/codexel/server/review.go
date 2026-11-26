@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"path"
 	"regexp"
 	"slices"
@@ -19,6 +20,7 @@ import (
 	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/herdr"
 	"go.f110.dev/mono/go/jujutsu"
+	"go.f110.dev/mono/go/logger"
 )
 
 const (
@@ -254,8 +256,9 @@ func (h *ReviewHandler) Finish(ctx context.Context, req *connect.Request[api.Req
 	return connect.NewResponse(api.ResponseFinish_builder{Review: toReview(r), NotifiedAgents: agents}.Build()), nil
 }
 
-// notifyAgents prompts the running agents which created the changes of the latest round. The agents are found by the
-// Agent and Agent-Session trailers.
+// notifyAgents prompts the agents which created the changes of the latest round. The agents are found by the Agent and
+// Agent-Session trailers. The session of the agent which is not running is resumed in the new workspace of herdr whose
+// working directory is the repository of the review.
 func (h *ReviewHandler) notifyAgents(ctx context.Context, repo *jujutsu.Repository, r *review.Review) ([]*api.Agent, error) {
 	commits := make([]string, 0, len(r.Changes))
 	for _, v := range r.Changes {
@@ -274,23 +277,65 @@ func (h *ReviewHandler) notifyAgents(ctx context.Context, repo *jujutsu.Reposito
 	if err != nil {
 		return nil, toConnectError(err)
 	}
+
+	var sessions [][2]string
+	var notified []*herdr.Agent
+	for _, row := range rows {
+		i := slices.IndexFunc(row.Commit.Trailers, func(t jujutsu.Trailer) bool { return t.Key == jujutsu.TrailerAgent })
+		j := slices.IndexFunc(row.Commit.Trailers, func(t jujutsu.Trailer) bool { return t.Key == jujutsu.TrailerAgentSession })
+		if i == -1 || j == -1 {
+			continue
+		}
+		kind, sessionID := row.Commit.Trailers[i].Value, row.Commit.Trailers[j].Value
+		if slices.Contains(sessions, [2]string{kind, sessionID}) {
+			continue
+		}
+		sessions = append(sessions, [2]string{kind, sessionID})
+
+		if k := slices.IndexFunc(agents, func(v *herdr.Agent) bool {
+			a := toAgent(v, nil)
+			return a.GetKind() == kind && a.GetSessionId() == sessionID
+		}); k != -1 {
+			if err := h.herdr.PromptAgent(ctx, agents[k].PaneID, finishedPrompt(r.ID)); err != nil {
+				return nil, toConnectError(err)
+			}
+			notified = append(notified, agents[k])
+			continue
+		}
+
+		resume, ok := resumeArgs[kind]
+		if !ok {
+			return nil, connect.NewError(connect.CodeFailedPrecondition, xerrors.Newf("the session %s of %s can't be resumed", sessionID, kind))
+		}
+		pane, cleanup, err := createPane(ctx, h.herdr, "", r.Repository)
+		if err != nil {
+			return nil, toConnectError(err)
+		}
+		agent, err := startAgent(ctx, h.herdr, agentName(kind), kind, pane.PaneID, resume(sessionID))
+		if err == nil {
+			err = h.herdr.PromptAgent(ctx, agent.PaneID, finishedPrompt(r.ID))
+		}
+		if err != nil {
+			if closeErr := cleanup(context.WithoutCancel(ctx)); closeErr != nil {
+				logger.Log.Info("Failed to close the pane", slog.String("pane_id", pane.PaneID), logger.E(closeErr))
+			}
+			return nil, toConnectError(err)
+		}
+		notified = append(notified, agent)
+	}
+	if len(notified) == 0 {
+		return nil, nil
+	}
+
 	workspaces, err := workspaceLabels(ctx, h.herdr)
 	if err != nil {
 		return nil, err
 	}
-
-	var notified []*api.Agent
-	for _, v := range agents {
-		a := toAgent(v, workspaces)
-		if a.GetSessionId() == "" || !slices.ContainsFunc(rows, func(row *jujutsu.LogRow) bool { return row.Commit.CreatedBy(a.GetKind(), a.GetSessionId()) }) {
-			continue
-		}
-		if err := h.herdr.PromptAgent(ctx, a.GetPaneId(), finishedPrompt(r.ID)); err != nil {
-			return nil, toConnectError(err)
-		}
-		notified = append(notified, a)
+	res := make([]*api.Agent, 0, len(notified))
+	for _, v := range notified {
+		res = append(res, toAgent(v, workspaces))
 	}
-	return notified, nil
+	return res, nil
 }
 
 // finishedPrompt is the prompt to the agent when the review is finished.
@@ -494,6 +539,13 @@ var reviewStates = map[review.State]api.ReviewState{
 	review.StateFinished:  api.ReviewState_REVIEW_STATE_FINISHED,
 	review.StateApproved:  api.ReviewState_REVIEW_STATE_APPROVED,
 	review.StateDiscarded: api.ReviewState_REVIEW_STATE_DISCARDED,
+}
+
+// resumeArgs returns the arguments of the agent to resume the session for each kind of the agents which add the
+// trailers by jj-trailer.
+var resumeArgs = map[string]func(sessionID string) []string{
+	"claude":   func(sessionID string) []string { return []string{"--resume", sessionID} },
+	"opencode": func(sessionID string) []string { return []string{"--session", sessionID} },
 }
 
 // generatedGoRegexp is the header of the generated Go files defined at https://go.dev/s/generatedcode

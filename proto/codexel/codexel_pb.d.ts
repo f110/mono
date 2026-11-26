@@ -3459,7 +3459,7 @@ export declare type ResponseFinish = Message<"mono.codexel.ResponseFinish"> & {
 
   /**
    * notified_agents are the agents which were told that the review is finished. The agents are found by the
-   * Agent and Agent-Session trailers of the changes.
+   * Agent and Agent-Session trailers of the changes. The sessions of the agents which are not running are resumed.
    *
    * @generated from field: repeated mono.codexel.Agent notified_agents = 2;
    */

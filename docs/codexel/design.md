@@ -316,6 +316,15 @@ crit はブランチと作業ツリーを単位にするが、Codexel は jj の
 
 未 resolve のコメントを残して Finish したら、コミットの `Agent-Session` から作成したエージェントを特定し、herdr の `agent.prompt` でレビューが終わったことを伝える。
 
+作成したエージェントが herdr にいない場合は、そのセッションを resume して起動してから伝える。
+
+- 種類は `Agent` Trailer の値にする。resume の引数は種類ごとに持ち、`jj-trailer` が対応している種類 (§6.1) だけにする
+  (`claude --resume <id>`, `opencode --session <id>`)。それ以外の種類はエラーにする
+- 新しい herdr の workspace を作り、作業ディレクトリはレビューのリポジトリにする。別の jj workspace で作業していた場合はエージェントがそちらを使う
+- resume するのでセッション ID は変わらず、次のラウンド以降も Trailer で見つかる。起動したことは記録しない
+- 起動したエージェントは approve されても終了しない
+- 起動か `agent.prompt` に失敗した場合は、作った workspace を閉じて Finish をエラーにする。状態は変わらず、エラーはレビュー画面に表示する
+
 エージェントは Codexel が提供する MCP でコメントを読み、返信・resolve する。
 
 - `go/issue/mcp` と同じく、Codexel のサーバーが MCP エンドポイント (`/mcp`) を提供する

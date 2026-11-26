@@ -4,6 +4,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -241,6 +242,61 @@ func TestStartReviewAgent(t *testing.T) {
 	assertion.MustNoError(t, err)
 	_, err = startAgent()
 	assertion.Equal(t, connect.CodeOf(err), connect.CodeFailedPrecondition)
+}
+
+func TestFinishResumesAgent(t *testing.T) {
+	if *jjBinaryPath == "" {
+		t.Skipf("Skip %s because -test.jj-binary is not set", t.Name())
+	}
+
+	repo, _ := newStackRepository(t)
+	runCommand(t, repo, "jj", "commit", "--message=exited\n\nAgent: claude\nAgent-Session: s1\n")
+	runCommand(t, repo, "jj", "commit", "--message=running\n\nAgent: claude\nAgent-Session: live\n")
+	changes := strings.Fields(runCommand(t, repo, "jj", "log", "--no-graph", "--revisions=@--|@-", "--template=change_id.short() ++ \"\\n\""))
+	agents := `"result":{"type":"agent_list","agents":[{"agent":"claude","agent_session":{"agent":"claude","kind":"id","source":"herdr:claude","value":"live"},"agent_status":"idle","cwd":"/other","pane_id":"w1:p1","tab_id":"w1:t1","workspace_id":"w1"}]}`
+	workspaceCreated := `"result":{"type":"workspace_created","workspace":{"workspace_id":"w2"},"tab":{"tab_id":"w2:t1"},"root_pane":{"pane_id":"w2:p1","tab_id":"w2:t1","workspace_id":"w2"}}`
+	agentStarted := `"result":{"type":"agent_started","argv":["claude","--resume","s1"],"agent":{"agent":"claude","agent_status":"idle","pane_id":"w2:p1","tab_id":"w2:t1","workspace_id":"w2"}}`
+	c, received := startHerdrWithSequence(t, map[string][]string{
+		"agent.list":       {agents},
+		"agent.prompt":     {`"result":{"type":"ok"}`},
+		"workspace.create": {workspaceCreated},
+		"agent.start":      {agentStarted, `"error":{"code":"agent_start_failed","message":"failed"}`},
+		"workspace.close":  {`"result":{"type":"ok"}`},
+		"workspace.list":   {`"result":{"type":"workspace_list","workspaces":[{"workspace_id":"w1","label":"other"},{"workspace_id":"w2","label":"repo"}]}`},
+	})
+	h := NewReviewHandler(newConfig(t, repo), review.NewStore(t.TempDir()), c)
+	finish := func(changeIDs ...string) (*api.Review, *connect.Response[api.ResponseFinish], error) {
+		started, err := h.Start(t.Context(), connect.NewRequest(api.RequestStartReview_builder{Path: new(repo), ChangeIds: changeIDs}.Build()))
+		assertion.MustNoError(t, err)
+		id := started.Msg.GetReview().GetId()
+		_, err = h.AddComment(t.Context(), connect.NewRequest(api.RequestAddComment_builder{ReviewId: new(id), Body: new("fix")}.Build()))
+		assertion.MustNoError(t, err)
+		res, err := h.Finish(t.Context(), connect.NewRequest(api.RequestFinish_builder{ReviewId: new(id)}.Build()))
+		got, getErr := h.Get(t.Context(), connect.NewRequest(api.RequestGetReview_builder{Id: new(id)}.Build()))
+		assertion.MustNoError(t, getErr)
+		return got.Msg.GetReview(), res, err
+	}
+
+	// The running agent is notified and the session of the exited agent is resumed in the new workspace of the repository.
+	r, res, err := finish(changes...)
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, r.GetState(), api.ReviewState_REVIEW_STATE_FINISHED)
+	reqs := received()
+	assertion.Equal(t, methods(reqs), []string{"agent.list", "agent.prompt", "workspace.create", "agent.start", "agent.prompt", "workspace.list"})
+	assertion.Equal(t, reqs[1].Params["target"], any("w1:p1"))
+	assertion.Equal(t, reqs[2].Params["cwd"], any(repo))
+	assertion.Equal(t, reqs[3].Params["kind"], any("claude"))
+	assertion.Equal(t, reqs[3].Params["args"], any([]any{"--resume", "s1"}))
+	assertion.Equal(t, reqs[4].Params["target"], any("w2:p1"))
+	assertion.Contains(t, reqs[4].Params["text"].(string), r.GetId())
+	assertion.MustLen(t, res.Msg.GetNotifiedAgents(), 2)
+	assertion.Equal(t, res.Msg.GetNotifiedAgents()[1].GetWorkspaceLabel(), "repo")
+
+	// The review stays open and the workspace is closed if the agent fails to start.
+	r, _, err = finish(changes[1])
+	assertion.Equal(t, connect.CodeOf(err), connect.CodeUnknown)
+	assertion.Equal(t, r.GetState(), api.ReviewState_REVIEW_STATE_OPEN)
+	assertion.Equal(t, methods(received()[len(reqs):]), []string{"agent.list", "workspace.create", "agent.start", "workspace.close"})
 }
 
 func TestListUnreviewedCommits(t *testing.T) {

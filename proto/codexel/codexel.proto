@@ -1092,7 +1092,7 @@ message RequestFinish {
 message ResponseFinish {
   Review review = 1;
   // notified_agents are the agents which were told that the review is finished. The agents are found by the
-  // Agent and Agent-Session trailers of the changes.
+  // Agent and Agent-Session trailers of the changes. The sessions of the agents which are not running are resumed.
   repeated Agent notified_agents = 2;
 }
 
