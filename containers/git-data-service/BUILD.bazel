@@ -9,15 +9,26 @@ pkg_tar(
     name = "bin",
     files = {
         "//go/cmd/git-data-service:linux_amd64": "/usr/local/bin/git-data-service",
+        "@protoc_ddl//cmd/migrate:linux_amd64": "/usr/local/bin/migrate",
     },
     mode = "0755",
+)
+
+pkg_tar(
+    name = "schema_files",
+    srcs = ["//go/git/database:schema_txt"],
+    mode = "0644",
+    package_dir = "/schema",
 )
 
 container_image(
     name = "image",
     base = "@com_google_distroless_base_linux_amd64",
     entrypoint = ["/usr/local/bin/git-data-service"],
-    tars = [":bin"],
+    tars = [
+        ":bin",
+        ":schema_files",
+    ],
 )
 
 oci_push(
