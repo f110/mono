@@ -10,6 +10,9 @@ const globalSection: Section = {
   title: 'All screens',
   shortcuts: [
     ['?', 'Show the keyboard shortcuts'],
+    ['Alt+1', 'Go to the agents'],
+    ['Alt+2', 'Go to the repositories'],
+    ['Alt+3', 'Go to the reviews'],
     ['Esc', 'Blur the input (the text is kept)'],
     ['Cmd/Ctrl+Enter', 'Submit the multi-line input'],
   ],

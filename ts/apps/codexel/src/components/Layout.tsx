@@ -2,21 +2,45 @@ import { useEffect, useState } from 'react'
 import { useQuery } from '@connectrpc/connect-query'
 import { Alert, AppBar, Box, Button, IconButton, Toolbar, Tooltip, Typography } from '@mui/material'
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
-import { Link, Outlet } from '@tanstack/react-router'
+import { Link, Outlet, useRouter } from '@tanstack/react-router'
 import { SystemService } from '../connect/codexel_pb.js'
 import { ignoreKey, isInput } from '../lib/keys.ts'
 import { ShortcutHelpDialog } from './ShortcutHelpDialog.tsx'
+
+// screenKeys are the codes of the keys which move to the screens of the buttons of the app bar with Alt (Option). The code
+// is used instead of the key because Option changes the key on macOS.
+const screenKeys: Record<string, '/agents' | '/repositories' | '/reviews'> = {
+  Digit1: '/agents',
+  Digit2: '/repositories',
+  Digit3: '/reviews',
+}
 
 export const Layout = () => {
   const { data } = useQuery(SystemService.method.getStatus, {})
   const missingBinaries = data?.missingBinaries ?? []
   const [helpOpen, setHelpOpen] = useState(false)
+  const router = useRouter()
 
-  // ? opens the help and Esc blurs the input without clearing it. See docs/ui-conventions.md.
+  // ? opens the help, Esc blurs the input without clearing it and Alt with the keys of screenKeys moves to the screen. See
+  // docs/ui-conventions.md. Alt with the key is ignored by the same conditions as the shortcut key except the modifier.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && !e.defaultPrevented && !e.isComposing && e.keyCode !== 229 && isInput(e.target)) {
         e.target.blur()
+        return
+      }
+      const to = screenKeys[e.code]
+      if (to && e.altKey && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
+        const ignored =
+          e.isComposing ||
+          e.keyCode === 229 ||
+          e.defaultPrevented ||
+          isInput(e.target) ||
+          document.querySelector('[role="dialog"], [role="menu"], [role="listbox"]') !== null
+        if (!ignored && router.state.location.pathname !== to) {
+          e.preventDefault()
+          void router.navigate({ to })
+        }
         return
       }
       if (e.key === '?' && !ignoreKey(e)) {
@@ -26,7 +50,7 @@ export const Layout = () => {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [])
+  }, [router])
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
