@@ -1,6 +1,9 @@
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_push")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files")
+load("//build/rules/artifact:def.bzl", "cd_artifact")
+
+REPOSITORY = "repo.center.x.f110.dev/stackexchange/dnscontrol"
 
 pkg_files(
     name = "bin",
@@ -34,5 +37,11 @@ oci_push(
     name = "push",
     image = ":image",
     remote_tags = ["latest"],
-    repository = "repo.center.x.f110.dev/stackexchange/dnscontrol",
+    repository = REPOSITORY,
+)
+
+cd_artifact(
+    name = "delivery",
+    images = [":image"],
+    repository = REPOSITORY,
 )

@@ -1,19 +1,21 @@
 load("@rules_oci//oci:defs.bzl", "oci_push")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("//build/rules/artifact:def.bzl", "cd_artifact")
 load("//build/rules/container:def.bzl", "container_image")
+
+REPOSITORY = "repo.center.x.f110.dev/common/etcdbackup"
 
 pkg_tar(
     name = "bin",
-    srcs = [
-        "//go/cmd/etcdbackup",
-    ],
+    files = {
+        "//go/cmd/etcdbackup:linux_arm64": "/usr/local/bin/etcdbackup",
+    },
     mode = "0755",
-    package_dir = "/usr/local/bin",
 )
 
 container_image(
     name = "image",
-    base = "@com_google_distroless_base",
+    base = "@com_google_distroless_base_linux_arm64_v8",
     entrypoint = ["/usr/local/bin/etcdbackup"],
     tars = [":bin"],
 )
@@ -22,5 +24,11 @@ oci_push(
     name = "push",
     image = ":image",
     remote_tags = ["latest"],
-    repository = "repo.center.x.f110.dev/common/etcdbackup",
+    repository = REPOSITORY,
+)
+
+cd_artifact(
+    name = "delivery",
+    images = [":image"],
+    repository = REPOSITORY,
 )
