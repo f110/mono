@@ -31,6 +31,7 @@ type PathConfig struct {
 	Path             string
 	Proxy            string
 	Root             string
+	Redirect         string
 	AccessLog        string
 	DisableAccessLog bool
 	Status           int

@@ -122,6 +122,9 @@ func parsePathConfig(path string, val map[string]any) (*PathConfig, error) {
 	if v, ok := val["root"]; ok {
 		pc.Root = v.(string)
 	}
+	if v, ok := val["redirect"]; ok {
+		pc.Redirect = v.(string)
+	}
 	if v, ok := val["access_log"]; ok {
 		pc.AccessLog = v.(string)
 	}
@@ -195,7 +198,17 @@ func (s *SimpleHTTPServer) startServer(ctx context.Context) (fsm.State, error) {
 				}
 				handler = h
 			}
-			if p.Status != 0 {
+			switch {
+			case p.Redirect != "":
+				target := p.Redirect
+				status := http.StatusFound
+				if p.Status != 0 {
+					status = p.Status
+				}
+				handler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+					http.Redirect(w, req, target, status)
+				})
+			case p.Status != 0:
 				status := p.Status
 				handler = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 					w.WriteHeader(status)

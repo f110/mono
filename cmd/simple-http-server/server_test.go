@@ -186,3 +186,80 @@ server {
 	assert.NotContains(t, string(buf), "/healthz", "health check path must not be logged")
 	assert.Contains(t, string(buf), "/foo", "normal request must be logged")
 }
+
+func TestSimpleHTTPServer_Redirect(t *testing.T) {
+	logger.Init()
+	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		fmt.Fprint(w, "proxy ok")
+	}))
+	t.Cleanup(backend.Close)
+	backendURL, err := url.Parse(backend.URL)
+	require.NoError(t, err)
+
+	port, err := netutil.FindUnusedPort()
+	require.NoError(t, err)
+
+	conf := `
+server {
+	listen = "127.0.0.1:%d"
+
+	path "/" {
+		redirect = "/select/vmui/"
+	}
+
+	path "/moved" {
+		redirect = "/new"
+		status = 301
+	}
+
+	path "/*" {
+		proxy = "http://%s"
+	}
+}`
+	f, err := os.CreateTemp(t.TempDir(), "")
+	require.NoError(t, err)
+	_, err = f.WriteString(fmt.Sprintf(conf, port, backendURL.Host))
+	require.NoError(t, err)
+
+	s := NewSimpleHTTPServer()
+	s.configFile = f.Name()
+	closeCh := make(chan struct{})
+	go func() {
+		require.NoError(t, s.LoopContext(context.Background()))
+		close(closeCh)
+	}()
+	require.NoError(t, netutil.WaitListen(fmt.Sprintf("127.0.0.1:%d", port), time.Second))
+
+	client := &http.Client{
+		CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	res, err := client.Get(fmt.Sprintf("http://127.0.0.1:%d/", port))
+	require.NoError(t, err)
+	require.NoError(t, res.Body.Close())
+	assert.Equal(t, http.StatusFound, res.StatusCode)
+	assert.Equal(t, "/select/vmui/", res.Header.Get("Location"))
+
+	res, err = client.Get(fmt.Sprintf("http://127.0.0.1:%d/moved", port))
+	require.NoError(t, err)
+	require.NoError(t, res.Body.Close())
+	assert.Equal(t, http.StatusMovedPermanently, res.StatusCode)
+	assert.Equal(t, "/new", res.Header.Get("Location"))
+
+	res, err = client.Get(fmt.Sprintf("http://127.0.0.1:%d/select/vmui/", port))
+	require.NoError(t, err)
+	buf, err := io.ReadAll(res.Body)
+	require.NoError(t, err)
+	require.NoError(t, res.Body.Close())
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.Equal(t, []byte("proxy ok"), buf)
+
+	s.FSM.Shutdown()
+	select {
+	case <-time.After(time.Second):
+		require.Fail(t, "timed out")
+	case <-closeCh:
+	}
+}
