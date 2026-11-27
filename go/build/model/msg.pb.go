@@ -1949,6 +1949,459 @@ func (b0 ArtifactPublishedEvent_builder) Build() *ArtifactPublishedEvent {
 	return m0
 }
 
+type ArtifactPublishedRule struct {
+	state                  protoimpl.MessageState         `protogen:"opaque.v1"`
+	xxx_hidden_Repository  *Repository                    `protobuf:"bytes,1,opt,name=repository"`
+	xxx_hidden_Name        *string                        `protobuf:"bytes,2,opt,name=name"`
+	xxx_hidden_Artifact    *string                        `protobuf:"bytes,3,opt,name=artifact"`
+	xxx_hidden_Action      isArtifactPublishedRule_Action `protobuf_oneof:"action"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *ArtifactPublishedRule) Reset() {
+	*x = ArtifactPublishedRule{}
+	mi := &file_proto_build_model_msg_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ArtifactPublishedRule) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ArtifactPublishedRule) ProtoMessage() {}
+
+func (x *ArtifactPublishedRule) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_build_model_msg_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ArtifactPublishedRule) GetRepository() *Repository {
+	if x != nil {
+		return x.xxx_hidden_Repository
+	}
+	return nil
+}
+
+func (x *ArtifactPublishedRule) GetName() string {
+	if x != nil {
+		if x.xxx_hidden_Name != nil {
+			return *x.xxx_hidden_Name
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ArtifactPublishedRule) GetArtifact() string {
+	if x != nil {
+		if x.xxx_hidden_Artifact != nil {
+			return *x.xxx_hidden_Artifact
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ArtifactPublishedRule) GetReplace() *ArtifactPublishedRuleReplace {
+	if x != nil {
+		if x, ok := x.xxx_hidden_Action.(*artifactPublishedRule_Replace); ok {
+			return x.Replace
+		}
+	}
+	return nil
+}
+
+func (x *ArtifactPublishedRule) GetKustomizeImage() *ArtifactPublishedRuleKustomizeImage {
+	if x != nil {
+		if x, ok := x.xxx_hidden_Action.(*artifactPublishedRule_KustomizeImage); ok {
+			return x.KustomizeImage
+		}
+	}
+	return nil
+}
+
+func (x *ArtifactPublishedRule) SetRepository(v *Repository) {
+	x.xxx_hidden_Repository = v
+}
+
+func (x *ArtifactPublishedRule) SetName(v string) {
+	x.xxx_hidden_Name = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 4)
+}
+
+func (x *ArtifactPublishedRule) SetArtifact(v string) {
+	x.xxx_hidden_Artifact = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 4)
+}
+
+func (x *ArtifactPublishedRule) SetReplace(v *ArtifactPublishedRuleReplace) {
+	if v == nil {
+		x.xxx_hidden_Action = nil
+		return
+	}
+	x.xxx_hidden_Action = &artifactPublishedRule_Replace{v}
+}
+
+func (x *ArtifactPublishedRule) SetKustomizeImage(v *ArtifactPublishedRuleKustomizeImage) {
+	if v == nil {
+		x.xxx_hidden_Action = nil
+		return
+	}
+	x.xxx_hidden_Action = &artifactPublishedRule_KustomizeImage{v}
+}
+
+func (x *ArtifactPublishedRule) HasRepository() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Repository != nil
+}
+
+func (x *ArtifactPublishedRule) HasName() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *ArtifactPublishedRule) HasArtifact() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *ArtifactPublishedRule) HasAction() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Action != nil
+}
+
+func (x *ArtifactPublishedRule) HasReplace() bool {
+	if x == nil {
+		return false
+	}
+	_, ok := x.xxx_hidden_Action.(*artifactPublishedRule_Replace)
+	return ok
+}
+
+func (x *ArtifactPublishedRule) HasKustomizeImage() bool {
+	if x == nil {
+		return false
+	}
+	_, ok := x.xxx_hidden_Action.(*artifactPublishedRule_KustomizeImage)
+	return ok
+}
+
+func (x *ArtifactPublishedRule) ClearRepository() {
+	x.xxx_hidden_Repository = nil
+}
+
+func (x *ArtifactPublishedRule) ClearName() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Name = nil
+}
+
+func (x *ArtifactPublishedRule) ClearArtifact() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Artifact = nil
+}
+
+func (x *ArtifactPublishedRule) ClearAction() {
+	x.xxx_hidden_Action = nil
+}
+
+func (x *ArtifactPublishedRule) ClearReplace() {
+	if _, ok := x.xxx_hidden_Action.(*artifactPublishedRule_Replace); ok {
+		x.xxx_hidden_Action = nil
+	}
+}
+
+func (x *ArtifactPublishedRule) ClearKustomizeImage() {
+	if _, ok := x.xxx_hidden_Action.(*artifactPublishedRule_KustomizeImage); ok {
+		x.xxx_hidden_Action = nil
+	}
+}
+
+const ArtifactPublishedRule_Action_not_set_case case_ArtifactPublishedRule_Action = 0
+const ArtifactPublishedRule_Replace_case case_ArtifactPublishedRule_Action = 4
+const ArtifactPublishedRule_KustomizeImage_case case_ArtifactPublishedRule_Action = 5
+
+func (x *ArtifactPublishedRule) WhichAction() case_ArtifactPublishedRule_Action {
+	if x == nil {
+		return ArtifactPublishedRule_Action_not_set_case
+	}
+	switch x.xxx_hidden_Action.(type) {
+	case *artifactPublishedRule_Replace:
+		return ArtifactPublishedRule_Replace_case
+	case *artifactPublishedRule_KustomizeImage:
+		return ArtifactPublishedRule_KustomizeImage_case
+	default:
+		return ArtifactPublishedRule_Action_not_set_case
+	}
+}
+
+type ArtifactPublishedRule_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Repository *Repository
+	Name       *string
+	Artifact   *string
+	// Fields of oneof xxx_hidden_Action:
+	Replace        *ArtifactPublishedRuleReplace
+	KustomizeImage *ArtifactPublishedRuleKustomizeImage
+	// -- end of xxx_hidden_Action
+}
+
+func (b0 ArtifactPublishedRule_builder) Build() *ArtifactPublishedRule {
+	m0 := &ArtifactPublishedRule{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Repository = b.Repository
+	if b.Name != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 4)
+		x.xxx_hidden_Name = b.Name
+	}
+	if b.Artifact != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 4)
+		x.xxx_hidden_Artifact = b.Artifact
+	}
+	if b.Replace != nil {
+		x.xxx_hidden_Action = &artifactPublishedRule_Replace{b.Replace}
+	}
+	if b.KustomizeImage != nil {
+		x.xxx_hidden_Action = &artifactPublishedRule_KustomizeImage{b.KustomizeImage}
+	}
+	return m0
+}
+
+type case_ArtifactPublishedRule_Action protoreflect.FieldNumber
+
+func (x case_ArtifactPublishedRule_Action) String() string {
+	md := file_proto_build_model_msg_proto_msgTypes[6].Descriptor()
+	if x == 0 {
+		return "not set"
+	}
+	return protoimpl.X.MessageFieldStringOf(md, protoreflect.FieldNumber(x))
+}
+
+type isArtifactPublishedRule_Action interface {
+	isArtifactPublishedRule_Action()
+}
+
+type artifactPublishedRule_Replace struct {
+	Replace *ArtifactPublishedRuleReplace `protobuf:"bytes,4,opt,name=replace,oneof"`
+}
+
+type artifactPublishedRule_KustomizeImage struct {
+	KustomizeImage *ArtifactPublishedRuleKustomizeImage `protobuf:"bytes,5,opt,name=kustomize_image,json=kustomizeImage,oneof"`
+}
+
+func (*artifactPublishedRule_Replace) isArtifactPublishedRule_Action() {}
+
+func (*artifactPublishedRule_KustomizeImage) isArtifactPublishedRule_Action() {}
+
+type ArtifactPublishedRuleReplace struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *ArtifactPublishedRuleReplace) Reset() {
+	*x = ArtifactPublishedRuleReplace{}
+	mi := &file_proto_build_model_msg_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ArtifactPublishedRuleReplace) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ArtifactPublishedRuleReplace) ProtoMessage() {}
+
+func (x *ArtifactPublishedRuleReplace) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_build_model_msg_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ArtifactPublishedRuleReplace) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ArtifactPublishedRuleReplace) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *ArtifactPublishedRuleReplace) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *ArtifactPublishedRuleReplace) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Path = nil
+}
+
+type ArtifactPublishedRuleReplace_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Path *string
+}
+
+func (b0 ArtifactPublishedRuleReplace_builder) Build() *ArtifactPublishedRuleReplace {
+	m0 := &ArtifactPublishedRuleReplace{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_Path = b.Path
+	}
+	return m0
+}
+
+type ArtifactPublishedRuleKustomizeImage struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
+	xxx_hidden_Name        *string                `protobuf:"bytes,2,opt,name=name"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *ArtifactPublishedRuleKustomizeImage) Reset() {
+	*x = ArtifactPublishedRuleKustomizeImage{}
+	mi := &file_proto_build_model_msg_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ArtifactPublishedRuleKustomizeImage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ArtifactPublishedRuleKustomizeImage) ProtoMessage() {}
+
+func (x *ArtifactPublishedRuleKustomizeImage) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_build_model_msg_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ArtifactPublishedRuleKustomizeImage) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ArtifactPublishedRuleKustomizeImage) GetName() string {
+	if x != nil {
+		if x.xxx_hidden_Name != nil {
+			return *x.xxx_hidden_Name
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ArtifactPublishedRuleKustomizeImage) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 2)
+}
+
+func (x *ArtifactPublishedRuleKustomizeImage) SetName(v string) {
+	x.xxx_hidden_Name = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
+}
+
+func (x *ArtifactPublishedRuleKustomizeImage) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *ArtifactPublishedRuleKustomizeImage) HasName() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *ArtifactPublishedRuleKustomizeImage) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Path = nil
+}
+
+func (x *ArtifactPublishedRuleKustomizeImage) ClearName() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Name = nil
+}
+
+type ArtifactPublishedRuleKustomizeImage_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Path *string
+	Name *string
+}
+
+func (b0 ArtifactPublishedRuleKustomizeImage_builder) Build() *ArtifactPublishedRuleKustomizeImage {
+	m0 := &ArtifactPublishedRuleKustomizeImage{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 2)
+		x.xxx_hidden_Path = b.Path
+	}
+	if b.Name != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		x.xxx_hidden_Name = b.Name
+	}
+	return m0
+}
+
 type TestReport struct {
 	state                  protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Label       *string                `protobuf:"bytes,1,opt,name=label"`
@@ -1962,7 +2415,7 @@ type TestReport struct {
 
 func (x *TestReport) Reset() {
 	*x = TestReport{}
-	mi := &file_proto_build_model_msg_proto_msgTypes[6]
+	mi := &file_proto_build_model_msg_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1974,7 +2427,7 @@ func (x *TestReport) String() string {
 func (*TestReport) ProtoMessage() {}
 
 func (x *TestReport) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_model_msg_proto_msgTypes[6]
+	mi := &file_proto_build_model_msg_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2117,7 +2570,7 @@ type BuildMetrics struct {
 
 func (x *BuildMetrics) Reset() {
 	*x = BuildMetrics{}
-	mi := &file_proto_build_model_msg_proto_msgTypes[7]
+	mi := &file_proto_build_model_msg_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2129,7 +2582,7 @@ func (x *BuildMetrics) String() string {
 func (*BuildMetrics) ProtoMessage() {}
 
 func (x *BuildMetrics) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_model_msg_proto_msgTypes[7]
+	mi := &file_proto_build_model_msg_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2695,7 +3148,7 @@ type GithubEvent struct {
 
 func (x *GithubEvent) Reset() {
 	*x = GithubEvent{}
-	mi := &file_proto_build_model_msg_proto_msgTypes[8]
+	mi := &file_proto_build_model_msg_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2707,7 +3160,7 @@ func (x *GithubEvent) String() string {
 func (*GithubEvent) ProtoMessage() {}
 
 func (x *GithubEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_model_msg_proto_msgTypes[8]
+	mi := &file_proto_build_model_msg_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3084,7 +3537,7 @@ type ExternalReleaseTrigger struct {
 
 func (x *ExternalReleaseTrigger) Reset() {
 	*x = ExternalReleaseTrigger{}
-	mi := &file_proto_build_model_msg_proto_msgTypes[9]
+	mi := &file_proto_build_model_msg_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3096,7 +3549,7 @@ func (x *ExternalReleaseTrigger) String() string {
 func (*ExternalReleaseTrigger) ProtoMessage() {}
 
 func (x *ExternalReleaseTrigger) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_model_msg_proto_msgTypes[9]
+	mi := &file_proto_build_model_msg_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3534,7 +3987,21 @@ const file_proto_build_model_msg_proto_rawDesc = "" +
 	"\x16ArtifactPublishedEvent\x12\x1f\n" +
 	"\vartifact_id\x18\x01 \x01(\x05R\n" +
 	"artifactId\x12\x17\n" +
-	"\atask_id\x18\x02 \x01(\x05R\x06taskId\"t\n" +
+	"\atask_id\x18\x02 \x01(\x05R\x06taskId\"\xbd\x02\n" +
+	"\x15ArtifactPublishedRule\x12<\n" +
+	"\n" +
+	"repository\x18\x01 \x01(\v2\x1c.mono.build.model.RepositoryR\n" +
+	"repository\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n" +
+	"\bartifact\x18\x03 \x01(\tR\bartifact\x12J\n" +
+	"\areplace\x18\x04 \x01(\v2..mono.build.model.ArtifactPublishedRuleReplaceH\x00R\areplace\x12`\n" +
+	"\x0fkustomize_image\x18\x05 \x01(\v25.mono.build.model.ArtifactPublishedRuleKustomizeImageH\x00R\x0ekustomizeImageB\b\n" +
+	"\x06action\"2\n" +
+	"\x1cArtifactPublishedRuleReplace\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\"M\n" +
+	"#ArtifactPublishedRuleKustomizeImage\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\"t\n" +
 	"\n" +
 	"TestReport\x12\x14\n" +
 	"\x05label\x18\x01 \x01(\tR\x05label\x124\n" +
@@ -3606,40 +4073,46 @@ const file_proto_build_model_msg_proto_rawDesc = "" +
 	"\x1aARTIFACT_TYPE_K8S_MANIFEST\x10\x02B)Z\x1fgo.f110.dev/mono/go/build/model\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
 
 var file_proto_build_model_msg_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_proto_build_model_msg_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_proto_build_model_msg_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_proto_build_model_msg_proto_goTypes = []any{
-	(TestStatus)(0),                // 0: mono.build.model.TestStatus
-	(ArtifactType)(0),              // 1: mono.build.model.ArtifactType
-	(*Repository)(nil),             // 2: mono.build.model.Repository
-	(*Task)(nil),                   // 3: mono.build.model.Task
-	(*Job)(nil),                    // 4: mono.build.model.Job
-	(*JobParam)(nil),               // 5: mono.build.model.JobParam
-	(*Artifact)(nil),               // 6: mono.build.model.Artifact
-	(*ArtifactPublishedEvent)(nil), // 7: mono.build.model.ArtifactPublishedEvent
-	(*TestReport)(nil),             // 8: mono.build.model.TestReport
-	(*BuildMetrics)(nil),           // 9: mono.build.model.BuildMetrics
-	(*GithubEvent)(nil),            // 10: mono.build.model.GithubEvent
-	(*ExternalReleaseTrigger)(nil), // 11: mono.build.model.ExternalReleaseTrigger
-	(*timestamppb.Timestamp)(nil),  // 12: google.protobuf.Timestamp
+	(TestStatus)(0),                             // 0: mono.build.model.TestStatus
+	(ArtifactType)(0),                           // 1: mono.build.model.ArtifactType
+	(*Repository)(nil),                          // 2: mono.build.model.Repository
+	(*Task)(nil),                                // 3: mono.build.model.Task
+	(*Job)(nil),                                 // 4: mono.build.model.Job
+	(*JobParam)(nil),                            // 5: mono.build.model.JobParam
+	(*Artifact)(nil),                            // 6: mono.build.model.Artifact
+	(*ArtifactPublishedEvent)(nil),              // 7: mono.build.model.ArtifactPublishedEvent
+	(*ArtifactPublishedRule)(nil),               // 8: mono.build.model.ArtifactPublishedRule
+	(*ArtifactPublishedRuleReplace)(nil),        // 9: mono.build.model.ArtifactPublishedRuleReplace
+	(*ArtifactPublishedRuleKustomizeImage)(nil), // 10: mono.build.model.ArtifactPublishedRuleKustomizeImage
+	(*TestReport)(nil),                          // 11: mono.build.model.TestReport
+	(*BuildMetrics)(nil),                        // 12: mono.build.model.BuildMetrics
+	(*GithubEvent)(nil),                         // 13: mono.build.model.GithubEvent
+	(*ExternalReleaseTrigger)(nil),              // 14: mono.build.model.ExternalReleaseTrigger
+	(*timestamppb.Timestamp)(nil),               // 15: google.protobuf.Timestamp
 }
 var file_proto_build_model_msg_proto_depIdxs = []int32{
-	12, // 0: mono.build.model.Task.start_at:type_name -> google.protobuf.Timestamp
-	12, // 1: mono.build.model.Task.finished_at:type_name -> google.protobuf.Timestamp
-	12, // 2: mono.build.model.Task.created_at:type_name -> google.protobuf.Timestamp
-	12, // 3: mono.build.model.Task.updated_at:type_name -> google.protobuf.Timestamp
-	8,  // 4: mono.build.model.Task.test_reports:type_name -> mono.build.model.TestReport
-	9,  // 5: mono.build.model.Task.build_metrics:type_name -> mono.build.model.BuildMetrics
+	15, // 0: mono.build.model.Task.start_at:type_name -> google.protobuf.Timestamp
+	15, // 1: mono.build.model.Task.finished_at:type_name -> google.protobuf.Timestamp
+	15, // 2: mono.build.model.Task.created_at:type_name -> google.protobuf.Timestamp
+	15, // 3: mono.build.model.Task.updated_at:type_name -> google.protobuf.Timestamp
+	11, // 4: mono.build.model.Task.test_reports:type_name -> mono.build.model.TestReport
+	12, // 5: mono.build.model.Task.build_metrics:type_name -> mono.build.model.BuildMetrics
 	5,  // 6: mono.build.model.Job.params:type_name -> mono.build.model.JobParam
 	1,  // 7: mono.build.model.Artifact.type:type_name -> mono.build.model.ArtifactType
-	12, // 8: mono.build.model.Artifact.created_at:type_name -> google.protobuf.Timestamp
-	0,  // 9: mono.build.model.TestReport.status:type_name -> mono.build.model.TestStatus
-	12, // 10: mono.build.model.GithubEvent.created_at:type_name -> google.protobuf.Timestamp
-	12, // 11: mono.build.model.GithubEvent.updated_at:type_name -> google.protobuf.Timestamp
-	12, // [12:12] is the sub-list for method output_type
-	12, // [12:12] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	15, // 8: mono.build.model.Artifact.created_at:type_name -> google.protobuf.Timestamp
+	2,  // 9: mono.build.model.ArtifactPublishedRule.repository:type_name -> mono.build.model.Repository
+	9,  // 10: mono.build.model.ArtifactPublishedRule.replace:type_name -> mono.build.model.ArtifactPublishedRuleReplace
+	10, // 11: mono.build.model.ArtifactPublishedRule.kustomize_image:type_name -> mono.build.model.ArtifactPublishedRuleKustomizeImage
+	0,  // 12: mono.build.model.TestReport.status:type_name -> mono.build.model.TestStatus
+	15, // 13: mono.build.model.GithubEvent.created_at:type_name -> google.protobuf.Timestamp
+	15, // 14: mono.build.model.GithubEvent.updated_at:type_name -> google.protobuf.Timestamp
+	15, // [15:15] is the sub-list for method output_type
+	15, // [15:15] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_proto_build_model_msg_proto_init() }
@@ -3647,13 +4120,17 @@ func file_proto_build_model_msg_proto_init() {
 	if File_proto_build_model_msg_proto != nil {
 		return
 	}
+	file_proto_build_model_msg_proto_msgTypes[6].OneofWrappers = []any{
+		(*artifactPublishedRule_Replace)(nil),
+		(*artifactPublishedRule_KustomizeImage)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_build_model_msg_proto_rawDesc), len(file_proto_build_model_msg_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   10,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

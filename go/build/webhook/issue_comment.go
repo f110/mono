@@ -125,7 +125,7 @@ func (r *IssueCommentReconciler) Reconcile(ctx context.Context, ev *ghwebhook.Ev
 			ev.State = ghwebhook.StateSkipped
 			return nil
 		}
-		if conf == nil {
+		if len(conf.Jobs) == 0 {
 			status.Skipped = true
 			status.SkipReason = "no build config or no jobs"
 			_ = ev.WriteStatus(&status)

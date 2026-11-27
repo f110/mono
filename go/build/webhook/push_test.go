@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/go-github/v85/github"
+	"go.f110.dev/githubmock"
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/build/database"
@@ -160,6 +161,7 @@ func TestPushReconciler_RecordsTasksOnDispatchError(t *testing.T) {
 	d.Repository.RegisterListByUrl(opsURL, []*database.SourceRepository{repoFixture(opsURL, "ops")}, nil)
 	d.Job.RegisterListByRepositoryId(1, nil, nil)
 	d.ExternalReleaseTrigger.RegisterListByRepositoryId(1, nil, nil)
+	d.ArtifactPublishedRule.RegisterListByRepositoryId(1, nil, nil)
 	builder := &recBuilder{err: xerrors.Define("failed to launch job").WithStack()}
 	transport, headSHA := configTransport(t, "f110/ops", "push")
 	gh := github.NewClient(&http.Client{Transport: transport})
@@ -179,4 +181,74 @@ func TestPushReconciler_RecordsTasksOnDispatchError(t *testing.T) {
 	var st PushStatus
 	assertion.MustNoError(t, ev.ReadStatus(&st))
 	assertion.Equal(t, len(st.DispatchedTaskIDs), 1)
+}
+
+// The rules of on_artifact_published in the default branch are stored even if the repository has no jobs, so
+// that the artifact-updater can look them up by the repository of the artifact.
+func TestPushReconciler_ReconcilesArtifactPublishedRules(t *testing.T) {
+	logger.SetLogLevel("debug")
+	logger.Init()
+
+	d := newTestDAO()
+	d.Repository.RegisterListByUrl(opsURL, []*database.SourceRepository{repoFixture(opsURL, "ops")}, nil)
+	d.Job.RegisterListByRepositoryId(1, nil, nil)
+	d.ExternalReleaseTrigger.RegisterListByRepositoryId(1, nil, nil)
+	d.ArtifactPublishedRule.RegisterListByRepositoryId(1, []*database.ArtifactPublishedRule{
+		{RepositoryId: 1, Name: "old", Artifact: "repo.example.com/old", Configuration: []byte(`{}`)},
+		{RepositoryId: 1, Name: "base", Artifact: "repo.example.com/app/manifests", Configuration: []byte(`{}`)},
+	}, nil)
+	m := githubmock.NewMock()
+	commit := githubmock.NewCommit().
+		IsHead().
+		Files(
+			&githubmock.File{Name: ".build/artifact.cue", Body: []byte(`on_artifact_published: {
+	base: {
+		artifact: "repo.example.com/app/manifests"
+		replace: path: "app/base/kustomize.base.yaml"
+	}
+	server: {
+		artifact: "repo.example.com/app/server"
+		kustomize_image: path: "app/dev/kustomization.yaml"
+	}
+}
+`)},
+			&githubmock.File{Name: ".bazelversion", Body: []byte("8.4.1")},
+		)
+	assertion.MustNoError(t, m.Repository("f110/ops").Commits(commit))
+	builder := &recBuilder{}
+	r := NewPushReconciler(d.toOptions(), github.NewClient(&http.Client{Transport: m.Transport()}), builder, nil, nil)
+
+	ev := &ghwebhook.Event{
+		Id:        1,
+		EventType: "push",
+		Payload:   pushPayload(t, "master", "a change", commit.GetSHA()),
+		State:     ghwebhook.StateProcessing,
+		CreatedAt: time.Now(),
+	}
+	err := reconcile[github.PushEvent](r, ev)
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, ev.State, ghwebhook.StateSkipped)
+	assertion.Equal(t, builder.called, false)
+
+	var st PushStatus
+	assertion.MustNoError(t, ev.ReadStatus(&st))
+	assertion.True(t, st.ArtifactPublishedRulesReconciledAt != nil)
+	assertion.Equal(t, st.SkipReason, "no build config or no jobs")
+
+	deleted := d.ArtifactPublishedRule.Called("Delete")
+	assertion.MustLen(t, deleted, 1)
+	assertion.Equal(t, deleted[0].Args["name"], "old")
+	updated := d.ArtifactPublishedRule.Called("Update")
+	assertion.MustLen(t, updated, 1)
+	base := updated[0].Args["artifactPublishedRule"].(*database.ArtifactPublishedRule)
+	assertion.Equal(t, base.Name, "base")
+	assertion.Equal(t, string(base.Configuration), `{"artifact":"repo.example.com/app/manifests","replace":{"path":"app/base/kustomize.base.yaml"}}`)
+	created := d.ArtifactPublishedRule.Called("Create")
+	assertion.MustLen(t, created, 1)
+	server := created[0].Args["artifactPublishedRule"].(*database.ArtifactPublishedRule)
+	assertion.Equal(t, server.RepositoryId, int32(1))
+	assertion.Equal(t, server.Name, "server")
+	assertion.Equal(t, server.Artifact, "repo.example.com/app/server")
+	assertion.Equal(t, string(server.Configuration),
+		`{"artifact":"repo.example.com/app/server","kustomize_image":{"path":"app/dev/kustomization.yaml","name":"repo.example.com/app/server"}}`)
 }

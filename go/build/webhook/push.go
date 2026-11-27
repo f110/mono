@@ -108,7 +108,14 @@ func (r *PushReconciler) Reconcile(ctx context.Context, ev *ghwebhook.Event, eve
 	if err != nil {
 		return err
 	}
-	if conf == nil {
+	if status.ArtifactPublishedRulesReconciledAt == nil {
+		if err := reconcileArtifactPublishedRules(ctx, r.dao, repo, conf.ArtifactPublishedRules); err != nil {
+			_ = ev.WriteStatus(&status)
+			return err
+		}
+		status.ArtifactPublishedRulesReconciledAt = new(time.Now())
+	}
+	if len(conf.Jobs) == 0 {
 		// Empty config or no jobs — nothing more to do.
 		status.Skipped = true
 		status.SkipReason = "no build config or no jobs"

@@ -633,6 +633,65 @@ func (d *ExternalReleaseTrigger) Update(ctx context.Context, externalReleaseTrig
 	return nil
 }
 
+type ArtifactPublishedRule struct {
+	*mock.Mock
+}
+
+func NewArtifactPublishedRule() *ArtifactPublishedRule {
+	return &ArtifactPublishedRule{Mock: mock.New()}
+}
+
+func (d *ArtifactPublishedRule) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
+	return nil
+}
+
+func (d *ArtifactPublishedRule) Select(ctx context.Context, repositoryId int32, name string) (*database.ArtifactPublishedRule, error) {
+	v, err := d.Call("Select", map[string]any{"repositoryId": repositoryId, "name": name})
+	return v.(*database.ArtifactPublishedRule), err
+}
+
+func (d *ArtifactPublishedRule) RegisterSelect(repositoryId int32, name string, value *database.ArtifactPublishedRule) {
+	d.Register("Select", map[string]any{"repositoryId": repositoryId, "name": name}, value, nil)
+}
+
+func (d *ArtifactPublishedRule) ListByRepositoryId(ctx context.Context, repositoryId int32, opt ...dao.ListOption) ([]*database.ArtifactPublishedRule, error) {
+	v, err := d.Call("ListByRepositoryId", map[string]any{"repositoryId": repositoryId})
+	return v.([]*database.ArtifactPublishedRule), err
+}
+
+func (d *ArtifactPublishedRule) RegisterListByRepositoryId(repositoryId int32, value []*database.ArtifactPublishedRule, err error) {
+	d.Register("ListByRepositoryId", map[string]any{"repositoryId": repositoryId}, value, err)
+}
+
+func (d *ArtifactPublishedRule) ListByArtifact(ctx context.Context, artifact string, opt ...dao.ListOption) ([]*database.ArtifactPublishedRule, error) {
+	v, err := d.Call("ListByArtifact", map[string]any{"artifact": artifact})
+	return v.([]*database.ArtifactPublishedRule), err
+}
+
+func (d *ArtifactPublishedRule) RegisterListByArtifact(artifact string, value []*database.ArtifactPublishedRule, err error) {
+	d.Register("ListByArtifact", map[string]any{"artifact": artifact}, value, err)
+}
+
+func (d *ArtifactPublishedRule) Create(ctx context.Context, artifactPublishedRule *database.ArtifactPublishedRule, opt ...dao.ExecOption) (*database.ArtifactPublishedRule, error) {
+	_, _ = d.Call("Create", map[string]any{"artifactPublishedRule": artifactPublishedRule})
+	return artifactPublishedRule, nil
+}
+
+func (d *ArtifactPublishedRule) CreateMulti(ctx context.Context, artifactPublishedRule []*database.ArtifactPublishedRule, opt ...dao.ExecOption) error {
+	_, _ = d.Call("CreateMulti", map[string]any{"artifactPublishedRule": artifactPublishedRule})
+	return nil
+}
+
+func (d *ArtifactPublishedRule) Delete(ctx context.Context, repositoryId int32, name string, opt ...dao.ExecOption) error {
+	_, _ = d.Call("Delete", map[string]any{"repositoryId": repositoryId, "name": name})
+	return nil
+}
+
+func (d *ArtifactPublishedRule) Update(ctx context.Context, artifactPublishedRule *database.ArtifactPublishedRule, opt ...dao.ExecOption) error {
+	_, _ = d.Call("Update", map[string]any{"artifactPublishedRule": artifactPublishedRule})
+	return nil
+}
+
 type GithubEvent struct {
 	*mock.Mock
 }

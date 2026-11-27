@@ -3019,6 +3019,288 @@ func (d *ExternalReleaseTrigger) Update(ctx context.Context, externalReleaseTrig
 	return nil
 }
 
+type ArtifactPublishedRule struct {
+	conn *sql.DB
+
+	sourceRepository *SourceRepository
+}
+
+type ArtifactPublishedRuleInterface interface {
+	Tx(ctx context.Context, fn func(tx *sql.Tx) error) error
+	Select(ctx context.Context, repositoryId int32, name string) (*database.ArtifactPublishedRule, error)
+	ListByRepositoryId(ctx context.Context, repositoryId int32, opt ...ListOption) ([]*database.ArtifactPublishedRule, error)
+	ListByArtifact(ctx context.Context, artifact string, opt ...ListOption) ([]*database.ArtifactPublishedRule, error)
+	Create(ctx context.Context, artifactPublishedRule *database.ArtifactPublishedRule, opt ...ExecOption) (*database.ArtifactPublishedRule, error)
+	CreateMulti(ctx context.Context, artifactPublishedRule []*database.ArtifactPublishedRule, opt ...ExecOption) error
+	Update(ctx context.Context, artifactPublishedRule *database.ArtifactPublishedRule, opt ...ExecOption) error
+	Delete(ctx context.Context, repositoryId int32, name string, opt ...ExecOption) error
+}
+
+var _ ArtifactPublishedRuleInterface = (*ArtifactPublishedRule)(nil)
+
+func NewArtifactPublishedRule(conn *sql.DB) *ArtifactPublishedRule {
+	return &ArtifactPublishedRule{
+		conn:             conn,
+		sourceRepository: NewSourceRepository(conn),
+	}
+}
+
+func (d *ArtifactPublishedRule) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
+	tx, err := d.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	if err := fn(tx); err != nil {
+		if rErr := tx.Rollback(); rErr != nil {
+			return rErr
+		}
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *ArtifactPublishedRule) Select(ctx context.Context, repositoryId int32, name string) (*database.ArtifactPublishedRule, error) {
+	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `artifact_published_rule` WHERE `repository_id` = ? AND `name` = ?", repositoryId, name)
+
+	v := &database.ArtifactPublishedRule{}
+	if err := row.Scan(&v.RepositoryId, &v.Name, &v.Artifact, &v.Configuration); err != nil {
+		return nil, err
+	}
+
+	{
+		if rel, _ := d.sourceRepository.Select(ctx, v.RepositoryId); rel != nil {
+			v.Repository = rel
+		}
+	}
+
+	v.ResetMark()
+	return v, nil
+}
+
+func (d *ArtifactPublishedRule) ListByRepositoryId(ctx context.Context, repositoryId int32, opt ...ListOption) ([]*database.ArtifactPublishedRule, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT `repository_id`, `name`, `artifact`, `configuration` FROM `artifact_published_rule` WHERE `repository_id` = ?"
+	orderCol := "`" + listOpts.sort + "`"
+	if listOpts.sort == "" {
+		orderCol = "`repository_id`,`name`"
+	}
+	orderDi := "ASC"
+	if listOpts.desc {
+		orderDi = "DESC"
+	}
+	query = query + fmt.Sprintf(" ORDER BY %s %s", orderCol, orderDi)
+	if listOpts.limit > 0 {
+		query = query + fmt.Sprintf(" LIMIT %d", listOpts.limit)
+	}
+	rows, err := d.conn.QueryContext(
+		ctx,
+		query,
+		repositoryId,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	res := make([]*database.ArtifactPublishedRule, 0)
+	for rows.Next() {
+		r := &database.ArtifactPublishedRule{}
+		if err := rows.Scan(&r.RepositoryId, &r.Name, &r.Artifact, &r.Configuration); err != nil {
+			return nil, err
+		}
+		r.ResetMark()
+		res = append(res, r)
+	}
+	if len(res) > 0 {
+		repositoryPrimaryKeys := make([]int32, len(res))
+		for i, v := range res {
+			repositoryPrimaryKeys[i] = v.RepositoryId
+		}
+		repositoryData := make(map[int32]*database.SourceRepository)
+		{
+			rels, _ := d.sourceRepository.SelectMulti(ctx, repositoryPrimaryKeys...)
+			for _, v := range rels {
+				repositoryData[v.Id] = v
+			}
+		}
+		for _, v := range res {
+			v.Repository = repositoryData[v.RepositoryId]
+		}
+	}
+
+	return res, nil
+}
+
+func (d *ArtifactPublishedRule) ListByArtifact(ctx context.Context, artifact string, opt ...ListOption) ([]*database.ArtifactPublishedRule, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT `repository_id`, `name`, `artifact`, `configuration` FROM `artifact_published_rule` WHERE `artifact` = ?"
+	orderCol := "`" + listOpts.sort + "`"
+	if listOpts.sort == "" {
+		orderCol = "`repository_id`,`name`"
+	}
+	orderDi := "ASC"
+	if listOpts.desc {
+		orderDi = "DESC"
+	}
+	query = query + fmt.Sprintf(" ORDER BY %s %s", orderCol, orderDi)
+	if listOpts.limit > 0 {
+		query = query + fmt.Sprintf(" LIMIT %d", listOpts.limit)
+	}
+	rows, err := d.conn.QueryContext(
+		ctx,
+		query,
+		artifact,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	res := make([]*database.ArtifactPublishedRule, 0)
+	for rows.Next() {
+		r := &database.ArtifactPublishedRule{}
+		if err := rows.Scan(&r.RepositoryId, &r.Name, &r.Artifact, &r.Configuration); err != nil {
+			return nil, err
+		}
+		r.ResetMark()
+		res = append(res, r)
+	}
+	if len(res) > 0 {
+		repositoryPrimaryKeys := make([]int32, len(res))
+		for i, v := range res {
+			repositoryPrimaryKeys[i] = v.RepositoryId
+		}
+		repositoryData := make(map[int32]*database.SourceRepository)
+		{
+			rels, _ := d.sourceRepository.SelectMulti(ctx, repositoryPrimaryKeys...)
+			for _, v := range rels {
+				repositoryData[v.Id] = v
+			}
+		}
+		for _, v := range res {
+			v.Repository = repositoryData[v.RepositoryId]
+		}
+	}
+
+	return res, nil
+}
+
+func (d *ArtifactPublishedRule) Create(ctx context.Context, artifactPublishedRule *database.ArtifactPublishedRule, opt ...ExecOption) (*database.ArtifactPublishedRule, error) {
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	res, err := conn.ExecContext(
+		ctx,
+		"INSERT INTO `artifact_published_rule` (`repository_id`, `name`, `artifact`, `configuration`) VALUES (?, ?, ?, ?)",
+		artifactPublishedRule.RepositoryId, artifactPublishedRule.Name, artifactPublishedRule.Artifact, artifactPublishedRule.Configuration,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if n, err := res.RowsAffected(); err != nil {
+		return nil, err
+	} else if n == 0 {
+		return nil, sql.ErrNoRows
+	}
+
+	artifactPublishedRule = artifactPublishedRule.Copy()
+
+	artifactPublishedRule.ResetMark()
+	return artifactPublishedRule, nil
+}
+
+func (d *ArtifactPublishedRule) CreateMulti(ctx context.Context, artifactPublishedRule []*database.ArtifactPublishedRule, opt ...ExecOption) error {
+	if len(artifactPublishedRule) == 0 {
+		return nil
+	}
+	execOpts := newExecOpt(opt...)
+	if execOpts.tx == nil {
+		return d.Tx(ctx, func(tx *sql.Tx) error {
+			return d.CreateMulti(ctx, artifactPublishedRule, append(opt, WithTx(tx))...)
+		})
+	}
+
+	rows := make([][]any, len(artifactPublishedRule))
+	for i, v := range artifactPublishedRule {
+		rows[i] = []any{v.RepositoryId, v.Name, v.Artifact, v.Configuration}
+	}
+	return insertMulti(ctx, execOpts.tx, "INSERT INTO `artifact_published_rule` (`repository_id`, `name`, `artifact`, `configuration`) VALUES ", "(?, ?, ?, ?)", rows)
+}
+
+func (d *ArtifactPublishedRule) Delete(ctx context.Context, repositoryId int32, name string, opt ...ExecOption) error {
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	res, err := conn.ExecContext(ctx, "DELETE FROM `artifact_published_rule` WHERE `repository_id` = ? AND `name` = ?", repositoryId, name)
+	if err != nil {
+		return err
+	}
+
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+}
+
+func (d *ArtifactPublishedRule) Update(ctx context.Context, artifactPublishedRule *database.ArtifactPublishedRule, opt ...ExecOption) error {
+	if !artifactPublishedRule.IsChanged() {
+		return nil
+	}
+
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	changedColumn := artifactPublishedRule.ChangedColumn()
+	cols := make([]string, len(changedColumn))
+	values := make([]any, len(changedColumn))
+	for i := range changedColumn {
+		cols[i] = "`" + changedColumn[i].Name + "` = ?"
+		values[i] = changedColumn[i].Value
+	}
+
+	query := fmt.Sprintf("UPDATE `artifact_published_rule` SET %s WHERE `repository_id` = ? AND `name` = ?", strings.Join(cols, ", "))
+	res, err := conn.ExecContext(
+		ctx,
+		query,
+		append(values, artifactPublishedRule.RepositoryId, artifactPublishedRule.Name)...,
+	)
+	if err != nil {
+		return err
+	}
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	artifactPublishedRule.ResetMark()
+	return nil
+}
+
 type GithubEvent struct {
 	conn *sql.DB
 }

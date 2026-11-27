@@ -357,6 +357,22 @@ func TestReadArtifactPublishedRulesFromBuildDir(t *testing.T) {
 	}, rules)
 }
 
+func TestReadFromProvider(t *testing.T) {
+	mapFS := fstest.MapFS(map[string]*fstest.MapFile{
+		".bazelversion": {Data: []byte("8.0.0\n")},
+		".build/artifact.cue": {Data: []byte(`on_artifact_published: a: {
+	artifact: "repo.example.com/a"
+	replace: path: "a.yaml"
+}`)},
+	})
+	conf, err := readFromProvider(mapFS, "example", "app")
+	assertion.MustNoError(t, err)
+	assertion.Len(t, conf.Jobs, 0)
+	assertion.Equal(t, []*ArtifactPublishedRule{
+		{Name: "a", Artifact: "repo.example.com/a", Replace: &ReplaceAction{Path: "a.yaml"}},
+	}, conf.ArtifactPublishedRules)
+}
+
 func TestNormalizeGitPath(t *testing.T) {
 	// git-data-service expects tree paths without a leading slash and "" for
 	// the repository root (ReadDir maps "" to "/"). Anything else makes

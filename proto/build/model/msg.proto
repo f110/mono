@@ -105,6 +105,32 @@ message ArtifactPublishedEvent {
   int32 task_id     = 2;
 }
 
+// ArtifactPublishedRule is a rule of on_artifact_published defined in the
+// default branch of the repository. It updates a file in the repository when the
+// artifact whose repository is `artifact` is published. See docs/build.md.
+message ArtifactPublishedRule {
+  Repository repository = 1;
+  string     name       = 2;
+  string     artifact   = 3;
+  oneof action {
+    ArtifactPublishedRuleReplace        replace         = 4;
+    ArtifactPublishedRuleKustomizeImage kustomize_image = 5;
+  }
+}
+
+// ArtifactPublishedRuleReplace replaces the whole file at path with the content
+// of the artifact.
+message ArtifactPublishedRuleReplace {
+  string path = 1;
+}
+
+// ArtifactPublishedRuleKustomizeImage updates the digest of the entry whose
+// name is `name` in images of the kustomization at path.
+message ArtifactPublishedRuleKustomizeImage {
+  string path = 1;
+  string name = 2;
+}
+
 message TestReport {
   string     label    = 1;
   TestStatus status   = 2;

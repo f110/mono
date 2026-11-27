@@ -26,6 +26,10 @@ service API {
   // ListContainerImageRepositories returns the repositories to which the
   // container image artifacts have been pushed, without duplicates.
   rpc ListContainerImageRepositories(RequestListContainerImageRepositories) returns (ResponseListContainerImageRepositories);
+  // ListArtifactPublishedRules returns the rules of on_artifact_published whose
+  // artifact equals the given repository of the artifact, with the repository
+  // which defines each rule.
+  rpc ListArtifactPublishedRules(RequestListArtifactPublishedRules) returns (ResponseListArtifactPublishedRules);
   // GetLogs returns the log of the task. When filter is specified, only the
   // lines which match the regular expression (RE2) are returned.
   rpc GetLogs(RequestGetLogs) returns (ResponseGetLogs);
@@ -203,6 +207,14 @@ message RequestListArtifacts {
 
 message ResponseListArtifacts {
   repeated mono.build.model.Artifact artifacts = 1;
+}
+
+message RequestListArtifactPublishedRules {
+  string artifact = 1;
+}
+
+message ResponseListArtifactPublishedRules {
+  repeated mono.build.model.ArtifactPublishedRule rules = 1;
 }
 
 message RequestListContainerImageRepositories {}

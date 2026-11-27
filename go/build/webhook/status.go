@@ -6,14 +6,15 @@ import "time"
 // optional field is set as the corresponding step succeeds so that re-running
 // the reconciler resumes from the right point.
 type PushStatus struct {
-	Skipped              bool       `json:"skipped,omitempty"`
-	SkipReason           string     `json:"skip_reason,omitempty"`
-	ConfigFetchedAt      *time.Time `json:"config_fetched_at,omitempty"`
-	ExternalReconciledAt *time.Time `json:"external_reconciled_at,omitempty"`
-	JobsReconciledAt     *time.Time `json:"jobs_reconciled_at,omitempty"`
-	GitSyncedAt          *time.Time `json:"git_synced_at,omitempty"`
-	GitSyncError         string     `json:"git_sync_error,omitempty"`
-	DispatchedTaskIDs    []int32    `json:"dispatched_task_ids,omitempty"`
+	Skipped                            bool       `json:"skipped,omitempty"`
+	SkipReason                         string     `json:"skip_reason,omitempty"`
+	ConfigFetchedAt                    *time.Time `json:"config_fetched_at,omitempty"`
+	ExternalReconciledAt               *time.Time `json:"external_reconciled_at,omitempty"`
+	JobsReconciledAt                   *time.Time `json:"jobs_reconciled_at,omitempty"`
+	ArtifactPublishedRulesReconciledAt *time.Time `json:"artifact_published_rules_reconciled_at,omitempty"`
+	GitSyncedAt                        *time.Time `json:"git_synced_at,omitempty"`
+	GitSyncError                       string     `json:"git_sync_error,omitempty"`
+	DispatchedTaskIDs                  []int32    `json:"dispatched_task_ids,omitempty"`
 }
 
 // PullRequestStatus is the progress checkpoint for a `pull_request` event.

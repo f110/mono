@@ -2,6 +2,7 @@ package webhook
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
 
 	"github.com/google/go-github/v85/github"
@@ -27,8 +28,7 @@ func gitDataRepoName(repo *database.SourceRepository) string {
 }
 
 // fetchConfig reads the build configuration for owner/repoName at revision.
-// gitDataRepo is the git-data-service key (see gitDataRepoName). Returns
-// (nil, nil) when the repository has no jobs configured.
+// gitDataRepo is the git-data-service key (see gitDataRepoName).
 func (r *PushReconciler) fetchConfig(ctx context.Context, gitDataRepo, owner, repoName, revision string) (*config.Config, error) {
 	return fetchBuildConfig(ctx, r.githubClient, r.gitDataClient, gitDataRepo, owner, repoName, revision)
 }
@@ -56,9 +56,6 @@ func fetchBuildConfig(ctx context.Context, gh *github.Client, gitDataClient git.
 			return nil, xerrors.WithStack(err)
 		}
 		conf = c2
-	}
-	if len(conf.Jobs) == 0 {
-		return nil, nil
 	}
 	return conf, nil
 }
@@ -237,6 +234,55 @@ func reconcileExternalReleaseTriggers(ctx context.Context, daos dao.Options, rep
 			if err != nil {
 				return xerrors.WithStack(err)
 			}
+		}
+	}
+	return nil
+}
+
+// reconcileArtifactPublishedRules writes the artifact_published_rule rows for repo to match the rules of
+// on_artifact_published in the freshly-parsed config.
+func reconcileArtifactPublishedRules(ctx context.Context, daos dao.Options, repo *database.SourceRepository, rules []*config.ArtifactPublishedRule) error {
+	want := make(map[string]*config.ArtifactPublishedRule, len(rules))
+	for _, rule := range rules {
+		want[rule.Name] = rule
+	}
+
+	existing, err := daos.ArtifactPublishedRule.ListByRepositoryId(ctx, repo.Id)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	existingByName := make(map[string]*database.ArtifactPublishedRule, len(existing))
+	for _, e := range existing {
+		existingByName[e.Name] = e
+		if _, keep := want[e.Name]; keep {
+			continue
+		}
+		if err := daos.ArtifactPublishedRule.Delete(ctx, e.RepositoryId, e.Name); err != nil {
+			return xerrors.WithStack(err)
+		}
+	}
+
+	for name, rule := range want {
+		conf, err := json.Marshal(rule)
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		if e, ok := existingByName[name]; ok {
+			e.Artifact = rule.Artifact
+			e.Configuration = conf
+			if err := daos.ArtifactPublishedRule.Update(ctx, e); err != nil {
+				return xerrors.WithStack(err)
+			}
+			continue
+		}
+		_, err = daos.ArtifactPublishedRule.Create(ctx, &database.ArtifactPublishedRule{
+			RepositoryId:  repo.Id,
+			Name:          name,
+			Artifact:      rule.Artifact,
+			Configuration: conf,
+		})
+		if err != nil {
+			return xerrors.WithStack(err)
 		}
 	}
 	return nil

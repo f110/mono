@@ -149,6 +149,16 @@ CREATE TABLE `external_release_trigger` (
 	PRIMARY KEY(`id`)
 ) Engine=InnoDB;
 
+DROP TABLE IF EXISTS `artifact_published_rule`;
+CREATE TABLE `artifact_published_rule` (
+	`repository_id` INTEGER NOT NULL,
+	`name` VARCHAR(255) NOT NULL,
+	`artifact` VARCHAR(255) NOT NULL,
+	`configuration` BLOB NOT NULL,
+	INDEX `idx_artifact` (`artifact`),
+	PRIMARY KEY(`repository_id`,`name`)
+) Engine=InnoDB;
+
 DROP TABLE IF EXISTS `github_event`;
 CREATE TABLE `github_event` (
 	`id` INTEGER NOT NULL AUTO_INCREMENT,

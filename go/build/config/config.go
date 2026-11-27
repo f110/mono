@@ -52,10 +52,11 @@ type ExternalReleaseSource struct {
 }
 
 type Config struct {
-	Jobs            []*JobV2
-	BazelVersion    string
-	RepositoryOwner string
-	RepositoryName  string
+	Jobs                   []*JobV2
+	ArtifactPublishedRules []*ArtifactPublishedRule
+	BazelVersion           string
+	RepositoryOwner        string
+	RepositoryName         string
 }
 
 func (c *Config) Job(event EventType) []*JobV2 {

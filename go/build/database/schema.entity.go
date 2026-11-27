@@ -1012,6 +1012,70 @@ func (e *ExternalReleaseTrigger) Copy() *ExternalReleaseTrigger {
 	return n
 }
 
+// ArtifactPublishedRule caches a rule of on_artifact_published defined in the
+// default branch of the source repository. The push reconciler refreshes this
+// table whenever the default branch is updated so that the artifact-updater can
+// look up the rules by the repository of the published artifact without reading
+// the cue files of every repository.
+//
+// `configuration` is the JSON of config.ArtifactPublishedRule.
+type ArtifactPublishedRule struct {
+	RepositoryId  int32
+	Name          string
+	Artifact      string
+	Configuration []byte
+
+	Repository *SourceRepository
+
+	mu   sync.Mutex
+	mark *ArtifactPublishedRule
+}
+
+func (e *ArtifactPublishedRule) ResetMark() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	e.mark = e.Copy()
+}
+
+func (e *ArtifactPublishedRule) IsChanged() bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	return e.Artifact != e.mark.Artifact ||
+		!bytes.Equal(e.Configuration, e.mark.Configuration)
+}
+
+func (e *ArtifactPublishedRule) ChangedColumn() []ddl.Column {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	res := make([]ddl.Column, 0)
+	if e.Artifact != e.mark.Artifact {
+		res = append(res, ddl.Column{Name: "artifact", Value: e.Artifact})
+	}
+	if !bytes.Equal(e.Configuration, e.mark.Configuration) {
+		res = append(res, ddl.Column{Name: "configuration", Value: e.Configuration})
+	}
+
+	return res
+}
+
+func (e *ArtifactPublishedRule) Copy() *ArtifactPublishedRule {
+	n := &ArtifactPublishedRule{
+		RepositoryId:  e.RepositoryId,
+		Name:          e.Name,
+		Artifact:      e.Artifact,
+		Configuration: e.Configuration,
+	}
+
+	if e.Repository != nil {
+		n.Repository = e.Repository.Copy()
+	}
+
+	return n
+}
+
 // GithubEvent records a single webhook delivery from GitHub. The HTTP handler
 // inserts a row with state=PENDING and returns 200 immediately; an asynchronous
 // scheduler picks up PENDING/FAILED rows and dispatches them to a Reconciler

@@ -274,3 +274,48 @@ func TestReadLog(t *testing.T) {
 		assertion.MustError(t, err)
 	})
 }
+
+func TestListArtifactPublishedRules(t *testing.T) {
+	t.Run("by artifact", func(t *testing.T) {
+		t.Parallel()
+		ruleDAO := daotest.NewArtifactPublishedRule()
+		ruleDAO.RegisterListByArtifact("repo.example.com/app/server", []*database.ArtifactPublishedRule{
+			{
+				RepositoryId:  1,
+				Name:          "server_dev",
+				Artifact:      "repo.example.com/app/server",
+				Configuration: []byte(`{"artifact":"repo.example.com/app/server","kustomize_image":{"path":"dev/kustomization.yaml","name":"server"}}`),
+			},
+			{
+				RepositoryId:  2,
+				Name:          "server",
+				Artifact:      "repo.example.com/app/server",
+				Configuration: []byte(`{"artifact":"repo.example.com/app/server","replace":{"path":"server.yaml"}}`),
+			},
+		}, nil)
+		repoDAO := daotest.NewSourceRepository()
+		repoDAO.RegisterSelect(1, &database.SourceRepository{Id: 1, Name: "ops", CloneUrl: "https://github.com/f110/ops.git"})
+		repoDAO.RegisterSelect(2, &database.SourceRepository{Id: 2, Name: "app", CloneUrl: "https://github.com/f110/app.git"})
+		s := &apiService{dao: dao.Options{Repository: repoDAO, ArtifactPublishedRule: ruleDAO}}
+
+		res, err := s.ListArtifactPublishedRules(context.Background(), RequestListArtifactPublishedRules_builder{Artifact: new("repo.example.com/app/server")}.Build())
+		assertion.MustNoError(t, err)
+		rules := res.GetRules()
+		assertion.MustLen(t, rules, 2)
+		assertion.Equal(t, "server_dev", rules[0].GetName())
+		assertion.Equal(t, "https://github.com/f110/ops.git", rules[0].GetRepository().GetCloneUrl())
+		assertion.Equal(t, "dev/kustomization.yaml", rules[0].GetKustomizeImage().GetPath())
+		assertion.Equal(t, "server", rules[0].GetKustomizeImage().GetName())
+		assertion.False(t, rules[0].HasReplace())
+		assertion.Equal(t, "server", rules[1].GetName())
+		assertion.Equal(t, "https://github.com/f110/app.git", rules[1].GetRepository().GetCloneUrl())
+		assertion.Equal(t, "server.yaml", rules[1].GetReplace().GetPath())
+	})
+
+	t.Run("without artifact is rejected", func(t *testing.T) {
+		t.Parallel()
+		s := &apiService{}
+		_, err := s.ListArtifactPublishedRules(context.Background(), &RequestListArtifactPublishedRules{})
+		assertion.Error(t, err)
+	})
+}

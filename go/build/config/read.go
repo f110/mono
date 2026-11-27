@@ -61,6 +61,10 @@ func readFromProvider(provider Provider, owner, repoName string) (*Config, error
 	if err != nil {
 		return nil, xerrors.WithMessage(err, "failed to read build dir")
 	}
+	rules, err := ReadArtifactPublishedRulesFromBuildDir(provider)
+	if err != nil {
+		return nil, xerrors.WithMessage(err, "failed to read build dir")
+	}
 	bazelVersion, err := ReadBazelVersion(provider)
 	if err != nil {
 		return nil, xerrors.WithMessage(err, "failed to read .bazelversion")
@@ -69,7 +73,7 @@ func readFromProvider(provider Provider, owner, repoName string) (*Config, error
 		j.RepositoryOwner = owner
 		j.RepositoryName = repoName
 	}
-	return &Config{RepositoryOwner: owner, RepositoryName: repoName, Jobs: jobs, BazelVersion: bazelVersion}, nil
+	return &Config{RepositoryOwner: owner, RepositoryName: repoName, Jobs: jobs, ArtifactPublishedRules: rules, BazelVersion: bazelVersion}, nil
 }
 
 type Provider interface {

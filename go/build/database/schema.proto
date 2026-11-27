@@ -349,6 +349,40 @@ message ExternalReleaseTrigger {
   };
 }
 
+// ArtifactPublishedRule caches a rule of on_artifact_published defined in the
+// default branch of the source repository. The push reconciler refreshes this
+// table whenever the default branch is updated so that the artifact-updater can
+// look up the rules by the repository of the published artifact without reading
+// the cue files of every repository.
+//
+// `configuration` is the JSON of config.ArtifactPublishedRule.
+message ArtifactPublishedRule {
+  SourceRepository repository    = 1;
+  string           name          = 2;
+  string           artifact      = 3 [(dev.f110.ddl.column) = { size: 255 }];
+  bytes            configuration = 4;
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "repository"
+    primary_key: "name"
+    indexes: {
+      name: "idx_artifact"
+      columns: "artifact"
+    }
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "ByRepositoryId"
+      query: "SELECT * FROM `:table_name:` WHERE `repository_id` = ?"
+    }
+    queries: {
+      name: "ByArtifact"
+      query: "SELECT * FROM `:table_name:` WHERE `artifact` = ?"
+    }
+  };
+}
+
 // GithubEvent records a single webhook delivery from GitHub. The HTTP handler
 // inserts a row with state=PENDING and returns 200 immediately; an asynchronous
 // scheduler picks up PENDING/FAILED rows and dispatches them to a Reconciler

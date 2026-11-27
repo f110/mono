@@ -31,6 +31,7 @@ const (
 	API_ListGithubEvents_FullMethodName               = "/mono.build.api.API/ListGithubEvents"
 	API_ListArtifacts_FullMethodName                  = "/mono.build.api.API/ListArtifacts"
 	API_ListContainerImageRepositories_FullMethodName = "/mono.build.api.API/ListContainerImageRepositories"
+	API_ListArtifactPublishedRules_FullMethodName     = "/mono.build.api.API/ListArtifactPublishedRules"
 	API_GetLogs_FullMethodName                        = "/mono.build.api.API/GetLogs"
 	API_CompleteTask_FullMethodName                   = "/mono.build.api.API/CompleteTask"
 	API_SyncArtifacts_FullMethodName                  = "/mono.build.api.API/SyncArtifacts"
@@ -53,6 +54,7 @@ type APIClient interface {
 	ListGithubEvents(ctx context.Context, in *RequestListGithubEvents, opts ...grpc.CallOption) (*ResponseListGithubEvents, error)
 	ListArtifacts(ctx context.Context, in *RequestListArtifacts, opts ...grpc.CallOption) (*ResponseListArtifacts, error)
 	ListContainerImageRepositories(ctx context.Context, in *RequestListContainerImageRepositories, opts ...grpc.CallOption) (*ResponseListContainerImageRepositories, error)
+	ListArtifactPublishedRules(ctx context.Context, in *RequestListArtifactPublishedRules, opts ...grpc.CallOption) (*ResponseListArtifactPublishedRules, error)
 	GetLogs(ctx context.Context, in *RequestGetLogs, opts ...grpc.CallOption) (*ResponseGetLogs, error)
 	CompleteTask(ctx context.Context, in *RequestCompleteTask, opts ...grpc.CallOption) (*ResponseCompleteTask, error)
 	SyncArtifacts(ctx context.Context, in *RequestSyncArtifacts, opts ...grpc.CallOption) (*ResponseSyncArtifacts, error)
@@ -187,6 +189,16 @@ func (c *aPIClient) ListContainerImageRepositories(ctx context.Context, in *Requ
 	return out, nil
 }
 
+func (c *aPIClient) ListArtifactPublishedRules(ctx context.Context, in *RequestListArtifactPublishedRules, opts ...grpc.CallOption) (*ResponseListArtifactPublishedRules, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ResponseListArtifactPublishedRules)
+	err := c.cc.Invoke(ctx, API_ListArtifactPublishedRules_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *aPIClient) GetLogs(ctx context.Context, in *RequestGetLogs, opts ...grpc.CallOption) (*ResponseGetLogs, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ResponseGetLogs)
@@ -246,6 +258,7 @@ type APIServer interface {
 	ListGithubEvents(context.Context, *RequestListGithubEvents) (*ResponseListGithubEvents, error)
 	ListArtifacts(context.Context, *RequestListArtifacts) (*ResponseListArtifacts, error)
 	ListContainerImageRepositories(context.Context, *RequestListContainerImageRepositories) (*ResponseListContainerImageRepositories, error)
+	ListArtifactPublishedRules(context.Context, *RequestListArtifactPublishedRules) (*ResponseListArtifactPublishedRules, error)
 	GetLogs(context.Context, *RequestGetLogs) (*ResponseGetLogs, error)
 	CompleteTask(context.Context, *RequestCompleteTask) (*ResponseCompleteTask, error)
 	SyncArtifacts(context.Context, *RequestSyncArtifacts) (*ResponseSyncArtifacts, error)
@@ -294,6 +307,9 @@ func (UnimplementedAPIServer) ListArtifacts(context.Context, *RequestListArtifac
 }
 func (UnimplementedAPIServer) ListContainerImageRepositories(context.Context, *RequestListContainerImageRepositories) (*ResponseListContainerImageRepositories, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListContainerImageRepositories not implemented")
+}
+func (UnimplementedAPIServer) ListArtifactPublishedRules(context.Context, *RequestListArtifactPublishedRules) (*ResponseListArtifactPublishedRules, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListArtifactPublishedRules not implemented")
 }
 func (UnimplementedAPIServer) GetLogs(context.Context, *RequestGetLogs) (*ResponseGetLogs, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLogs not implemented")
@@ -543,6 +559,24 @@ func _API_ListContainerImageRepositories_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _API_ListArtifactPublishedRules_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestListArtifactPublishedRules)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).ListArtifactPublishedRules(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_ListArtifactPublishedRules_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).ListArtifactPublishedRules(ctx, req.(*RequestListArtifactPublishedRules))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _API_GetLogs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RequestGetLogs)
 	if err := dec(in); err != nil {
@@ -658,6 +692,10 @@ var API_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListContainerImageRepositories",
 			Handler:    _API_ListContainerImageRepositories_Handler,
+		},
+		{
+			MethodName: "ListArtifactPublishedRules",
+			Handler:    _API_ListArtifactPublishedRules_Handler,
 		},
 		{
 			MethodName: "GetLogs",

@@ -718,6 +718,49 @@ func (s *apiService) ListContainerImageRepositories(ctx context.Context, _ *Requ
 	}.Build(), nil
 }
 
+func (s *apiService) ListArtifactPublishedRules(ctx context.Context, req *RequestListArtifactPublishedRules) (*ResponseListArtifactPublishedRules, error) {
+	if req.GetArtifact() == "" {
+		return nil, status.Error(codes.InvalidArgument, "artifact is required")
+	}
+	rows, err := s.dao.ArtifactPublishedRule.ListByArtifact(ctx, req.GetArtifact())
+	if err != nil {
+		logger.Log.Warn("Failed to list artifact_published_rule", logger.E(err))
+		return nil, status.Error(codes.Internal, "failed to list artifact_published_rule")
+	}
+
+	repoCache := make(map[int32]*model.Repository)
+	rules := make([]*model.ArtifactPublishedRule, 0, len(rows))
+	for _, r := range rows {
+		repo, ok := repoCache[r.RepositoryId]
+		if !ok {
+			sr, err := s.dao.Repository.Select(ctx, r.RepositoryId)
+			if err != nil {
+				logger.Log.Warn("Failed to load source_repository for artifact_published_rule", logger.E(err))
+				continue
+			}
+			repo = s.dbRepoToAPIRepo(sr)
+			repoCache[r.RepositoryId] = repo
+		}
+		conf := &config.ArtifactPublishedRule{}
+		if err := json.Unmarshal(r.Configuration, conf); err != nil {
+			logger.Log.Warn("Failed to decode artifact_published_rule", logger.E(err), slog.String("name", r.Name))
+			continue
+		}
+		rule := model.ArtifactPublishedRule_builder{Repository: repo, Name: new(r.Name), Artifact: new(r.Artifact)}.Build()
+		switch {
+		case conf.Replace != nil:
+			rule.SetReplace(model.ArtifactPublishedRuleReplace_builder{Path: new(conf.Replace.Path)}.Build())
+		case conf.KustomizeImage != nil:
+			rule.SetKustomizeImage(model.ArtifactPublishedRuleKustomizeImage_builder{
+				Path: new(conf.KustomizeImage.Path),
+				Name: new(conf.KustomizeImage.Name),
+			}.Build())
+		}
+		rules = append(rules, rule)
+	}
+	return ResponseListArtifactPublishedRules_builder{Rules: rules}.Build(), nil
+}
+
 func (s *apiService) GetLogs(ctx context.Context, req *RequestGetLogs) (*ResponseGetLogs, error) {
 	var filter *regexp.Regexp
 	if req.GetFilter() != "" {

@@ -31,6 +31,7 @@ type testDAO struct {
 	GithubEvent            *daotest.GithubEvent
 	ExternalReleaseTrigger *daotest.ExternalReleaseTrigger
 	Job                    *daotest.Job
+	ArtifactPublishedRule  *daotest.ArtifactPublishedRule
 }
 
 func newTestDAO() *testDAO {
@@ -42,6 +43,7 @@ func newTestDAO() *testDAO {
 		GithubEvent:            daotest.NewGithubEvent(),
 		ExternalReleaseTrigger: daotest.NewExternalReleaseTrigger(),
 		Job:                    daotest.NewJob(),
+		ArtifactPublishedRule:  daotest.NewArtifactPublishedRule(),
 	}
 }
 
@@ -54,6 +56,7 @@ func (d *testDAO) toOptions() dao.Options {
 		GithubEvent:            d.GithubEvent,
 		ExternalReleaseTrigger: d.ExternalReleaseTrigger,
 		Job:                    d.Job,
+		ArtifactPublishedRule:  d.ArtifactPublishedRule,
 	}
 }
 

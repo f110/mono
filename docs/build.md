@@ -134,6 +134,10 @@ Task には設定が JSON シリアライズされて保存され、再ビルド
 `UnmarshalJob` は schema_version で世代を判別する。ジョブは `command`（`test` または `run`）、`targets`,
 `platforms`, `exclusive`, `github_status`, `schedule`, `secrets`(Vault 参照), `external_source`, `params` などを持つ。
 
+`on_artifact_published` のルールも同じ設定ファイルから読む。push reconciler はデフォルトブランチへの push のたびに
+ルールを `artifact_published_rule` に保存する（jobs が無いリポジトリでも保存する）。`ListArtifactPublishedRules` で
+成果物の repository からルールと、ルールを定義しているリポジトリを引ける。
+
 ### git-data-service 連携
 
 `go/git` の git-data-service は、リポジトリのオブジェクト（参照・コミット・統計）を gRPC で提供する。
@@ -155,7 +159,7 @@ build システムでは 2 通りの使われ方をする。
 
 - **MariaDB**: `database/schema.sql`（protoc-ddl 生成、DAO は `database/dao`）。主要テーブルは
   `source_repository`, `task`, `job`, `test_report`, `github_event`, `external_release_trigger`,
-  `external_release_history`, `trusted_user`, `permit_pull_request`。
+  `external_release_history`, `trusted_user`, `permit_pull_request`, `artifact_published_rule`。
 - **MinIO (S3)**: ビルドログ（`logs` バケット）と Bazel バイナリ / Central Registry のミラー。
 - **Vault**: ジョブが参照するシークレット（`secrets-store-csi-driver` 経由で Job にマウント）。
 
