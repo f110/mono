@@ -46,22 +46,12 @@ const imageTypes: Record<string, string> = {
 const extension = (path: string) => path.split('.').pop()?.toLowerCase() ?? ''
 export const isMarkdown = (path: string) => ['md', 'markdown'].includes(extension(path))
 
+// The elements of the lines are plain elements styled by the classes in the container of the file. The diff has many
+// lines, and the sx of MUI on each line is too slow to render.
 const LineNumber = ({ n, onClick }: { n: number; onClick?: (e: MouseEvent) => void }) => (
-  <Box
-    component="span"
-    onClick={onClick}
-    sx={{
-      width: 48,
-      flexShrink: 0,
-      textAlign: 'right',
-      pr: 1,
-      color: 'text.disabled',
-      userSelect: 'none',
-      ...(onClick && { cursor: 'pointer', '&:hover': { color: 'primary.main' } }),
-    }}
-  >
+  <span className={onClick ? 'diff-number diff-number-clickable' : 'diff-number'} onClick={onClick}>
     {n > 0 ? n : ''}
-  </Box>
+  </span>
 )
 
 // LineAnnotation attaches the elements (e.g. the comments) to the lines. The lines are identified by the side and the
@@ -112,29 +102,26 @@ const LineContent = ({
   }
 
   return (
-    <Box component="span" sx={{ whiteSpace: 'pre' }}>
+    <span className="diff-text">
       {segments.map((s, i) => (
         <span key={i} className={s.className} style={s.changed ? { backgroundColor: emphasis, borderRadius: 2 } : undefined}>
           {s.text}
         </span>
       ))}
       {line.noNewline && (
-        <Box component="span" sx={{ color: 'text.disabled' }} title="No newline at end of file">
+        <span className="diff-no-newline" title="No newline at end of file">
           {' ⏎̸'}
-        </Box>
+        </span>
       )}
-    </Box>
+    </span>
   )
 }
 
-const HunkHeader = ({ hunk }: { hunk: Hunk }) => {
-  const theme = useTheme()
-  return (
-    <Box data-hunk sx={{ px: 1, color: 'text.secondary', bgcolor: alpha(theme.palette.info.main, 0.08) }}>
-      @@ -{hunk.oldStart},{hunk.oldLines} +{hunk.newStart},{hunk.newLines} @@ {hunk.section}
-    </Box>
-  )
-}
+const HunkHeader = ({ hunk }: { hunk: Hunk }) => (
+  <div data-hunk className="diff-hunk">
+    @@ -{hunk.oldStart},{hunk.oldLines} +{hunk.newStart},{hunk.newLines} @@ {hunk.section}
+  </div>
+)
 
 // Gap is the unchanged lines which the diff doesn't show. The lines are the numbers in the new file. end is undefined
 // for the lines after the last hunk because the length of the file is unknown until it is read.
@@ -315,23 +302,20 @@ export const FileDiffView = ({
     return elements
   }
 
-  const cell = (line: DiffLine | undefined, ranges: Range[] | undefined, side: 'old' | 'new') => (
-    <Stack
-      direction="row"
-      data-line={line ? lineProps(line)['data-line'] : undefined}
-      sx={{ flex: 1, minWidth: 0, bgcolor: line ? lineBackground(line) : 'action.hover', boxShadow: line ? lineProps(line).boxShadow : undefined }}
-    >
-      {line && (
-        <>
-          <LineNumber n={side === 'old' ? line.oldLine : line.newLine} onClick={onSelect(line)} />
-          <Box component="span" sx={{ width: 16, flexShrink: 0, color: 'text.secondary', userSelect: 'none' }}>
-            {marker[line.kind]}
-          </Box>
-          <LineContent line={line} lang={lang} ranges={ranges} emphasis={emphasis[line.kind]} />
-        </>
-      )}
-    </Stack>
-  )
+  const cell = (line: DiffLine | undefined, ranges: Range[] | undefined, side: 'old' | 'new') =>
+    line ? (
+      <div
+        className="diff-cell"
+        data-line={lineProps(line)['data-line']}
+        style={{ backgroundColor: lineBackground(line), boxShadow: lineProps(line).boxShadow }}
+      >
+        <LineNumber n={side === 'old' ? line.oldLine : line.newLine} onClick={onSelect(line)} />
+        <span className="diff-marker">{marker[line.kind]}</span>
+        <LineContent line={line} lang={lang} ranges={ranges} emphasis={emphasis[line.kind]} />
+      </div>
+    ) : (
+      <div className="diff-cell diff-cell-empty" />
+    )
 
   const splitRow = (
     left: DiffLine | undefined,
@@ -341,25 +325,27 @@ export const FileDiffView = ({
     key: string | number,
   ) => (
     <Fragment key={key}>
-      <Stack direction="row">
+      <div className="diff-row">
         {cell(left, leftRanges, 'old')}
-        <Box sx={{ width: '1px', bgcolor: 'divider', flexShrink: 0 }} />
+        <div className="diff-separator" />
         {cell(right, rightRanges, 'new')}
-      </Stack>
+      </div>
       {after(left, right)}
     </Fragment>
   )
 
   const row = (line: DiffLine, ranges: Range[] | undefined, key: string | number) => (
     <Fragment key={key}>
-      <Stack direction="row" data-line={lineProps(line)['data-line']} sx={{ bgcolor: lineBackground(line), boxShadow: lineProps(line).boxShadow }}>
+      <div
+        className="diff-row"
+        data-line={lineProps(line)['data-line']}
+        style={{ backgroundColor: lineBackground(line), boxShadow: lineProps(line).boxShadow }}
+      >
         <LineNumber n={line.oldLine} onClick={onSelect(line)} />
         <LineNumber n={line.newLine} onClick={onSelect(line)} />
-        <Box component="span" sx={{ width: 16, flexShrink: 0, color: 'text.secondary', userSelect: 'none' }}>
-          {marker[line.kind]}
-        </Box>
+        <span className="diff-marker">{marker[line.kind]}</span>
         <LineContent line={line} lang={lang} ranges={ranges} emphasis={emphasis[line.kind]} />
-      </Stack>
+      </div>
       {after(line)}
     </Fragment>
   )
@@ -466,7 +452,24 @@ export const FileDiffView = ({
           {lines ? <Markdown text={lines.join('\n')} /> : 'Loading…'}
         </Box>
       ) : (
-        <Box sx={{ fontFamily: 'monospace', fontSize: 12, lineHeight: 1.5, overflowX: 'auto' }}>
+        <Box
+          sx={{
+            fontFamily: 'monospace',
+            fontSize: 12,
+            lineHeight: 1.5,
+            overflowX: 'auto',
+            '& .diff-hunk': { px: 1, color: 'text.secondary', bgcolor: alpha(theme.palette.info.main, 0.08) },
+            '& .diff-row': { display: 'flex' },
+            '& .diff-cell': { display: 'flex', flex: 1, minWidth: 0 },
+            '& .diff-cell-empty': { bgcolor: 'action.hover' },
+            '& .diff-separator': { width: '1px', bgcolor: 'divider', flexShrink: 0 },
+            '& .diff-number': { width: 48, flexShrink: 0, textAlign: 'right', pr: 1, color: 'text.disabled', userSelect: 'none' },
+            '& .diff-number-clickable': { cursor: 'pointer', '&:hover': { color: 'primary.main' } },
+            '& .diff-marker': { width: 16, flexShrink: 0, color: 'text.secondary', userSelect: 'none' },
+            '& .diff-text': { whiteSpace: 'pre' },
+            '& .diff-no-newline': { color: 'text.disabled' },
+          }}
+        >
           {file.hunks.map((h, i) => (
             <Box key={i}>
               {renderGap(i)}

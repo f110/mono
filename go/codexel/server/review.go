@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"path"
 	"regexp"
+	"runtime"
 	"slices"
 	"strings"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/go-enry/go-enry/v2"
 	"go.f110.dev/xerrors"
+	"golang.org/x/sync/errgroup"
 
 	"go.f110.dev/mono/go/codexel/api"
 	"go.f110.dev/mono/go/codexel/config"
@@ -482,6 +484,7 @@ func (h *ReviewHandler) RoundDiff(ctx context.Context, req *connect.Request[api.
 // generatedFiles returns the paths of the generated files like GitHub. linguist-generated of .gitattributes at the root
 // of the commit is used if it is specified, otherwise the heuristics of Linguist are used. The content of the Go files
 // is judged by the convention of Go instead of Linguist. Only the top-level .gitattributes is read. The deleted files and the binary files are judged only by the path.
+// The files are read concurrently because reading each file runs jj.
 func generatedFiles(ctx context.Context, repo *jujutsu.Repository, commit string, files []*jujutsu.FileDiff) ([]string, error) {
 	content, err := repo.File(ctx, commit, ".gitattributes")
 	if _, ok := errors.AsType[*jujutsu.Error](err); ok {
@@ -490,28 +493,37 @@ func generatedFiles(ctx context.Context, repo *jujutsu.Repository, commit string
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	attrs := git.ParseAttributes(content)
-	var generated []string
-	for _, v := range files {
+	isGenerated := make([]bool, len(files))
+	eg, ctx := errgroup.WithContext(ctx)
+	eg.SetLimit(runtime.NumCPU())
+	for i, v := range files {
 		if g, ok := attrs.Generated(v.Path); ok {
-			if g {
-				generated = append(generated, v.Path)
-			}
+			isGenerated[i] = g
 			continue
 		}
-		var data []byte
-		if v.Status != jujutsu.FileStatusDeleted && !v.Binary {
-			data, err = repo.File(ctx, commit, v.Path)
-			if err != nil {
-				return nil, toJujutsuError(err)
+		eg.Go(func() error {
+			var data []byte
+			if v.Status != jujutsu.FileStatusDeleted && !v.Binary {
+				d, err := repo.File(ctx, commit, v.Path)
+				if err != nil {
+					return toJujutsuError(err)
+				}
+				data = d
 			}
-		}
-		if path.Ext(v.Path) == ".go" {
-			if enry.IsGenerated(v.Path, nil) || generatedGoRegexp.Match(data) {
-				generated = append(generated, v.Path)
+			if path.Ext(v.Path) == ".go" {
+				isGenerated[i] = enry.IsGenerated(v.Path, nil) || generatedGoRegexp.Match(data)
+			} else {
+				isGenerated[i] = enry.IsGenerated(v.Path, data)
 			}
-			continue
-		}
-		if enry.IsGenerated(v.Path, data) {
+			return nil
+		})
+	}
+	if err := eg.Wait(); err != nil {
+		return nil, err
+	}
+	var generated []string
+	for i, v := range files {
+		if isGenerated[i] {
 			generated = append(generated, v.Path)
 		}
 	}
