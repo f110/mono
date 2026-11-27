@@ -256,6 +256,7 @@ server {
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 	assert.Equal(t, []byte("proxy ok"), buf)
 
+	client.CloseIdleConnections()
 	s.FSM.Shutdown()
 	select {
 	case <-time.After(time.Second):
