@@ -203,7 +203,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   const { data: workspaceData, refetch: refetchWorkspaces } = useQuery(
     RepositoryService.method.listWorkspaces,
     { path },
-    { enabled: view === 'workspaces' || menu !== undefined },
+    { enabled: view === 'workspaces' || menu !== undefined || paletteOpen },
   )
   const workspaces = workspaceData?.workspaces ?? []
   const [sidebar, setSidebar] = useState(() => localStorage.getItem(sidebarKey) === 'true')
@@ -1196,6 +1196,9 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
                   { label: 'Start the review of the revisions', shortcut: 'v', run: () => startReview(targets()) },
                   { label: 'Create the pull request (jj pr submit)', shortcut: 'P', run: () => setSubmittingPR(targets()) },
                   { label: 'Copy the change ID', shortcut: 'y', run: () => copyChangeId(selectedCommit) },
+                  ...(single ? workspaces : [])
+                    .filter((w) => selectedCommit.workingCopies.includes(w.name) && w.root !== path)
+                    .map((w) => ({ label: `Remove the workspace ${w.name}`, run: () => setRemovingWorkspace(w) })),
                 ]
               : []),
             { label: 'Commit the working copy', shortcut: 'c', run: () => startCommit() },
