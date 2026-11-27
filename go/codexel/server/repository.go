@@ -33,14 +33,25 @@ func NewRepositoryHandler(conf *config.File) *RepositoryHandler {
 	return &RepositoryHandler{config: conf}
 }
 
-func (h *RepositoryHandler) List(_ context.Context, _ *connect.Request[api.RequestListRepositories]) (*connect.Response[api.ResponseListRepositories], error) {
+func (h *RepositoryHandler) List(ctx context.Context, _ *connect.Request[api.RequestListRepositories]) (*connect.Response[api.ResponseListRepositories], error) {
 	conf, err := h.config.Load()
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	repos := make([]*api.Repository, 0, len(conf.Repositories))
 	for _, v := range conf.Repositories {
-		repos = append(repos, toRepository(v.Path))
+		r := toRepository(v.Path)
+		repo := jujutsu.NewRepository(v.Path)
+		trunk, err := repo.Log(ctx, "trunk()", 1)
+		if err == nil && len(trunk) == 1 && len(trunk[0].Commit.RemoteBookmarks) > 0 {
+			var rows []*jujutsu.LogRow
+			rows, err = repo.Log(ctx, "trunk()..@ ~ empty()", 1)
+			r.SetUnpushed(len(rows) > 0)
+		}
+		if err != nil {
+			logger.Log.Info("Failed to find the unpushed commits", slog.String("path", v.Path), logger.E(err))
+		}
+		repos = append(repos, r)
 	}
 	return connect.NewResponse(api.ResponseListRepositories_builder{Repositories: repos}.Build()), nil
 }

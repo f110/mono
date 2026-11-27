@@ -2260,6 +2260,7 @@ type Repository struct {
 	state                  protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
 	xxx_hidden_Name        *string                `protobuf:"bytes,2,opt,name=name"`
+	xxx_hidden_Unpushed    bool                   `protobuf:"varint,3,opt,name=unpushed"`
 	XXX_raceDetectHookData protoimpl.RaceDetectHookData
 	XXX_presence           [1]uint32
 	unknownFields          protoimpl.UnknownFields
@@ -2311,14 +2312,26 @@ func (x *Repository) GetName() string {
 	return ""
 }
 
+func (x *Repository) GetUnpushed() bool {
+	if x != nil {
+		return x.xxx_hidden_Unpushed
+	}
+	return false
+}
+
 func (x *Repository) SetPath(v string) {
 	x.xxx_hidden_Path = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 2)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 3)
 }
 
 func (x *Repository) SetName(v string) {
 	x.xxx_hidden_Name = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 3)
+}
+
+func (x *Repository) SetUnpushed(v bool) {
+	x.xxx_hidden_Unpushed = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 3)
 }
 
 func (x *Repository) HasPath() bool {
@@ -2335,6 +2348,13 @@ func (x *Repository) HasName() bool {
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
 }
 
+func (x *Repository) HasUnpushed() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
 func (x *Repository) ClearPath() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
 	x.xxx_hidden_Path = nil
@@ -2345,11 +2365,17 @@ func (x *Repository) ClearName() {
 	x.xxx_hidden_Name = nil
 }
 
+func (x *Repository) ClearUnpushed() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Unpushed = false
+}
+
 type Repository_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	Path *string
-	Name *string
+	Path     *string
+	Name     *string
+	Unpushed *bool
 }
 
 func (b0 Repository_builder) Build() *Repository {
@@ -2357,12 +2383,16 @@ func (b0 Repository_builder) Build() *Repository {
 	b, x := &b0, m0
 	_, _ = b, x
 	if b.Path != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 2)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 3)
 		x.xxx_hidden_Path = b.Path
 	}
 	if b.Name != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 3)
 		x.xxx_hidden_Name = b.Name
+	}
+	if b.Unpushed != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 3)
+		x.xxx_hidden_Unpushed = *b.Unpushed
 	}
 	return m0
 }
@@ -18847,11 +18877,12 @@ const file_proto_codexel_codexel_proto_rawDesc = "" +
 	"\x05agent\x18\x01 \x01(\v2\x13.mono.codexel.AgentR\x05agent\"+\n" +
 	"\x10RequestStopAgent\x12\x17\n" +
 	"\apane_id\x18\x01 \x01(\tR\x06paneId\"\x13\n" +
-	"\x11ResponseStopAgent\"4\n" +
+	"\x11ResponseStopAgent\"P\n" +
 	"\n" +
 	"Repository\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\"<\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n" +
+	"\bunpushed\x18\x03 \x01(\bR\bunpushed\"<\n" +
 	"\x0eRemoteBookmark\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x16\n" +
 	"\x06remote\x18\x02 \x01(\tR\x06remote\"1\n" +

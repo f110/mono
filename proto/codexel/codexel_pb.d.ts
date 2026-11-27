@@ -424,6 +424,14 @@ export declare type Repository = Message<"mono.codexel.Repository"> & {
    * @generated from field: string name = 2;
    */
   name: string;
+
+  /**
+   * unpushed is true if the working copy of the workspace has the non-empty commits which are not in trunk(). It is
+   * false if trunk() doesn't have the remote bookmark. Only RepositoryService.List sets it.
+   *
+   * @generated from field: bool unpushed = 3;
+   */
+  unpushed: boolean;
 };
 
 /**

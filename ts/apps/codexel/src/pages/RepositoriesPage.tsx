@@ -8,10 +8,14 @@ import { RepositoryView } from '../components/RepositoryView.tsx'
 import { useAgents } from '../hooks/useAgents.ts'
 import { RepositoryService } from '../connect/codexel_pb.js'
 
+// repositoriesRefreshInterval is the interval to read the list of the repositories again. The tabs of the repositories
+// which are not shown are not watched, so the unpushed commits of them are found by polling.
+const repositoriesRefreshInterval = 5000
+
 export const RepositoriesPage = () => {
   const { path } = useSearch({ from: '/repositories' })
   const navigate = useNavigate({ from: '/repositories' })
-  const { data, refetch } = useQuery(RepositoryService.method.list, {})
+  const { data, refetch } = useQuery(RepositoryService.method.list, {}, { refetchInterval: repositoriesRefreshInterval })
   // useAgents reads the list of the repositories again when the agents change.
   useAgents()
   const closeRepository = useMutation(RepositoryService.method.close)
@@ -50,7 +54,7 @@ export const RepositoriesPage = () => {
               title={r.path}
               label={
                 <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
-                  <span>{r.name}</span>
+                  <span>{r.unpushed ? `${r.name}*` : r.name}</span>
                   <IconButton
                     component="span"
                     size="small"

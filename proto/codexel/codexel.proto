@@ -286,6 +286,9 @@ message Repository {
   // path is the root of the workspace. It identifies the repository.
   string path = 1;
   string name = 2;
+  // unpushed is true if the working copy of the workspace has the non-empty commits which are not in trunk(). It is
+  // false if trunk() doesn't have the remote bookmark. Only RepositoryService.List sets it.
+  bool unpushed = 3;
 }
 
 message RemoteBookmark {

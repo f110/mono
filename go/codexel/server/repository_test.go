@@ -47,6 +47,43 @@ func TestListAndCloseRepositories(t *testing.T) {
 	assertion.Equal(t, c.Repositories[0].Path, "/src/ops")
 }
 
+func TestListRepositoriesWithUnpushedCommits(t *testing.T) {
+	if *jjBinaryPath == "" {
+		t.Skipf("Skip %s because -test.jj-binary is not set", t.Name())
+	}
+
+	mono, _ := newStackRepository(t)
+	workspace := mono + "-x"
+	runCommand(t, mono, "jj", "workspace", "add", "--name=x", "--revision=trunk()", workspace)
+	ops := filepath.Join(filepath.Dir(mono), "ops")
+	runCommand(t, filepath.Dir(mono), "jj", "git", "init", ops)
+	assertion.MustNoError(t, os.WriteFile(filepath.Join(ops, "README"), []byte("init"), 0644))
+	runCommand(t, ops, "jj", "commit", "--message=init")
+	h := NewRepositoryHandler(newConfig(t, mono, workspace, ops))
+	unpushed := func() []bool {
+		res, err := h.List(t.Context(), connect.NewRequest(&api.RequestListRepositories{}))
+		assertion.MustNoError(t, err)
+		var v []bool
+		for _, r := range res.Msg.GetRepositories() {
+			v = append(v, r.GetUnpushed())
+		}
+		return v
+	}
+
+	assertion.Equal(t, unpushed(), []bool{false, false, false})
+
+	assertion.MustNoError(t, os.WriteFile(filepath.Join(mono, "a"), []byte("a"), 0644))
+	runCommand(t, mono, "jj", "util", "snapshot")
+	assertion.Equal(t, unpushed(), []bool{true, false, false})
+
+	runCommand(t, mono, "jj", "commit", "--message=a: Add")
+	runCommand(t, mono, "jj", "bookmark", "set", "master", "--revision=@-")
+	assertion.Equal(t, unpushed(), []bool{true, false, false})
+
+	runCommand(t, mono, "jj", "git", "push", "--bookmark=master")
+	assertion.Equal(t, unpushed(), []bool{false, false, false})
+}
+
 func TestLogRejectsRepositoryNotOpened(t *testing.T) {
 	h := NewRepositoryHandler(newConfig(t, "/src/mono"))
 
