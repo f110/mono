@@ -930,8 +930,8 @@ go.f110.dev/githubmock v0.0.0-20261103073433-c7537d30aaea h1:pP9oEo01vZ2JfGsas4b
 go.f110.dev/githubmock v0.0.0-20261103073433-c7537d30aaea/go.mod h1:bEjZJSGhp4EqZsKtdAEQ1JtTJsXDYRcgL5XSD10RkPE=
 go.f110.dev/go-memcached v0.0.0-20231116161756-526e3f3ea54c h1:9rI3TfcM1tJs5J6YT8OQPnFsmdfsxXWL14oHnIFD3iY=
 go.f110.dev/go-memcached v0.0.0-20231116161756-526e3f3ea54c/go.mod h1:qsC70AjhvI2KStwgacc3f+cLy7o5SB04H4zKA3e1W7o=
-go.f110.dev/kubeproto v0.1.1-0.20261123140935-1633199ac2c2 h1:jsrcZHBR1oXsAxLxMhpkTcoge7gKBnNSCQBvnhe9OXE=
-go.f110.dev/kubeproto v0.1.1-0.20261123140935-1633199ac2c2/go.mod h1:p+DCdNSqaWDyuRamtNTRnfTzXRpepiB44uOpd8wF8EU=
+go.f110.dev/kubeproto v0.1.1-0.20261125035311-9f62221b3072 h1:ClCXVo2R8pcmI4Y8mRddtpO9eERPvGPKiGFzCSVrgkg=
+go.f110.dev/kubeproto v0.1.1-0.20261125035311-9f62221b3072/go.mod h1:p+DCdNSqaWDyuRamtNTRnfTzXRpepiB44uOpd8wF8EU=
 go.f110.dev/notion-api/v3 v3.0.0-20241002160255-a0b86c0350f0 h1:gSnmo+s12m4IdHywPJoJNMXkwQ9OkxJ1w7GigjVtEHg=
 go.f110.dev/notion-api/v3 v3.0.0-20241002160255-a0b86c0350f0/go.mod h1:sQJf2G+CTpEwIOqSogbqYtVSJCVxB2zYraxUK4HNGL0=
 go.f110.dev/protoc-ddl v0.0.0-20261125140311-fc460adcdbe1 h1:PoZAzlQBtkVJtPNbiKtBpsjDUDRZBfKz1H+Nq2dQBqI=

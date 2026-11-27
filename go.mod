@@ -64,7 +64,7 @@ require (
 	go.etcd.io/etcd/client/v3 v3.6.11
 	go.f110.dev/githubmock v0.0.0-20261103073433-c7537d30aaea
 	go.f110.dev/go-memcached v0.0.0-20231116161756-526e3f3ea54c
-	go.f110.dev/kubeproto v0.1.1-0.20261123140935-1633199ac2c2
+	go.f110.dev/kubeproto v0.1.1-0.20261125035311-9f62221b3072
 	go.f110.dev/notion-api/v3 v3.0.0-20241002160255-a0b86c0350f0
 	go.f110.dev/protoc-ddl v0.0.0-20261125140311-fc460adcdbe1
 	go.f110.dev/xerrors v0.0.0-20260430154500-93b3f86ffe89
