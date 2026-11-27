@@ -38,8 +38,9 @@
 | `webhook`                  | Webhook の受信 (`Handler`)、`Scheduler`、イベント種別ごとの `Reconciler`、`Notifier`。 |
 | `watcher`                  | Kubernetes の Job informer。`jobType` ごとの reconcile 関数にイベントをルーティングする。    |
 | `releasewatcher`           | サードパーティのリリース/タグをポーリングし `external_release` トリガーを発火する。                   |
+| `artifactupdater`          | 成果物の publish イベントを受けて、ルールのあるリポジトリのファイルを更新する bot（`go/cmd/build-artifact-updater`）。 |
 | `gc`                       | 古い Job / ログのガベージコレクション。                                                |
-| `config`                   | ジョブ設定の読み込み。Starlark の `Job`(旧) と CUE の `JobV2`(現行)。                    |
+| `config`                   | ジョブ設定の読み込み。Starlark の `Job`(旧) と CUE の `JobV2`(現行)。`on_artifact_published` のルールも読む。 |
 | `database`, `database/dao` | スキーマ定義（protoc-ddl 生成）と DAO。                                            |
 | `model`                    | API/BFF/DB 間で共有するドメインの protobuf メッセージ。                                 |
 
@@ -182,6 +183,43 @@ write-back bot など成果物の更新を受けたいものが subscribe する
   （既定 `build`）と `--nats-subject`（既定 `artifact.published`）で変えられ、`<stream 名>.<subject>` に publish する。
 - 起動時に stream が無ければ builder の起動に失敗する。
 - publish に失敗してもアップロードは失敗にしない（成果物は保存済み）。ログに警告を出すだけで、再送はしない。
+
+### 成果物の更新を書き戻す bot (`artifactupdater` パッケージ)
+
+`build-artifact-updater`（`go/cmd/build-artifact-updater`）は成果物の publish イベントを受けて、Build に登録された
+リポジトリのファイルを更新し、デフォルトブランチへ直接 push する。Bazel のビルドは不要なので Build の Job は使わない。
+どの成果物でどのファイルをどう更新するかは、更新されるリポジトリの `.build/*.cue` の `on_artifact_published` に書く。
+bot は `ListArtifactPublishedRules` で成果物の repository からルールとリポジトリを引き、ルールのあるリポジトリだけを clone する。
+ルールはデフォルトブランチへの push のたびに Build が保存したもの（`artifact_published_rule`）を使う。
+
+```cue
+on_artifact_published: {
+	issue_base: {
+		artifact: "repo.center.x.f110.dev/issue/manifests"
+		replace: path: "clusters/globemaster/issue/base/kustomize.base.yaml"
+	}
+	issue_server_dev: {
+		artifact: "repo.center.x.f110.dev/issue/server"
+		kustomize_image: path: "clusters/globemaster/issue/dev/kustomization.yaml"
+	}
+}
+```
+
+- キーはルールの名前。`artifact` が成果物の repository と完全に一致したルールを適用する
+- 操作は次のどちらか 1 つ
+  - `replace.path`: ファイル全体を成果物（ファイル）の中身で置き換える。zot から digest で取得する
+  - `kustomize_image.path`: kustomization の `images:` のうち `name`（`kustomize_image.name`。省略時は `artifact`）が
+    一致するエントリの `digest` の値だけを書き換える。エントリや `digest` が無い場合はエラーにする
+- 成果物の type と操作が合わない場合（`replace` にコンテナイメージ、`kustomize_image` にファイル）はエラーにする
+- リポジトリごとに、1 つのイベントで適用したルールを 1 つのコミットにする。コミットには `Artifact-Rule: <ルール名>` と
+  `Build-Task: <task_id>` の Trailer をつける。ルールを最後に適用したタスクを履歴の Trailer から探し、イベントの
+  task_id がそれ以下ならそのルールは適用しない。並行して走った古いタスクのイベントや再配信で古い digest に戻さないため
+- ファイルの内容が変わらなければコミットしない。同じイベントを何度処理しても結果は変わらない
+- push が non-fast-forward で拒否されたら clone からやり直す（5 回まで）
+- イベントは `--consumer-name` の durable consumer（`DeliverNew`）で受け取り、push が終わってから ack する。
+  失敗したら 1 分後に再配信させる。consumer の名前は既定で `artifact-updater`
+- push の認証は GitHub App（`--github-app-id`、`--github-installation-id`、`--private-key-file`）。
+  zot の認証は docker の config を使う
 
 ## Job の構造とビルド結果の収集
 
