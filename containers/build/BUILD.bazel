@@ -11,6 +11,8 @@ SIDECAR_REPOSITORY = CONTAINER_REGISTRY + "/build/sidecar"
 
 CTL_REPOSITORY = CONTAINER_REGISTRY + "/build/buildctl"
 
+ARTIFACT_UPDATER_REPOSITORY = CONTAINER_REGISTRY + "/build/artifact-updater"
+
 pkg_tar(
     name = "build_bin",
     files = {
@@ -117,4 +119,32 @@ cd_artifact(
     name = "ctl_delivery",
     images = [":ctl_image"],
     repository = CTL_REPOSITORY,
+)
+
+pkg_tar(
+    name = "artifact_updater_bin",
+    files = {
+        "//go/cmd/build-artifact-updater:linux_amd64": "/usr/local/bin/artifact-updater",
+    },
+    mode = "0755",
+)
+
+oci_image(
+    name = "artifact_updater_image",
+    base = "@com_google_distroless_base_linux_amd64",
+    entrypoint = ["/usr/local/bin/artifact-updater"],
+    tars = [":artifact_updater_bin"],
+)
+
+oci_push(
+    name = "push_artifact_updater",
+    image = ":artifact_updater_image",
+    remote_tags = ["latest"],
+    repository = ARTIFACT_UPDATER_REPOSITORY,
+)
+
+cd_artifact(
+    name = "artifact_updater_delivery",
+    images = [":artifact_updater_image"],
+    repository = ARTIFACT_UPDATER_REPOSITORY,
 )
