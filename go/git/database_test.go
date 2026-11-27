@@ -17,6 +17,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/cache"
 	"github.com/go-git/go-git/v5/plumbing/format/packfile"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/storer"
@@ -261,6 +262,35 @@ func TestDatabaseStorerTree(t *testing.T) {
 	assert.Equal(t, database.ObjectEncodingFull, encoding)
 	s.cache.Clear()
 	assertObject(t, s, padded, plumbing.TreeObject)
+}
+
+func TestDatabaseStorerWithoutObjectCache(t *testing.T) {
+	src := memory.NewStorage()
+	var hashes []plumbing.Hash
+	var content []byte
+	for i := range 3 {
+		content = append(content, fmt.Sprintf("line %d of the file which is appended every version\n", i)...)
+		obj := &plumbing.MemoryObject{}
+		obj.SetType(plumbing.BlobObject)
+		_, err := obj.Write(content)
+		require.NoError(t, err)
+		h, err := src.SetEncodedObject(obj)
+		require.NoError(t, err)
+		hashes = append(hashes, h)
+	}
+	var buf bytes.Buffer
+	_, err := packfile.NewEncoder(&buf, src, false).Encode(hashes, 10)
+	require.NoError(t, err)
+
+	s := newDatabaseStorer(t)
+	s.cache = nil
+	writePackfile(t, s, buf.Bytes())
+	tree := setObject(t, s, plumbing.TreeObject, treeContent("100644 a", hashes[0], "100644 b", hashes[1]))
+
+	for _, h := range hashes {
+		assertObject(t, s, h, plumbing.BlobObject)
+	}
+	assertObject(t, s, tree, plumbing.TreeObject)
 }
 
 func TestDatabaseStorerRepack(t *testing.T) {
@@ -539,7 +569,7 @@ func newDatabaseStorer(t *testing.T) *DatabaseStorer {
 	conn := newTestDatabase(t)
 	repo, err := dao.NewRepository(conn).Create(context.Background(), &database.Repository{Name: t.Name(), NextObjectId: 1})
 	require.NoError(t, err)
-	return NewDatabaseStorer(conn, repo.Id)
+	return NewDatabaseStorer(conn, repo.Id, cache.NewObjectLRUDefault())
 }
 
 func writePackfile(t *testing.T, s *DatabaseStorer, data []byte) {

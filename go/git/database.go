@@ -79,8 +79,9 @@ var _ gitStorage.Storer = (*DatabaseStorer)(nil)
 var _ storer.PackfileWriter = (*DatabaseStorer)(nil)
 
 // NewDatabaseStorer returns the storer of the repository. The row of the repository must exist.
-func NewDatabaseStorer(conn *sql.DB, repositoryID int32) *DatabaseStorer {
-	return &DatabaseStorer{dao: dao.NewOptions(conn), repositoryID: repositoryID, cache: cache.NewObjectLRUDefault()}
+// objectCache caches the objects which are read. If objectCache is nil, the objects are read from the database every time.
+func NewDatabaseStorer(conn *sql.DB, repositoryID int32, objectCache cache.Object) *DatabaseStorer {
+	return &DatabaseStorer{dao: dao.NewOptions(conn), repositoryID: repositoryID, cache: objectCache}
 }
 
 func (s *DatabaseStorer) NewEncodedObject() plumbing.EncodedObject {
@@ -131,11 +132,13 @@ func (s *DatabaseStorer) PackfileWriter() (io.WriteCloser, error) {
 }
 
 func (s *DatabaseStorer) EncodedObject(t plumbing.ObjectType, h plumbing.Hash) (plumbing.EncodedObject, error) {
-	if obj, ok := s.cache.Get(h); ok {
-		if t != plumbing.AnyObject && obj.Type() != t {
-			return nil, plumbing.ErrObjectNotFound
+	if s.cache != nil {
+		if obj, ok := s.cache.Get(h); ok {
+			if t != plumbing.AnyObject && obj.Type() != t {
+				return nil, plumbing.ErrObjectNotFound
+			}
+			return obj, nil
 		}
-		return obj, nil
 	}
 
 	ctx := context.Background()
@@ -176,7 +179,9 @@ func (s *DatabaseStorer) EncodedObject(t plumbing.ObjectType, h plumbing.Hash) (
 	if _, err := obj.Write(content); err != nil {
 		return nil, xerrors.WithStack(err)
 	}
-	s.cache.Put(obj)
+	if s.cache != nil {
+		s.cache.Put(obj)
+	}
 	return obj, nil
 }
 
@@ -564,13 +569,15 @@ func (s *DatabaseStorer) restoreDelta(ctx context.Context, row *database.Object)
 		if err != nil {
 			return nil, xerrors.WithStack(err)
 		}
-		var h plumbing.Hash
-		copy(h[:], base.Hash)
-		if obj, ok := s.cache.Get(h); ok {
-			if content, err = readContent(obj); err != nil {
-				return nil, err
+		if s.cache != nil {
+			var h plumbing.Hash
+			copy(h[:], base.Hash)
+			if obj, ok := s.cache.Get(h); ok {
+				if content, err = readContent(obj); err != nil {
+					return nil, err
+				}
+				break
 			}
-			break
 		}
 		if base.Encoding == database.ObjectEncodingFull {
 			if content, err = zstdDecoder.DecodeAll(base.Payload, nil); err != nil {
@@ -721,6 +728,8 @@ func (s *DatabaseStorer) newObjectWriter(ctx context.Context) *objectWriter {
 // The repository is identified by RepositoryConfig.Name.
 type DatabaseBackend struct {
 	Conn *sql.DB
+	// DisableObjectCache disables the in-memory cache of the objects of each repository.
+	DisableObjectCache bool
 }
 
 var _ Backend = (*DatabaseBackend)(nil)
@@ -736,7 +745,11 @@ func (b *DatabaseBackend) Open(ctx context.Context, repo *RepositoryConfig, toke
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
-	s := NewDatabaseStorer(b.Conn, row.Id)
+	var objectCache cache.Object
+	if !b.DisableObjectCache {
+		objectCache = cache.NewObjectLRUDefault()
+	}
+	s := NewDatabaseStorer(b.Conn, row.Id, objectCache)
 	if row.ClonedAt != nil {
 		gitRepo, err := git.Open(s, nil)
 		if err != nil {

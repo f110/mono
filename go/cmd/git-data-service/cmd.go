@@ -57,6 +57,7 @@ type gitDataServiceCommand struct {
 	RefreshWorkers         int
 	RepackInterval         time.Duration
 	DisableInflatePackFile bool
+	DisableObjectCache     bool
 
 	PackfileCacheSize int64
 	PackfileCacheTTL  time.Duration
@@ -114,6 +115,7 @@ func (c *gitDataServiceCommand) Flags(fs *flag.FlagSet) {
 	fs.Duration("repack-interval", "The interval for repacking the repositories which are stored in the database (--dsn). "+
 		"If set zero, the repack is disabled.").Var(&c.RepackInterval).Default(24 * time.Hour)
 	fs.Bool("disable-inflate-packfile", "Disable inflating packfile").Var(&c.DisableInflatePackFile)
+	fs.Bool("disable-object-cache", "Disable the in-memory cache of the objects which are read from the database (--dsn)").Var(&c.DisableObjectCache)
 
 	fs.Int64("packfile-cache-size", "Maximum total bytes of packfiles cached in process memory. "+
 		"If set zero, the in-memory packfile cache is disabled.").Var(&c.PackfileCacheSize)
@@ -163,7 +165,7 @@ func (c *gitDataServiceCommand) init(ctx context.Context) (fsm.State, error) {
 		if err != nil {
 			return fsm.Error(err)
 		}
-		backend = &git.DatabaseBackend{Conn: conn}
+		backend = &git.DatabaseBackend{Conn: conn, DisableObjectCache: c.DisableObjectCache}
 	} else {
 		var cachePool *client.SinglePool
 		if c.MemcachedEndpoint != "" {
