@@ -354,6 +354,96 @@ export declare type ArtifactPublishedEvent = Message<"mono.build.model.ArtifactP
 export declare const ArtifactPublishedEventSchema: GenMessage<ArtifactPublishedEvent>;
 
 /**
+ * ArtifactPublishedRule is a rule of on_artifact_published defined in the
+ * default branch of the repository. It updates a file in the repository when the
+ * artifact whose repository is `artifact` is published. See docs/build.md.
+ *
+ * @generated from message mono.build.model.ArtifactPublishedRule
+ */
+export declare type ArtifactPublishedRule = Message<"mono.build.model.ArtifactPublishedRule"> & {
+  /**
+   * @generated from field: mono.build.model.Repository repository = 1;
+   */
+  repository?: Repository;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string artifact = 3;
+   */
+  artifact: string;
+
+  /**
+   * @generated from oneof mono.build.model.ArtifactPublishedRule.action
+   */
+  action: {
+    /**
+     * @generated from field: mono.build.model.ArtifactPublishedRuleReplace replace = 4;
+     */
+    value: ArtifactPublishedRuleReplace;
+    case: "replace";
+  } | {
+    /**
+     * @generated from field: mono.build.model.ArtifactPublishedRuleKustomizeImage kustomize_image = 5;
+     */
+    value: ArtifactPublishedRuleKustomizeImage;
+    case: "kustomizeImage";
+  } | { case: undefined; value?: undefined };
+};
+
+/**
+ * Describes the message mono.build.model.ArtifactPublishedRule.
+ * Use `create(ArtifactPublishedRuleSchema)` to create a new message.
+ */
+export declare const ArtifactPublishedRuleSchema: GenMessage<ArtifactPublishedRule>;
+
+/**
+ * ArtifactPublishedRuleReplace replaces the whole file at path with the content
+ * of the artifact.
+ *
+ * @generated from message mono.build.model.ArtifactPublishedRuleReplace
+ */
+export declare type ArtifactPublishedRuleReplace = Message<"mono.build.model.ArtifactPublishedRuleReplace"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+};
+
+/**
+ * Describes the message mono.build.model.ArtifactPublishedRuleReplace.
+ * Use `create(ArtifactPublishedRuleReplaceSchema)` to create a new message.
+ */
+export declare const ArtifactPublishedRuleReplaceSchema: GenMessage<ArtifactPublishedRuleReplace>;
+
+/**
+ * ArtifactPublishedRuleKustomizeImage updates the digest of the entry whose
+ * name is `name` in images of the kustomization at path.
+ *
+ * @generated from message mono.build.model.ArtifactPublishedRuleKustomizeImage
+ */
+export declare type ArtifactPublishedRuleKustomizeImage = Message<"mono.build.model.ArtifactPublishedRuleKustomizeImage"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+};
+
+/**
+ * Describes the message mono.build.model.ArtifactPublishedRuleKustomizeImage.
+ * Use `create(ArtifactPublishedRuleKustomizeImageSchema)` to create a new message.
+ */
+export declare const ArtifactPublishedRuleKustomizeImageSchema: GenMessage<ArtifactPublishedRuleKustomizeImage>;
+
+/**
  * @generated from message mono.build.model.TestReport
  */
 export declare type TestReport = Message<"mono.build.model.TestReport"> & {
