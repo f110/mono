@@ -77,7 +77,7 @@ func newNATSJetStreamController(
 		nil,
 		[]string{natsJetStreamControllerFinalizerName},
 		natsInformers.JetStreamLister().Get,
-		apiClient.NatsV1alpha1.UpdateJetStream,
+		apiClient.NatsV1alpha1.PatchJetStream,
 	)
 	return c
 }

@@ -94,7 +94,7 @@ func NewMinIOClusterController(
 		[]cache.SharedIndexInformer{serviceInformer, podInformer, secretInformer, pvcInformer},
 		[]string{minIOClusterControllerFinalizerName},
 		mcLister.Get,
-		apiClient.MinioV1alpha1.UpdateMinIOCluster,
+		apiClient.MinioV1alpha1.PatchMinIOCluster,
 	)
 
 	return c

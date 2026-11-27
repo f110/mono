@@ -98,7 +98,7 @@ func NewMinIOUserController(
 		[]cache.SharedIndexInformer{instanceInformer, configMapInformer, serviceInformer, secretInformer},
 		[]string{minIOUserControllerFinalizerName},
 		minioUserLister.Get,
-		apiClient.MinioV1alpha1.UpdateMinIOUser,
+		apiClient.MinioV1alpha1.PatchMinIOUser,
 	)
 
 	return c, nil

@@ -1,4 +1,4 @@
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "controllerutil",
@@ -21,11 +21,28 @@ go_library(
         "@io_k8s_apimachinery//pkg/api/errors",
         "@io_k8s_apimachinery//pkg/api/meta",
         "@io_k8s_apimachinery//pkg/runtime",
+        "@io_k8s_apimachinery//pkg/types",
         "@io_k8s_client_go//kubernetes",
         "@io_k8s_client_go//kubernetes/typed/core/v1:core",
         "@io_k8s_client_go//tools/cache",
         "@io_k8s_client_go//tools/record",
         "@io_k8s_client_go//util/workqueue",
         "@io_k8s_component_base//metrics/prometheus/workqueue",
+    ],
+)
+
+go_test(
+    name = "controllerutil_test",
+    srcs = ["base_test.go"],
+    embed = [":controllerutil"],
+    deps = [
+        "//go/api/natsv1alpha1",
+        "//go/k8s/client/testingclient",
+        "//go/logger",
+        "//go/testing/assertion",
+        "@dev_f110_kubeproto//go/apis/metav1",
+        "@io_k8s_apimachinery//pkg/types",
+        "@io_k8s_client_go//kubernetes/fake",
+        "@io_k8s_client_go//testing",
     ],
 )

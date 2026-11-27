@@ -72,7 +72,7 @@ func NewGrafanaController(
 		[]cache.SharedIndexInformer{secretInformer, serviceInformer},
 		[]string{grafanaControllerFinalizerName},
 		grafanaInformers.GrafanaLister().Get,
-		apiClient.GrafanaV1alpha1.UpdateGrafana,
+		apiClient.GrafanaV1alpha1.PatchGrafana,
 	)
 
 	return a, nil

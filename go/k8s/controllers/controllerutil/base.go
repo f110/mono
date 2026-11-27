@@ -2,6 +2,7 @@ package controllerutil
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -14,6 +15,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/cache"
@@ -275,16 +277,16 @@ type GenericReconciler[T runtime.Object] interface {
 }
 
 type GenericControllerBase[T runtime.Object] struct {
-	log            *slog.Logger
-	recorder       record.EventRecorder
-	queue          *WorkQueue
-	supervisor     *parallel.Supervisor
-	informers      []cache.SharedIndexInformer
-	eventSource    []cache.SharedIndexInformer
-	finalizers     []string
-	getObjectFn    func(namespace, name string) (T, error)
-	updateObjectFn func(context.Context, T, metav1.UpdateOptions) (T, error)
-	newReconciler  func() GenericReconciler[T]
+	log           *slog.Logger
+	recorder      record.EventRecorder
+	queue         *WorkQueue
+	supervisor    *parallel.Supervisor
+	informers     []cache.SharedIndexInformer
+	eventSource   []cache.SharedIndexInformer
+	finalizers    []string
+	getObjectFn   func(namespace, name string) (T, error)
+	patchObjectFn func(ctx context.Context, namespace, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (T, error)
+	newReconciler func() GenericReconciler[T]
 }
 
 func NewGenericControllerBase[T runtime.Object](
@@ -295,7 +297,7 @@ func NewGenericControllerBase[T runtime.Object](
 	informers []cache.SharedIndexInformer,
 	finalizers []string,
 	getObjectFn func(namespace, name string) (T, error),
-	updateObjectFn func(context.Context, T, metav1.UpdateOptions) (T, error),
+	patchObjectFn func(ctx context.Context, namespace, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (T, error),
 ) *GenericControllerBase[T] {
 	l := logger.Log.With(slog.String("logger", name))
 	eventBroadcaster := record.NewBroadcaster()
@@ -306,15 +308,15 @@ func NewGenericControllerBase[T runtime.Object](
 	recorder := eventBroadcaster.NewRecorder(client.Scheme, corev1.EventSource{Component: name})
 
 	return &GenericControllerBase[T]{
-		log:            l,
-		recorder:       recorder,
-		queue:          NewWorkQueue(name),
-		eventSource:    eventSource,
-		informers:      informers,
-		finalizers:     finalizers,
-		newReconciler:  newReconciler,
-		getObjectFn:    getObjectFn,
-		updateObjectFn: updateObjectFn,
+		log:           l,
+		recorder:      recorder,
+		queue:         NewWorkQueue(name),
+		eventSource:   eventSource,
+		informers:     informers,
+		finalizers:    finalizers,
+		newReconciler: newReconciler,
+		getObjectFn:   getObjectFn,
+		patchObjectFn: patchObjectFn,
 	}
 }
 
@@ -421,7 +423,13 @@ func (b *GenericControllerBase[T]) process(workerCtx context.Context, key string
 			}
 		}
 		if updatedFinalizers {
-			if _, err := b.updateObjectFn(ctx, target, metav1.UpdateOptions{}); err != nil {
+			patch, err := json.Marshal(map[string]any{
+				"metadata": map[string]any{"finalizers": objMeta.GetFinalizers(), "resourceVersion": objMeta.GetResourceVersion()},
+			})
+			if err != nil {
+				return xerrors.WithStack(err)
+			}
+			if _, err := b.patchObjectFn(ctx, objMeta.GetNamespace(), objMeta.GetName(), types.MergePatchType, patch, metav1.PatchOptions{}); err != nil {
 				return WrapRetryError(xerrors.WithStack(err))
 			}
 			return nil
