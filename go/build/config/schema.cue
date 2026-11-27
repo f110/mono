@@ -91,3 +91,19 @@ jobs: [Name=_]: {
 }
 
 output: [for _name, job in jobs {job}]
+
+#ArtifactPublishedRule: {
+	artifact!: string
+	{
+		replace: path!: string
+		kustomize_image?: _|_
+	} | {
+		kustomize_image: {
+			path!: string
+			name:  *artifact | string
+		}
+		replace?: _|_
+	}
+}
+
+on_artifact_published: [string]: #ArtifactPublishedRule

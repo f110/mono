@@ -6,9 +6,11 @@ import (
 	"io"
 	"io/fs"
 	"log/slog"
+	"maps"
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -324,32 +326,37 @@ func (e *gitDataServiceEntry) ModTime() time.Time { return time.Time{} }
 func (e *gitDataServiceEntry) Sys() any           { return nil }
 
 func ReadJobsFromBuildDir(fileProvider Provider) ([]*JobV2, error) {
-	entries, err := fileProvider.ReadDir(BuildFileDir)
+	var allJobs []*JobV2
+	err := readBuildFiles(fileProvider, func(f fs.File) error {
+		jobs, err := ParseFile(f)
+		if err != nil {
+			return err
+		}
+		allJobs = append(allJobs, jobs...)
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	var allJobs []*JobV2
-	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
-		}
-		if filepath.Ext(entry.Name()) != ".cue" {
-			continue
-		}
-		f, err := fileProvider.Open(filepath.Join(BuildFileDir, entry.Name()))
-		if err != nil {
-			return nil, err
-		}
-		jobs, err := ParseFile(f)
-		if err != nil {
-			f.Close()
-			return nil, err
-		}
-		allJobs = append(allJobs, jobs...)
-		f.Close()
-	}
-
 	return allJobs, nil
+}
+
+// ReadArtifactPublishedRulesFromBuildDir reads the rules of on_artifact_published from all configuration files
+// in the build directory.
+func ReadArtifactPublishedRulesFromBuildDir(fileProvider Provider) ([]*ArtifactPublishedRule, error) {
+	var allRules []*ArtifactPublishedRule
+	err := readBuildFiles(fileProvider, func(f fs.File) error {
+		rules, err := ParseArtifactPublishedRules(f)
+		if err != nil {
+			return err
+		}
+		allRules = append(allRules, rules...)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return allRules, nil
 }
 
 func ReadBazelVersion(fileProvider Provider) (string, error) {
@@ -366,26 +373,9 @@ func ReadBazelVersion(fileProvider Provider) (string, error) {
 }
 
 func ParseFile(f fs.File) ([]*JobV2, error) {
-	cueCtx := cuecontext.New()
-	cueSchema := cueCtx.CompileBytes(schema)
-
-	buf, err := io.ReadAll(f)
+	parsed, err := compileFile(f)
 	if err != nil {
-		f.Close()
-		return nil, xerrors.WithStack(err)
-	}
-	f.Close()
-
-	rawConf := cueCtx.CompileBytes(buf)
-	if rawConf.Err() != nil {
-		return nil, xerrors.WithStack(rawConf.Err())
-	}
-	parsed := cueSchema.Unify(rawConf)
-	if parsed.Err() != nil {
-		return nil, xerrors.WithStack(parsed.Err())
-	}
-	if err := parsed.Validate(cue.Concrete(true)); err != nil {
-		return nil, xerrors.WithStack(err)
+		return nil, err
 	}
 	parsed = parsed.LookupPath(cue.ParsePath("output"))
 	if parsed.Err() != nil {
@@ -396,4 +386,79 @@ func ParseFile(f fs.File) ([]*JobV2, error) {
 		return nil, xerrors.WithStack(err)
 	}
 	return jobs, nil
+}
+
+// ParseArtifactPublishedRules parses the rules of on_artifact_published in the configuration file.
+// The rules are sorted by the name.
+func ParseArtifactPublishedRules(f fs.File) ([]*ArtifactPublishedRule, error) {
+	parsed, err := compileFile(f)
+	if err != nil {
+		return nil, err
+	}
+	rules := make([]*ArtifactPublishedRule, 0)
+	parsed = parsed.LookupPath(cue.ParsePath("on_artifact_published"))
+	if !parsed.Exists() {
+		return rules, nil
+	}
+	m := make(map[string]*ArtifactPublishedRule)
+	if err := parsed.Decode(&m); err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	for _, name := range slices.Sorted(maps.Keys(m)) {
+		r := m[name]
+		r.Name = name
+		rules = append(rules, r)
+	}
+	return rules, nil
+}
+
+// readBuildFiles calls fn with each configuration file in the build directory.
+func readBuildFiles(fileProvider Provider, fn func(f fs.File) error) error {
+	entries, err := fileProvider.ReadDir(BuildFileDir)
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		if filepath.Ext(entry.Name()) != ".cue" {
+			continue
+		}
+		f, err := fileProvider.Open(filepath.Join(BuildFileDir, entry.Name()))
+		if err != nil {
+			return err
+		}
+		err = fn(f)
+		f.Close()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// compileFile reads f, unifies it with the schema and validates it. f is closed.
+func compileFile(f fs.File) (cue.Value, error) {
+	cueCtx := cuecontext.New()
+	cueSchema := cueCtx.CompileBytes(schema)
+
+	buf, err := io.ReadAll(f)
+	f.Close()
+	if err != nil {
+		return cue.Value{}, xerrors.WithStack(err)
+	}
+
+	rawConf := cueCtx.CompileBytes(buf)
+	if rawConf.Err() != nil {
+		return cue.Value{}, xerrors.WithStack(rawConf.Err())
+	}
+	parsed := cueSchema.Unify(rawConf)
+	if parsed.Err() != nil {
+		return cue.Value{}, xerrors.WithStack(parsed.Err())
+	}
+	if err := parsed.Validate(cue.Concrete(true)); err != nil {
+		return cue.Value{}, xerrors.WithStack(err)
+	}
+	return parsed, nil
 }

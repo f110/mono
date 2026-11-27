@@ -578,3 +578,26 @@ func (j *JobV2) Copy() *JobV2 {
 
 	return n
 }
+
+// ArtifactPublishedRule is a rule of on_artifact_published. It updates a file in the repository when the artifact is
+// published. Either Replace or KustomizeImage is set.
+//
+// The fields here must be kept in sync with the CUE schema in schema.cue.
+type ArtifactPublishedRule struct {
+	Name string `json:"-"`
+	// Artifact is the repository of the artifact (e.g. repo.center.x.f110.dev/issue/server).
+	Artifact       string                `json:"artifact"`
+	Replace        *ReplaceAction        `json:"replace,omitempty"`
+	KustomizeImage *KustomizeImageAction `json:"kustomize_image,omitempty"`
+}
+
+// ReplaceAction replaces the whole file at Path with the content of the artifact.
+type ReplaceAction struct {
+	Path string `json:"path"`
+}
+
+// KustomizeImageAction updates the digest of the entry whose name is Name in images of the kustomization at Path.
+type KustomizeImageAction struct {
+	Path string `json:"path"`
+	Name string `json:"name"`
+}

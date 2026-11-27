@@ -219,6 +219,144 @@ func TestParseFile(t *testing.T) {
 	}
 }
 
+func TestParseArtifactPublishedRules(t *testing.T) {
+	cases := []struct {
+		Name  string
+		File  string
+		Rules []*ArtifactPublishedRule
+	}{
+		{
+			Name: "Valid",
+			File: `on_artifact_published: {
+	issue_base: {
+		artifact: "repo.center.x.f110.dev/issue/manifests"
+		replace: path: "clusters/globemaster/issue/base/kustomize.base.yaml"
+	}
+	issue_server_dev: {
+		artifact: "repo.center.x.f110.dev/issue/server"
+		kustomize_image: path: "clusters/globemaster/issue/dev/kustomization.yaml"
+	}
+	issue_frontend_dev: {
+		artifact: "repo.center.x.f110.dev/issue/frontend"
+		kustomize_image: {
+			path: "clusters/globemaster/issue/dev/kustomization.yaml"
+			name: "issue-frontend"
+		}
+	}
+}`,
+			Rules: []*ArtifactPublishedRule{
+				{
+					Name:     "issue_base",
+					Artifact: "repo.center.x.f110.dev/issue/manifests",
+					Replace:  &ReplaceAction{Path: "clusters/globemaster/issue/base/kustomize.base.yaml"},
+				},
+				{
+					Name:           "issue_frontend_dev",
+					Artifact:       "repo.center.x.f110.dev/issue/frontend",
+					KustomizeImage: &KustomizeImageAction{Path: "clusters/globemaster/issue/dev/kustomization.yaml", Name: "issue-frontend"},
+				},
+				{
+					Name:     "issue_server_dev",
+					Artifact: "repo.center.x.f110.dev/issue/server",
+					KustomizeImage: &KustomizeImageAction{
+						Path: "clusters/globemaster/issue/dev/kustomization.yaml",
+						Name: "repo.center.x.f110.dev/issue/server",
+					},
+				},
+			},
+		},
+		{
+			Name: "Valid: with jobs",
+			File: `jobs: test: {
+	command: "test"
+	targets: ["//..."]
+	event: ["push"]
+	platforms: ["linux_amd64"]
+}
+on_artifact_published: base: {
+	artifact: "repo.example.com/manifests"
+	replace: path: "base.yaml"
+}`,
+			Rules: []*ArtifactPublishedRule{
+				{Name: "base", Artifact: "repo.example.com/manifests", Replace: &ReplaceAction{Path: "base.yaml"}},
+			},
+		},
+		{
+			Name: "Valid: no rules",
+			File: `jobs: test: {
+	command: "test"
+	targets: ["//..."]
+	event: ["push"]
+	platforms: ["linux_amd64"]
+}`,
+			Rules: []*ArtifactPublishedRule{},
+		},
+		{
+			Name: "Invalid: no artifact",
+			File: `on_artifact_published: base: replace: path: "base.yaml"`,
+		},
+		{
+			Name: "Invalid: no action",
+			File: `on_artifact_published: base: artifact: "repo.example.com/manifests"`,
+		},
+		{
+			Name: "Invalid: both actions",
+			File: `on_artifact_published: base: {
+	artifact: "repo.example.com/manifests"
+	replace: path: "base.yaml"
+	kustomize_image: path: "kustomization.yaml"
+}`,
+		},
+		{
+			Name: "Invalid: no path",
+			File: `on_artifact_published: base: {
+	artifact: "repo.example.com/server"
+	kustomize_image: name: "server"
+}`,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.Name, func(t *testing.T) {
+			mapFS := fstest.MapFS(map[string]*fstest.MapFile{
+				".build/config.cue": {Data: []byte(tc.File)},
+			})
+			f, err := mapFS.Open(".build/config.cue")
+			assertion.MustNoError(t, err)
+			rules, err := ParseArtifactPublishedRules(f)
+			if tc.Rules != nil {
+				assertion.MustNoError(t, err)
+				assertion.Equal(t, tc.Rules, rules)
+			} else {
+				if testing.Verbose() && err != nil {
+					t.Log(err)
+				}
+				assertion.MustError(t, err)
+			}
+		})
+	}
+}
+
+func TestReadArtifactPublishedRulesFromBuildDir(t *testing.T) {
+	mapFS := fstest.MapFS(map[string]*fstest.MapFile{
+		".build/a.cue": {Data: []byte(`on_artifact_published: a: {
+	artifact: "repo.example.com/a"
+	replace: path: "a.yaml"
+}`)},
+		".build/b.cue": {Data: []byte(`on_artifact_published: b: {
+	artifact: "repo.example.com/b"
+	kustomize_image: path: "kustomization.yaml"
+}`)},
+		".build/README.md": {Data: []byte("readme")},
+	})
+	rules, err := ReadArtifactPublishedRulesFromBuildDir(mapFS)
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, []*ArtifactPublishedRule{
+		{Name: "a", Artifact: "repo.example.com/a", Replace: &ReplaceAction{Path: "a.yaml"}},
+		{Name: "b", Artifact: "repo.example.com/b", KustomizeImage: &KustomizeImageAction{Path: "kustomization.yaml", Name: "repo.example.com/b"}},
+	}, rules)
+}
+
 func TestNormalizeGitPath(t *testing.T) {
 	// git-data-service expects tree paths without a leading slash and "" for
 	// the repository root (ReadDir maps "" to "/"). Anything else makes
