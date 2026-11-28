@@ -9,20 +9,39 @@ import (
 )
 
 func runCommand() error {
-	c := newGitDataServiceCommand()
-	cmd := &cli.Command{
+	rootCmd := &cli.Command{
 		Use: "git-data-service",
+	}
+
+	s := newGitDataServiceCommand()
+	serverCmd := &cli.Command{
+		Use:   "server",
+		Short: "Serve the repositories via gRPC",
 		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
-			if err := c.ValidateFlagValue(); err != nil {
+			if err := s.ValidateFlagValue(); err != nil {
 				return err
 			}
-			return c.LoopContext(ctx)
+			return s.LoopContext(ctx)
 		},
 	}
-	c.Flags(cmd.Flags())
-	c.GitHubClient.Flags(cmd.Flags())
+	s.Flags(serverCmd.Flags())
+	rootCmd.AddCommand(serverCmd)
 
-	return cmd.Execute(os.Args)
+	u := newUpdaterCommand()
+	updaterCmd := &cli.Command{
+		Use:   "updater",
+		Short: "Update the repositories periodically",
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
+			if err := u.ValidateFlagValue(); err != nil {
+				return err
+			}
+			return u.LoopContext(ctx)
+		},
+	}
+	u.Flags(updaterCmd.Flags())
+	rootCmd.AddCommand(updaterCmd)
+
+	return rootCmd.Execute(os.Args)
 }
 
 func main() {

@@ -1,4 +1,4 @@
-load("@rules_go//go:def.bzl", "go_binary", "go_cross_binary", "go_library")
+load("@rules_go//go:def.bzl", "go_binary", "go_cross_binary", "go_library", "go_test")
 
 go_library(
     name = "git-data-service_lib",
@@ -37,4 +37,16 @@ go_cross_binary(
     platform = "@rules_go//go/toolchain:linux_amd64",
     target = ":git-data-service",
     visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "git-data-service_test",
+    srcs = ["cmd_test.go"],
+    embed = [":git-data-service_lib"],
+    deps = [
+        "//go/fsm",
+        "//go/git",
+        "//go/logger",
+        "//go/testing/assertion",
+    ],
 )
