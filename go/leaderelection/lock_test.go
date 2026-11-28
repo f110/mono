@@ -108,6 +108,35 @@ func TestObjectStorage_Lock(t *testing.T) {
 		waitFor(t, func() bool { return lockCtx.Err() != nil })
 	})
 
+	t.Run("CancelledContext", func(t *testing.T) {
+		st := newSyncStorage()
+		l, err := NewObjectStorage(st, "lock")
+		assertion.MustNoError(t, err)
+
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+		_, err = l.Lock(ctx)
+		assertion.MustError(t, err)
+	})
+
+	t.Run("RetryWhenFailedToPut", func(t *testing.T) {
+		st := &failingStorage{syncStorage: newSyncStorage()}
+		st.failPut.Store(true)
+		l, err := NewObjectStorage(st, "lock")
+		assertion.MustNoError(t, err)
+		l.retryInterval = 10 * time.Millisecond
+
+		go func() {
+			time.Sleep(50 * time.Millisecond)
+			st.failPut.Store(false)
+		}()
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_, err = l.Lock(ctx)
+		assertion.MustNoError(t, err)
+		assertion.Equal(t, readRecord(t, st.syncStorage).Id, l.id)
+	})
+
 	t.Run("ReleaseWhenDone", func(t *testing.T) {
 		st := newSyncStorage()
 		l, err := NewObjectStorage(st, "lock")
@@ -178,7 +207,8 @@ func (s *syncStorage) Delete(ctx context.Context, name string) error {
 
 type failingStorage struct {
 	*syncStorage
-	fail atomic.Bool
+	fail    atomic.Bool
+	failPut atomic.Bool
 }
 
 func (s *failingStorage) Get(ctx context.Context, name string) (*storage.Object, error) {
@@ -189,7 +219,7 @@ func (s *failingStorage) Get(ctx context.Context, name string) (*storage.Object,
 }
 
 func (s *failingStorage) Put(ctx context.Context, name string, data []byte) error {
-	if s.fail.Load() {
+	if s.fail.Load() || s.failPut.Load() {
 		return errors.New("failed")
 	}
 	return s.syncStorage.Put(ctx, name, data)

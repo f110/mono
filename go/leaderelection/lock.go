@@ -67,11 +67,13 @@ func (l *ObjectStorage) Lock(ctx context.Context) (context.Context, error) {
 	t := time.NewTicker(l.retryInterval)
 	defer t.Stop()
 	for {
+		if err := ctx.Err(); err != nil {
+			return nil, xerrors.WithStack(err)
+		}
 		expire, ok, err := l.tryLock(ctx)
 		if err != nil {
-			return nil, err
-		}
-		if ok {
+			logger.Log.Warn("Failed to acquire the lock", logger.E(err), slog.String("id", l.id))
+		} else if ok {
 			logger.Log.Info("Got lock", slog.String("id", l.id))
 			lockCtx, cancel := context.WithCancel(ctx)
 			go l.keep(ctx, cancel, expire)
