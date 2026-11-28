@@ -122,6 +122,8 @@ type Options struct {
 	GitDataServiceURL                 string
 	GitDataUpdaterURL                 string
 	CloneFromGitDataService           bool
+	GitDataDSN                        string
+	GitDataDisableObjectCache         bool
 	GitDataStorageEndpoint            string
 	GitDataStorageRegion              string
 	GitDataStorageAccessKey           string
@@ -654,6 +656,7 @@ type gitDataUpdater struct {
 	RefreshInterval time.Duration
 	RefreshTimeout  time.Duration
 	RefreshWorkers  int
+	RepackInterval  time.Duration
 }
 
 func newGitDataUpdater() *gitDataUpdater {
@@ -679,10 +682,13 @@ func (u *gitDataUpdater) Flags(fs *flag.FlagSet) {
 	u.opt.GitHubClient.Flags(fs)
 	gitDataBackendFlags(fs, &u.opt)
 	fs.String("listen", "Listen addr of the gRPC server which serves Sync").Var(&u.Listen).Default(":8057")
-	fs.String("lock-file-path", "The path of the lock file in the bucket (--git-data-bucket). If not set the value, don't get the lock").Var(&u.LockFilePath)
+	fs.String("lock-file-path", "The path of the lock file in the bucket (--git-data-bucket). If not set the value, don't get the lock. "+
+		"If --git-data-dsn is set, the named lock of the database is used instead").Var(&u.LockFilePath)
 	fs.Duration("refresh-interval", "Interval for refreshing repositories").Var(&u.RefreshInterval)
 	fs.Duration("refresh-timeout", "Timeout for refreshing a repository").Var(&u.RefreshTimeout).Default(1 * time.Minute)
 	fs.Int("refresh-workers", "Number of workers for refreshing repositories").Var(&u.RefreshWorkers).Default(1)
+	fs.Duration("repack-interval", "Interval for repacking the repositories which are stored in the database (--git-data-dsn). "+
+		"If set zero, the repack is disabled.").Var(&u.RepackInterval).Default(24 * time.Hour)
 }
 
 func (u *gitDataUpdater) init(ctx context.Context) (fsm.State, error) {
@@ -709,8 +715,15 @@ func (u *gitDataUpdater) init(ctx context.Context) (fsm.State, error) {
 	u.updater = git.NewUpdater(backend, u.opt.GitHubClient.TokenProvider, repositoryProvider, u.RefreshWorkers).
 		SetInterval(u.RefreshInterval).
 		SetTimeout(u.RefreshTimeout).
-		SetInitTimeout(u.opt.GitDataRepositoryInitTimeout)
-	if u.LockFilePath != "" {
+		SetInitTimeout(u.opt.GitDataRepositoryInitTimeout).
+		SetRepackInterval(u.RepackInterval)
+	if b, ok := backend.(*git.DatabaseBackend); ok {
+		cfg, err := mysql.ParseDSN(u.opt.GitDataDSN)
+		if err != nil {
+			return fsm.Error(xerrors.WithStack(err))
+		}
+		u.locker = leaderelection.NewMySQL(b.Conn, "git-data-updater:"+cfg.DBName)
+	} else if u.LockFilePath != "" {
 		l, err := leaderelection.NewObjectStorage(storageClient, u.LockFilePath)
 		if err != nil {
 			return fsm.Error(err)
@@ -1083,10 +1096,18 @@ func openDatabase(dsn string) (*sql.DB, error) {
 	return conn, nil
 }
 
-// newGitDataBackend creates the backend of git-data-service from the --git-data-* options. It also returns the client of the object storage.
-func newGitDataBackend(ctx context.Context, opt Options, packCache *git.PackfileCache) (*git.ObjectStorageBackend, *storage.S3, error) {
+// newGitDataBackend creates the backend of git-data-service from the --git-data-* options.
+// If --git-data-dsn is set, the backend uses the database. Otherwise, it uses the object storage and also returns the client of the object storage.
+func newGitDataBackend(ctx context.Context, opt Options, packCache *git.PackfileCache) (git.Backend, *storage.S3, error) {
+	if opt.GitDataDSN != "" {
+		conn, err := git.OpenDatabase(ctx, opt.GitDataDSN, 5*time.Minute)
+		if err != nil {
+			return nil, nil, err
+		}
+		return &git.DatabaseBackend{Conn: conn, DisableObjectCache: opt.GitDataDisableObjectCache}, nil, nil
+	}
 	if opt.GitDataStorageEndpoint == "" || opt.GitDataBucket == "" {
-		return nil, nil, xerrors.Define("--git-data-storage-endpoint and --git-data-bucket are required").WithStack()
+		return nil, nil, xerrors.Define("--git-data-dsn or both of --git-data-storage-endpoint and --git-data-bucket are required").WithStack()
 	}
 
 	secretAccessKey := opt.GitDataStorageSecretAccessKey
@@ -1126,6 +1147,9 @@ func newGitDataBackend(ctx context.Context, opt Options, packCache *git.Packfile
 }
 
 func gitDataBackendFlags(fs *flag.FlagSet, opt *Options) {
+	fs.String("git-data-dsn", "Data source name of the database which stores the repositories of git-data-service. It is not the database of build (--dsn). "+
+		"If empty, the repositories are stored in the object storage (--git-data-storage-*, --git-data-bucket).").Var(&opt.GitDataDSN)
+	fs.Bool("git-data-disable-object-cache", "Disable the in-memory cache of the objects which are read from the database (--git-data-dsn)").Var(&opt.GitDataDisableObjectCache)
 	fs.String("git-data-storage-endpoint", "The endpoint of the object storage for git-data-service").Var(&opt.GitDataStorageEndpoint)
 	fs.String("git-data-storage-region", "The region name of the object storage for git-data-service").Var(&opt.GitDataStorageRegion)
 	fs.String("git-data-storage-access-key", "The access key for the git-data-service object storage").Var(&opt.GitDataStorageAccessKey)
