@@ -130,6 +130,10 @@ message TreeEntry {
       query: "SELECT * FROM `:table_name:` WHERE `repository_id` = ? AND `tree_id` = ?"
     }
     queries: {
+      name: "ByTrees"
+      query: "SELECT * FROM `:table_name:` WHERE `repository_id` = ? AND `tree_id` IN (?)"
+    }
+    queries: {
       name: "ByRepository"
       query: "SELECT * FROM `:table_name:` WHERE `repository_id` = ?"
     }

@@ -356,19 +356,31 @@ func (g *DataService) GetTree(ctx context.Context, req *RequestGetTree) (*Respon
 		pathTree = tree
 	}
 
-	var treeEntry []*TreeEntry
-	walker := object.NewTreeWalker(pathTree, req.Recursive, nil)
-	for {
-		name, e, err := walker.Next()
-		if err == io.EOF {
-			break
-		}
+	var entries []object.TreeEntry
+	if s, ok := repo.Storer.(*DatabaseStorer); ok && req.Recursive {
+		entries, err = s.TreeEntries(ctx, pathTree.Hash)
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		walker := object.NewTreeWalker(pathTree, req.Recursive, nil)
+		for {
+			name, e, err := walker.Next()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				return nil, err
+			}
+			e.Name = name
+			entries = append(entries, e)
+		}
+	}
+	var treeEntry []*TreeEntry
+	for _, e := range entries {
 		treeEntry = append(treeEntry, &TreeEntry{
 			Sha:  e.Hash.String(),
-			Path: name,
+			Path: e.Name,
 			Mode: e.Mode.String(),
 		})
 	}

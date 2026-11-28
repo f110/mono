@@ -702,6 +702,7 @@ type TreeEntryInterface interface {
 	Tx(ctx context.Context, fn func(tx *sql.Tx) error) error
 	Select(ctx context.Context, repositoryId int32, treeId int64, position int32) (*database.TreeEntry, error)
 	ListByTree(ctx context.Context, repositoryId int32, treeId int64, opt ...ListOption) ([]*database.TreeEntry, error)
+	ListByTrees(ctx context.Context, repositoryId int32, treeId []int64, opt ...ListOption) ([]*database.TreeEntry, error)
 	ListByRepository(ctx context.Context, repositoryId int32, opt ...ListOption) ([]*database.TreeEntry, error)
 	Create(ctx context.Context, treeEntry *database.TreeEntry, opt ...ExecOption) (*database.TreeEntry, error)
 	CreateMulti(ctx context.Context, treeEntry []*database.TreeEntry, opt ...ExecOption) error
@@ -769,6 +770,41 @@ func (d *TreeEntry) ListByTree(ctx context.Context, repositoryId int32, treeId i
 		repositoryId,
 		treeId,
 	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	res := make([]*database.TreeEntry, 0)
+	for rows.Next() {
+		r := &database.TreeEntry{}
+		if err := rows.Scan(&r.RepositoryId, &r.TreeId, &r.Position, &r.Name, &r.Mode, &r.ChildId); err != nil {
+			return nil, err
+		}
+		r.ResetMark()
+		res = append(res, r)
+	}
+
+	return res, nil
+}
+
+func (d *TreeEntry) ListByTrees(ctx context.Context, repositoryId int32, treeId []int64, opt ...ListOption) ([]*database.TreeEntry, error) {
+	listOpts := newListOpt(opt...)
+	where := whereAnd(whereCond("`repository_id` = ?", repositoryId), whereIn("`tree_id`", treeId))
+	query := "SELECT `repository_id`, `tree_id`, `position`, `name`, `mode`, `child_id` FROM `tree_entry` WHERE " + where.sql
+	orderCol := "`" + listOpts.sort + "`"
+	if listOpts.sort == "" {
+		orderCol = "`repository_id`,`tree_id`,`position`"
+	}
+	orderDi := "ASC"
+	if listOpts.desc {
+		orderDi = "DESC"
+	}
+	query = query + fmt.Sprintf(" ORDER BY %s %s", orderCol, orderDi)
+	if listOpts.limit > 0 {
+		query = query + fmt.Sprintf(" LIMIT %d", listOpts.limit)
+	}
+	rows, err := d.conn.QueryContext(ctx, query, where.args...)
 	if err != nil {
 		return nil, err
 	}

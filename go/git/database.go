@@ -8,8 +8,10 @@ import (
 	"errors"
 	"io"
 	"log/slog"
+	"maps"
 	"os"
 	"path"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -46,13 +48,15 @@ const (
 	// the size of a statement which CreateMulti of DAO writes at once.
 	maxBufferedRows  = 1000
 	maxBufferedBytes = 4 * 1024 * 1024
-	// maxLookupHashes bounds the hashes of a query which looks up the IDs.
-	maxLookupHashes = 1000
+	// maxQueryValues bounds the values of IN of a query.
+	maxQueryValues = 1000
 	// maxDeltaDepth is the maximum length of the chain of the deltas. Reading the delta reads the objects of the chain
 	// one by one.
 	maxDeltaDepth = 10
 	// maxChainLength stops following the chain of the deltas if the stored chain is broken.
 	maxChainLength = 64
+	// maxTreeDepth is the maximum depth of the trees which object.TreeWalker walks.
+	maxTreeDepth = 1024
 )
 
 var (
@@ -60,6 +64,11 @@ var (
 	zstdDecoder, _ = zstd.NewReader(nil)
 	// storedEncodings is the encodings of the objects which are stored. The external object is not stored.
 	storedEncodings = []uint32{uint32(database.ObjectEncodingFull), uint32(database.ObjectEncodingDelta), uint32(database.ObjectEncodingTree)}
+	// hfsIgnoredCodepoints is the code points which HFS+ ignores in the path. It is the same as go-git.
+	hfsIgnoredCodepoints = map[rune]struct{}{
+		0x200c: {}, 0x200d: {}, 0x200e: {}, 0x200f: {}, 0x202a: {}, 0x202b: {}, 0x202c: {}, 0x202d: {}, 0x202e: {},
+		0x206a: {}, 0x206b: {}, 0x206c: {}, 0x206d: {}, 0x206e: {}, 0x206f: {}, 0xfeff: {},
+	}
 )
 
 // DatabaseStorer is the storer of go-git which stores the objects, the references and the config of one repository
@@ -543,6 +552,117 @@ func (s *DatabaseStorer) Repack(ctx context.Context) error {
 		}
 	}
 	return nil
+}
+
+// TreeEntries returns the entries of the tree h and its subtrees in the same order as object.TreeWalker. The name of
+// the entry is the path from h. The trees are read with a few queries for each depth instead of one by one.
+// Unlike object.TreeWalker, TreeEntries returns plumbing.ErrObjectNotFound if the subtree is not stored.
+func (s *DatabaseStorer) TreeEntries(ctx context.Context, h plumbing.Hash) ([]object.TreeEntry, error) {
+	trees := make(map[plumbing.Hash][]object.TreeEntry)
+	for level := []plumbing.Hash{h}; len(level) > 0; {
+		ids := make(map[int64]plumbing.Hash, len(level))
+		for chunk := range slices.Chunk(level, maxQueryValues) {
+			keys := make([][]byte, len(chunk))
+			for i := range chunk {
+				keys[i] = chunk[i][:]
+			}
+			rows, err := s.dao.Object.ListIdsByHashes(ctx, s.repositoryID, keys)
+			if err != nil {
+				return nil, xerrors.WithStack(err)
+			}
+			for _, v := range rows {
+				var t plumbing.Hash
+				copy(t[:], v.Hash)
+				switch v.Encoding {
+				case database.ObjectEncodingTree:
+					ids[v.Id] = t
+					trees[t] = nil
+				case database.ObjectEncodingFull:
+					tree, err := object.GetTree(s, t)
+					if err != nil {
+						return nil, err
+					}
+					trees[t] = tree.Entries
+				}
+			}
+		}
+		for _, t := range level {
+			if _, ok := trees[t]; !ok {
+				return nil, xerrors.WithMessagef(plumbing.ErrObjectNotFound, "git: the tree %s is not stored", t)
+			}
+		}
+
+		var entries []*database.TreeEntry
+		for chunk := range slices.Chunk(slices.Collect(maps.Keys(ids)), maxQueryValues) {
+			rows, err := s.dao.TreeEntry.ListByTrees(ctx, s.repositoryID, chunk)
+			if err != nil {
+				return nil, xerrors.WithStack(err)
+			}
+			entries = append(entries, rows...)
+		}
+		childIDs := make(map[int64]struct{}, len(entries))
+		for _, v := range entries {
+			childIDs[v.ChildId] = struct{}{}
+		}
+		hashes := make(map[int64]plumbing.Hash, len(childIDs))
+		for chunk := range slices.Chunk(slices.Collect(maps.Keys(childIDs)), maxQueryValues) {
+			rows, err := s.dao.Object.ListHashesByIds(ctx, s.repositoryID, chunk)
+			if err != nil {
+				return nil, xerrors.WithStack(err)
+			}
+			for _, v := range rows {
+				var child plumbing.Hash
+				copy(child[:], v.Hash)
+				hashes[v.Id] = child
+			}
+		}
+		// The entries are ordered by the tree and the position.
+		for _, v := range entries {
+			child, ok := hashes[v.ChildId]
+			if !ok {
+				return nil, xerrors.Definef("git: the child %d of the tree %d is not found", v.ChildId, v.TreeId).WithStack()
+			}
+			t := ids[v.TreeId]
+			trees[t] = append(trees[t], object.TreeEntry{Name: string(v.Name), Mode: filemode.FileMode(v.Mode), Hash: child})
+		}
+
+		next := make(map[plumbing.Hash]struct{})
+		for _, t := range level {
+			for _, e := range trees[t] {
+				if _, ok := trees[e.Hash]; !ok && e.Mode == filemode.Dir {
+					next[e.Hash] = struct{}{}
+				}
+			}
+		}
+		level = slices.Collect(maps.Keys(next))
+	}
+
+	var entries []object.TreeEntry
+	var walk func(h plumbing.Hash, base string, depth int) error
+	walk = func(h plumbing.Hash, base string, depth int) error {
+		if depth > maxTreeDepth {
+			return xerrors.WithStack(object.ErrMaxTreeDepth)
+		}
+		for _, e := range trees[h] {
+			if err := validTreePath(e.Name); err != nil {
+				return err
+			}
+			if base != "" {
+				e.Name = base + "/" + e.Name
+			}
+			entries = append(entries, e)
+			if e.Mode == filemode.Dir {
+				if err := walk(e.Hash, e.Name, depth+1); err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	}
+	if err := walk(h, "", 0); err != nil {
+		return nil, err
+	}
+	return entries, nil
 }
 
 func (s *DatabaseStorer) objectContent(h plumbing.Hash) ([]byte, error) {
@@ -1183,7 +1303,7 @@ func (w *objectWriter) lookup(hashes []plumbing.Hash) error {
 		}
 	}
 	for len(targets) > 0 {
-		n := min(len(targets), maxLookupHashes)
+		n := min(len(targets), maxQueryValues)
 		rows, err := w.storer.dao.Object.ListIdsByHashes(w.ctx, w.storer.repositoryID, targets[:n])
 		if err != nil {
 			return xerrors.WithStack(err)
@@ -1301,4 +1421,33 @@ func readContent(obj plumbing.EncodedObject) ([]byte, error) {
 		return nil, xerrors.WithStack(err)
 	}
 	return content, nil
+}
+
+// validTreePath is the port of ValidTreePath of the internal package pathutil of go-git, which object.TreeWalker uses
+// to validate the name of the entry. It rejects the control characters, the empty path, the volume name, "." and ".."
+// and the names which refer to ".git" on any filesystem (".git", "git~1", and their variants on HFS+ and NTFS).
+func validTreePath(p string) error {
+	for i := 0; i < len(p); i++ {
+		if p[i] < 0x20 || p[i] == 0x7f {
+			return xerrors.Definef("git: the path %q contains the control character", p).WithStack()
+		}
+	}
+	parts := strings.FieldsFunc(p, func(r rune) bool { return r == '\\' || r == '/' })
+	if len(parts) == 0 || filepath.VolumeName(p) != "" {
+		return xerrors.Definef("git: the path %q is invalid", p).WithStack()
+	}
+	for _, part := range parts {
+		hfs := strings.Map(func(r rune) rune {
+			if _, ok := hfsIgnoredCodepoints[r]; ok {
+				return -1
+			}
+			return r
+		}, part)
+		ntfs, _, _ := strings.Cut(strings.ToLower(part), ":")
+		ntfs = strings.TrimRight(ntfs, ". ")
+		if part == "." || part == ".." || strings.ToLower(hfs) == ".git" || ntfs == ".git" || ntfs == "git~1" {
+			return xerrors.Definef("git: the path %q is invalid", p).WithStack()
+		}
+	}
+	return nil
 }

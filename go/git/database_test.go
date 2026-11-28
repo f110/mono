@@ -264,6 +264,52 @@ func TestDatabaseStorerTree(t *testing.T) {
 	assertObject(t, s, padded, plumbing.TreeObject)
 }
 
+func TestDatabaseStorerTreeEntries(t *testing.T) {
+	s := newDatabaseStorer(t)
+	a := setBlob(t, s, "a")
+	b := setBlob(t, s, "b")
+	leaf := setObject(t, s, plumbing.TreeObject, treeContent("100644 a", a))
+	dir := setObject(t, s, plumbing.TreeObject, treeContent("100644 b", b, "40000 leaf", leaf))
+	padded := setObject(t, s, plumbing.TreeObject, treeContent("040000 leaf", leaf))
+	empty := setObject(t, s, plumbing.TreeObject, nil)
+	submodule := plumbing.ComputeHash(plumbing.CommitObject, []byte("submodule"))
+	root := setObject(t, s, plumbing.TreeObject, treeContent(
+		"100644 a", a, "40000 dir", dir, "40000 empty", empty, "40000 padded", padded, "160000 sub", submodule, "40000 twice", dir,
+	))
+	encoding, _, _ := storedObject(t, s, padded)
+	require.Equal(t, database.ObjectEncodingFull, encoding)
+
+	tree, err := object.GetTree(s, root)
+	require.NoError(t, err)
+	var want []object.TreeEntry
+	walker := object.NewTreeWalker(tree, true, nil)
+	for {
+		name, e, err := walker.Next()
+		if err == io.EOF {
+			break
+		}
+		require.NoError(t, err)
+		e.Name = name
+		want = append(want, e)
+	}
+	require.Len(t, want, 14)
+
+	got, err := s.TreeEntries(t.Context(), root)
+	require.NoError(t, err)
+	assert.Equal(t, want, got)
+
+	missing := plumbing.ComputeHash(plumbing.TreeObject, []byte("missing"))
+	broken := setObject(t, s, plumbing.TreeObject, treeContent("100644 a", a, "40000 missing", missing))
+	_, err = s.TreeEntries(t.Context(), broken)
+	assert.ErrorIs(t, err, plumbing.ErrObjectNotFound)
+
+	for _, name := range []string{".git", ".GIT", "git~1", ".g\u200cit", ".git.", ".git:stream", "..", "a\x01"} {
+		invalid := setObject(t, s, plumbing.TreeObject, treeContent("40000 dir", dir, "100644 "+name, a))
+		_, err = s.TreeEntries(t.Context(), invalid)
+		assert.Error(t, err, name)
+	}
+}
+
 func TestDatabaseStorerWithoutObjectCache(t *testing.T) {
 	src := memory.NewStorage()
 	var hashes []plumbing.Hash
