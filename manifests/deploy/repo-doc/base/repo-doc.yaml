@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: repo-doc
+  labels:
+    app.kubernetes.io/name: repo-doc
+    app.kubernetes.io/component: repo-doc
+spec:
+  selector:
+    app.kubernetes.io/name: repo-doc
+    app.kubernetes.io/component: repo-doc
+  ports:
+    - name: http
+      port: 8079
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: repo-doc
+  labels:
+    app.kubernetes.io/name: repo-doc
+    app.kubernetes.io/component: repo-doc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: repo-doc
+      app.kubernetes.io/component: repo-doc
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: repo-doc
+        app.kubernetes.io/component: repo-doc
+    spec:
+      containers:
+        - name: repo-doc
+          image: repo.center.x.f110.dev/repo-doc/repo-doc
+          args:
+            - --listen=:8079
+            - --title=docs
+            - --search-service=doc-search-service:8067
+            - --insecure
+          ports:
+            - name: http
+              containerPort: 8079
+          livenessProbe:
+            tcpSocket:
+              port: http

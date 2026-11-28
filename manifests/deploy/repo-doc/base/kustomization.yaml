@@ -1,0 +1,3 @@
+resources:
+  - repo-doc.yaml
+  - doc-search-service.yaml
