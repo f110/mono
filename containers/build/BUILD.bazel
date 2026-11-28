@@ -29,6 +29,13 @@ pkg_tar(
     package_dir = "/schema",
 )
 
+pkg_tar(
+    name = "git_data_schema_files",
+    srcs = ["//go/git/database:schema_txt"],
+    mode = "0644",
+    package_dir = "/schema/git-data",
+)
+
 pkg_files(
     name = "frontend_assets_files",
     srcs = ["//ts/apps/build:vite_build_prod"],
@@ -48,6 +55,7 @@ oci_image(
     tars = [
         ":build_bin",
         ":schema_files",
+        ":git_data_schema_files",
         ":frontend_assets",
     ],
 )
