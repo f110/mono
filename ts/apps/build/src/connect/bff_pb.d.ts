@@ -228,13 +228,6 @@ export declare type ServerConfig = Message<"mono.build.bff.ServerConfig"> & {
   gcEnabled: boolean;
 
   /**
-   * listen addr of the embedded git-data-service
-   *
-   * @generated from field: string git_data_service_listen = 10;
-   */
-  gitDataServiceListen: string;
-
-  /**
    * URL of an external git-data-service
    *
    * @generated from field: string git_data_service_url = 11;

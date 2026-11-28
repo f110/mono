@@ -32,7 +32,6 @@ func TestBuildServerConfig(t *testing.T) {
 		TaskCPULimit:                "1000m",
 		TaskMemoryLimit:             "4096Mi",
 		WithGC:                      true,
-		GitDataListen:               "0.0.0.0:9000",
 		GitDataServiceURL:           "git-data:9000",
 		GitDataUpdaterURL:           "git-data-updater:8057",
 		ExternalReleasePollInterval: time.Hour,
@@ -58,7 +57,6 @@ func TestBuildServerConfig(t *testing.T) {
 	assertion.Equal(t, c.GetTaskCpuLimit(), "1000m")
 	assertion.Equal(t, c.GetTaskMemoryLimit(), "4096Mi")
 	assertion.True(t, c.GetGcEnabled())
-	assertion.Equal(t, c.GetGitDataServiceListen(), "0.0.0.0:9000")
 	assertion.Equal(t, c.GetGitDataServiceUrl(), "git-data:9000")
 	assertion.Equal(t, c.GetGitDataUpdaterUrl(), "git-data-updater:8057")
 	assertion.Equal(t, c.GetExternalReleasePollInterval(), "1h0m0s")

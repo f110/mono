@@ -144,8 +144,8 @@ message ResponseGetServerInfo {
 // configuration shown on the info page. It intentionally omits secrets
 // (credentials, tokens, DSN). Durations are pre-formatted strings.
 message ServerConfig {
-  reserved 12, 13, 28;
-  reserved git_data_refresh_interval, git_data_refresh_workers, artifact_registry_host;
+  reserved 10, 12, 13, 28;
+  reserved git_data_service_listen, git_data_refresh_interval, git_data_refresh_workers, artifact_registry_host;
 
   bool dev                              = 1;  // development mode (no kube-apiserver integration)
   bool leader_election                  = 2;
@@ -156,7 +156,6 @@ message ServerConfig {
   string task_cpu_limit                 = 7;
   string task_memory_limit              = 8;
   bool   gc_enabled                     = 9;
-  string git_data_service_listen        = 10;  // listen addr of the embedded git-data-service
   string git_data_service_url           = 11;  // URL of an external git-data-service
   string git_data_updater_url           = 29;  // URL of the git-data updater which syncs the pushed repository
   string external_release_poll_interval = 14;

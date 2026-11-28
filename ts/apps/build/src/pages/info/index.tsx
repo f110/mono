@@ -58,10 +58,6 @@ function configItems(c: ServerConfig): { label: string; value: string }[] {
     },
     { label: 'Log GC', value: c.gcEnabled ? 'Enabled' : 'Disabled' },
     {
-      label: 'Embedded git-data-service',
-      value: c.gitDataServiceListen || 'Disabled',
-    },
-    {
       label: 'Repository data source',
       value: c.gitDataServiceUrl ? `git-data-service (${c.gitDataServiceUrl})` : 'GitHub (direct)',
     },

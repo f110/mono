@@ -1723,7 +1723,6 @@ type ServerConfig struct {
 	xxx_hidden_TaskCpuLimit                *string                `protobuf:"bytes,7,opt,name=task_cpu_limit,json=taskCpuLimit"`
 	xxx_hidden_TaskMemoryLimit             *string                `protobuf:"bytes,8,opt,name=task_memory_limit,json=taskMemoryLimit"`
 	xxx_hidden_GcEnabled                   bool                   `protobuf:"varint,9,opt,name=gc_enabled,json=gcEnabled"`
-	xxx_hidden_GitDataServiceListen        *string                `protobuf:"bytes,10,opt,name=git_data_service_listen,json=gitDataServiceListen"`
 	xxx_hidden_GitDataServiceUrl           *string                `protobuf:"bytes,11,opt,name=git_data_service_url,json=gitDataServiceUrl"`
 	xxx_hidden_GitDataUpdaterUrl           *string                `protobuf:"bytes,29,opt,name=git_data_updater_url,json=gitDataUpdaterUrl"`
 	xxx_hidden_ExternalReleasePollInterval *string                `protobuf:"bytes,14,opt,name=external_release_poll_interval,json=externalReleasePollInterval"`
@@ -1847,16 +1846,6 @@ func (x *ServerConfig) GetGcEnabled() bool {
 		return x.xxx_hidden_GcEnabled
 	}
 	return false
-}
-
-func (x *ServerConfig) GetGitDataServiceListen() string {
-	if x != nil {
-		if x.xxx_hidden_GitDataServiceListen != nil {
-			return *x.xxx_hidden_GitDataServiceListen
-		}
-		return ""
-	}
-	return ""
 }
 
 func (x *ServerConfig) GetGitDataServiceUrl() string {
@@ -2006,132 +1995,127 @@ func (x *ServerConfig) GetEmulateJobControl() bool {
 
 func (x *ServerConfig) SetDev(v bool) {
 	x.xxx_hidden_Dev = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 25)
 }
 
 func (x *ServerConfig) SetLeaderElection(v bool) {
 	x.xxx_hidden_LeaderElection = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 25)
 }
 
 func (x *ServerConfig) SetNamespace(v string) {
 	x.xxx_hidden_Namespace = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 25)
 }
 
 func (x *ServerConfig) SetUseBazelisk(v bool) {
 	x.xxx_hidden_UseBazelisk = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 25)
 }
 
 func (x *ServerConfig) SetDefaultBazelVersion(v string) {
 	x.xxx_hidden_DefaultBazelVersion = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 25)
 }
 
 func (x *ServerConfig) SetRemoteCache(v string) {
 	x.xxx_hidden_RemoteCache = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 25)
 }
 
 func (x *ServerConfig) SetTaskCpuLimit(v string) {
 	x.xxx_hidden_TaskCpuLimit = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 25)
 }
 
 func (x *ServerConfig) SetTaskMemoryLimit(v string) {
 	x.xxx_hidden_TaskMemoryLimit = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 25)
 }
 
 func (x *ServerConfig) SetGcEnabled(v bool) {
 	x.xxx_hidden_GcEnabled = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 26)
-}
-
-func (x *ServerConfig) SetGitDataServiceListen(v string) {
-	x.xxx_hidden_GitDataServiceListen = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 25)
 }
 
 func (x *ServerConfig) SetGitDataServiceUrl(v string) {
 	x.xxx_hidden_GitDataServiceUrl = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 25)
 }
 
 func (x *ServerConfig) SetGitDataUpdaterUrl(v string) {
 	x.xxx_hidden_GitDataUpdaterUrl = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 25)
 }
 
 func (x *ServerConfig) SetExternalReleasePollInterval(v string) {
 	x.xxx_hidden_ExternalReleasePollInterval = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 12, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 25)
 }
 
 func (x *ServerConfig) SetEventReconcileInterval(v string) {
 	x.xxx_hidden_EventReconcileInterval = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 13, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 12, 25)
 }
 
 func (x *ServerConfig) SetGithubAppId(v int64) {
 	x.xxx_hidden_GithubAppId = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 14, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 13, 25)
 }
 
 func (x *ServerConfig) SetVaultAddr(v string) {
 	x.xxx_hidden_VaultAddr = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 15, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 14, 25)
 }
 
 func (x *ServerConfig) SetDashboardUrl(v string) {
 	x.xxx_hidden_DashboardUrl = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 16, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 15, 25)
 }
 
 func (x *ServerConfig) SetBazelImage(v string) {
 	x.xxx_hidden_BazelImage = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 17, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 16, 25)
 }
 
 func (x *ServerConfig) SetSidecarImage(v string) {
 	x.xxx_hidden_SidecarImage = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 18, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 17, 25)
 }
 
 func (x *ServerConfig) SetBazelMirrorUrl(v string) {
 	x.xxx_hidden_BazelMirrorUrl = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 19, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 18, 25)
 }
 
 func (x *ServerConfig) SetCentralRegistryMirrorUrl(v string) {
 	x.xxx_hidden_CentralRegistryMirrorUrl = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 20, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 19, 25)
 }
 
 func (x *ServerConfig) SetRemoteAssetApi(v bool) {
 	x.xxx_hidden_RemoteAssetApi = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 21, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 20, 25)
 }
 
 func (x *ServerConfig) SetPullAlways(v bool) {
 	x.xxx_hidden_PullAlways = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 22, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 21, 25)
 }
 
 func (x *ServerConfig) SetGithubInstallationId(v int64) {
 	x.xxx_hidden_GithubInstallationId = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 23, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 22, 25)
 }
 
 func (x *ServerConfig) SetGithubAppSecretName(v string) {
 	x.xxx_hidden_GithubAppSecretName = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 24, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 23, 25)
 }
 
 func (x *ServerConfig) SetEmulateJobControl(v bool) {
 	x.xxx_hidden_EmulateJobControl = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 25, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 24, 25)
 }
 
 func (x *ServerConfig) HasDev() bool {
@@ -2197,123 +2181,116 @@ func (x *ServerConfig) HasGcEnabled() bool {
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 8)
 }
 
-func (x *ServerConfig) HasGitDataServiceListen() bool {
+func (x *ServerConfig) HasGitDataServiceUrl() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 9)
 }
 
-func (x *ServerConfig) HasGitDataServiceUrl() bool {
+func (x *ServerConfig) HasGitDataUpdaterUrl() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 10)
 }
 
-func (x *ServerConfig) HasGitDataUpdaterUrl() bool {
+func (x *ServerConfig) HasExternalReleasePollInterval() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 11)
 }
 
-func (x *ServerConfig) HasExternalReleasePollInterval() bool {
+func (x *ServerConfig) HasEventReconcileInterval() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 12)
 }
 
-func (x *ServerConfig) HasEventReconcileInterval() bool {
+func (x *ServerConfig) HasGithubAppId() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 13)
 }
 
-func (x *ServerConfig) HasGithubAppId() bool {
+func (x *ServerConfig) HasVaultAddr() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 14)
 }
 
-func (x *ServerConfig) HasVaultAddr() bool {
+func (x *ServerConfig) HasDashboardUrl() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 15)
 }
 
-func (x *ServerConfig) HasDashboardUrl() bool {
+func (x *ServerConfig) HasBazelImage() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 16)
 }
 
-func (x *ServerConfig) HasBazelImage() bool {
+func (x *ServerConfig) HasSidecarImage() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 17)
 }
 
-func (x *ServerConfig) HasSidecarImage() bool {
+func (x *ServerConfig) HasBazelMirrorUrl() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 18)
 }
 
-func (x *ServerConfig) HasBazelMirrorUrl() bool {
+func (x *ServerConfig) HasCentralRegistryMirrorUrl() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 19)
 }
 
-func (x *ServerConfig) HasCentralRegistryMirrorUrl() bool {
+func (x *ServerConfig) HasRemoteAssetApi() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 20)
 }
 
-func (x *ServerConfig) HasRemoteAssetApi() bool {
+func (x *ServerConfig) HasPullAlways() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 21)
 }
 
-func (x *ServerConfig) HasPullAlways() bool {
+func (x *ServerConfig) HasGithubInstallationId() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 22)
 }
 
-func (x *ServerConfig) HasGithubInstallationId() bool {
+func (x *ServerConfig) HasGithubAppSecretName() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 23)
 }
 
-func (x *ServerConfig) HasGithubAppSecretName() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 24)
-}
-
 func (x *ServerConfig) HasEmulateJobControl() bool {
 	if x == nil {
 		return false
 	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 25)
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 24)
 }
 
 func (x *ServerConfig) ClearDev() {
@@ -2361,88 +2338,83 @@ func (x *ServerConfig) ClearGcEnabled() {
 	x.xxx_hidden_GcEnabled = false
 }
 
-func (x *ServerConfig) ClearGitDataServiceListen() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 9)
-	x.xxx_hidden_GitDataServiceListen = nil
-}
-
 func (x *ServerConfig) ClearGitDataServiceUrl() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 10)
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 9)
 	x.xxx_hidden_GitDataServiceUrl = nil
 }
 
 func (x *ServerConfig) ClearGitDataUpdaterUrl() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 11)
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 10)
 	x.xxx_hidden_GitDataUpdaterUrl = nil
 }
 
 func (x *ServerConfig) ClearExternalReleasePollInterval() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 12)
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 11)
 	x.xxx_hidden_ExternalReleasePollInterval = nil
 }
 
 func (x *ServerConfig) ClearEventReconcileInterval() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 13)
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 12)
 	x.xxx_hidden_EventReconcileInterval = nil
 }
 
 func (x *ServerConfig) ClearGithubAppId() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 14)
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 13)
 	x.xxx_hidden_GithubAppId = 0
 }
 
 func (x *ServerConfig) ClearVaultAddr() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 15)
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 14)
 	x.xxx_hidden_VaultAddr = nil
 }
 
 func (x *ServerConfig) ClearDashboardUrl() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 16)
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 15)
 	x.xxx_hidden_DashboardUrl = nil
 }
 
 func (x *ServerConfig) ClearBazelImage() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 17)
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 16)
 	x.xxx_hidden_BazelImage = nil
 }
 
 func (x *ServerConfig) ClearSidecarImage() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 18)
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 17)
 	x.xxx_hidden_SidecarImage = nil
 }
 
 func (x *ServerConfig) ClearBazelMirrorUrl() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 19)
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 18)
 	x.xxx_hidden_BazelMirrorUrl = nil
 }
 
 func (x *ServerConfig) ClearCentralRegistryMirrorUrl() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 20)
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 19)
 	x.xxx_hidden_CentralRegistryMirrorUrl = nil
 }
 
 func (x *ServerConfig) ClearRemoteAssetApi() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 21)
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 20)
 	x.xxx_hidden_RemoteAssetApi = false
 }
 
 func (x *ServerConfig) ClearPullAlways() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 22)
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 21)
 	x.xxx_hidden_PullAlways = false
 }
 
 func (x *ServerConfig) ClearGithubInstallationId() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 23)
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 22)
 	x.xxx_hidden_GithubInstallationId = 0
 }
 
 func (x *ServerConfig) ClearGithubAppSecretName() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 24)
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 23)
 	x.xxx_hidden_GithubAppSecretName = nil
 }
 
 func (x *ServerConfig) ClearEmulateJobControl() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 25)
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 24)
 	x.xxx_hidden_EmulateJobControl = false
 }
 
@@ -2458,7 +2430,6 @@ type ServerConfig_builder struct {
 	TaskCpuLimit                *string
 	TaskMemoryLimit             *string
 	GcEnabled                   *bool
-	GitDataServiceListen        *string
 	GitDataServiceUrl           *string
 	GitDataUpdaterUrl           *string
 	ExternalReleasePollInterval *string
@@ -2482,107 +2453,103 @@ func (b0 ServerConfig_builder) Build() *ServerConfig {
 	b, x := &b0, m0
 	_, _ = b, x
 	if b.Dev != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 25)
 		x.xxx_hidden_Dev = *b.Dev
 	}
 	if b.LeaderElection != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 25)
 		x.xxx_hidden_LeaderElection = *b.LeaderElection
 	}
 	if b.Namespace != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 25)
 		x.xxx_hidden_Namespace = b.Namespace
 	}
 	if b.UseBazelisk != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 25)
 		x.xxx_hidden_UseBazelisk = *b.UseBazelisk
 	}
 	if b.DefaultBazelVersion != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 25)
 		x.xxx_hidden_DefaultBazelVersion = b.DefaultBazelVersion
 	}
 	if b.RemoteCache != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 25)
 		x.xxx_hidden_RemoteCache = b.RemoteCache
 	}
 	if b.TaskCpuLimit != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 25)
 		x.xxx_hidden_TaskCpuLimit = b.TaskCpuLimit
 	}
 	if b.TaskMemoryLimit != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 25)
 		x.xxx_hidden_TaskMemoryLimit = b.TaskMemoryLimit
 	}
 	if b.GcEnabled != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 25)
 		x.xxx_hidden_GcEnabled = *b.GcEnabled
 	}
-	if b.GitDataServiceListen != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 26)
-		x.xxx_hidden_GitDataServiceListen = b.GitDataServiceListen
-	}
 	if b.GitDataServiceUrl != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 25)
 		x.xxx_hidden_GitDataServiceUrl = b.GitDataServiceUrl
 	}
 	if b.GitDataUpdaterUrl != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 25)
 		x.xxx_hidden_GitDataUpdaterUrl = b.GitDataUpdaterUrl
 	}
 	if b.ExternalReleasePollInterval != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 12, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 25)
 		x.xxx_hidden_ExternalReleasePollInterval = b.ExternalReleasePollInterval
 	}
 	if b.EventReconcileInterval != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 13, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 12, 25)
 		x.xxx_hidden_EventReconcileInterval = b.EventReconcileInterval
 	}
 	if b.GithubAppId != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 14, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 13, 25)
 		x.xxx_hidden_GithubAppId = *b.GithubAppId
 	}
 	if b.VaultAddr != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 15, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 14, 25)
 		x.xxx_hidden_VaultAddr = b.VaultAddr
 	}
 	if b.DashboardUrl != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 16, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 15, 25)
 		x.xxx_hidden_DashboardUrl = b.DashboardUrl
 	}
 	if b.BazelImage != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 17, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 16, 25)
 		x.xxx_hidden_BazelImage = b.BazelImage
 	}
 	if b.SidecarImage != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 18, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 17, 25)
 		x.xxx_hidden_SidecarImage = b.SidecarImage
 	}
 	if b.BazelMirrorUrl != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 19, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 18, 25)
 		x.xxx_hidden_BazelMirrorUrl = b.BazelMirrorUrl
 	}
 	if b.CentralRegistryMirrorUrl != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 20, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 19, 25)
 		x.xxx_hidden_CentralRegistryMirrorUrl = b.CentralRegistryMirrorUrl
 	}
 	if b.RemoteAssetApi != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 21, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 20, 25)
 		x.xxx_hidden_RemoteAssetApi = *b.RemoteAssetApi
 	}
 	if b.PullAlways != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 22, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 21, 25)
 		x.xxx_hidden_PullAlways = *b.PullAlways
 	}
 	if b.GithubInstallationId != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 23, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 22, 25)
 		x.xxx_hidden_GithubInstallationId = *b.GithubInstallationId
 	}
 	if b.GithubAppSecretName != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 24, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 23, 25)
 		x.xxx_hidden_GithubAppSecretName = b.GithubAppSecretName
 	}
 	if b.EmulateJobControl != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 25, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 24, 25)
 		x.xxx_hidden_EmulateJobControl = *b.EmulateJobControl
 	}
 	return m0
@@ -4089,7 +4056,7 @@ const file_proto_build_api_api_proto_rawDesc = "" +
 	"\n" +
 	"commit_sha\x18\x04 \x01(\tR\tcommitSha\x12;\n" +
 	"\vcommit_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"commitTime\"\xc6\t\n" +
+	"commitTime\"\xae\t\n" +
 	"\fServerConfig\x12\x10\n" +
 	"\x03dev\x18\x01 \x01(\bR\x03dev\x12'\n" +
 	"\x0fleader_election\x18\x02 \x01(\bR\x0eleaderElection\x12\x1c\n" +
@@ -4100,9 +4067,7 @@ const file_proto_build_api_api_proto_rawDesc = "" +
 	"\x0etask_cpu_limit\x18\a \x01(\tR\ftaskCpuLimit\x12*\n" +
 	"\x11task_memory_limit\x18\b \x01(\tR\x0ftaskMemoryLimit\x12\x1d\n" +
 	"\n" +
-	"gc_enabled\x18\t \x01(\bR\tgcEnabled\x125\n" +
-	"\x17git_data_service_listen\x18\n" +
-	" \x01(\tR\x14gitDataServiceListen\x12/\n" +
+	"gc_enabled\x18\t \x01(\bR\tgcEnabled\x12/\n" +
 	"\x14git_data_service_url\x18\v \x01(\tR\x11gitDataServiceUrl\x12/\n" +
 	"\x14git_data_updater_url\x18\x1d \x01(\tR\x11gitDataUpdaterUrl\x12C\n" +
 	"\x1eexternal_release_poll_interval\x18\x0e \x01(\tR\x1bexternalReleasePollInterval\x128\n" +
@@ -4121,7 +4086,8 @@ const file_proto_build_api_api_proto_rawDesc = "" +
 	"pullAlways\x124\n" +
 	"\x16github_installation_id\x18\x19 \x01(\x03R\x14githubInstallationId\x123\n" +
 	"\x16github_app_secret_name\x18\x1a \x01(\tR\x13githubAppSecretName\x12.\n" +
-	"\x13emulate_job_control\x18\x1b \x01(\bR\x11emulateJobControlJ\x04\b\f\x10\rJ\x04\b\r\x10\x0eJ\x04\b\x1c\x10\x1dR\x19git_data_refresh_intervalR\x18git_data_refresh_workersR\x16artifact_registry_host\"I\n" +
+	"\x13emulate_job_control\x18\x1b \x01(\bR\x11emulateJobControlJ\x04\b\n" +
+	"\x10\vJ\x04\b\f\x10\rJ\x04\b\r\x10\x0eJ\x04\b\x1c\x10\x1dR\x17git_data_service_listenR\x19git_data_refresh_intervalR\x18git_data_refresh_workersR\x16artifact_registry_host\"I\n" +
 	"\"RequestListExternalReleaseTriggers\x12#\n" +
 	"\rrepository_id\x18\x01 \x01(\x05R\frepositoryId\"k\n" +
 	"#ResponseListExternalReleaseTriggers\x12D\n" +

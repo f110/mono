@@ -15,6 +15,7 @@ func main() {
 	}
 	builder.AddCommand(rootCmd)
 	builder.AddGitDataUpdaterCommand(rootCmd)
+	builder.AddGitDataServiceCommand(rootCmd)
 	bff.AddCommand(rootCmd)
 
 	if err := rootCmd.Execute(os.Args); err != nil {

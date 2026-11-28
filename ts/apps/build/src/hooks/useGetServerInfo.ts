@@ -13,7 +13,6 @@ export interface ServerConfig {
   taskCpuLimit: string
   taskMemoryLimit: string
   gcEnabled: boolean
-  gitDataServiceListen: string
   gitDataServiceUrl: string
   gitDataUpdaterUrl: string
   externalReleasePollInterval: string
@@ -54,7 +53,6 @@ export function useGetServerInfo(): ServerInfo {
           taskCpuLimit: c.taskCpuLimit,
           taskMemoryLimit: c.taskMemoryLimit,
           gcEnabled: c.gcEnabled,
-          gitDataServiceListen: c.gitDataServiceListen,
           gitDataServiceUrl: c.gitDataServiceUrl,
           gitDataUpdaterUrl: c.gitDataUpdaterUrl,
           externalReleasePollInterval: c.externalReleasePollInterval,

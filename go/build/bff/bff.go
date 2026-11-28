@@ -245,7 +245,6 @@ func convertServerConfig(c *api.ServerConfig) *ServerConfig {
 		TaskCpuLimit:                new(c.GetTaskCpuLimit()),
 		TaskMemoryLimit:             new(c.GetTaskMemoryLimit()),
 		GcEnabled:                   new(c.GetGcEnabled()),
-		GitDataServiceListen:        new(c.GetGitDataServiceListen()),
 		GitDataServiceUrl:           new(c.GetGitDataServiceUrl()),
 		GitDataUpdaterUrl:           new(c.GetGitDataUpdaterUrl()),
 		ExternalReleasePollInterval: new(c.GetExternalReleasePollInterval()),

@@ -13,12 +13,13 @@
 主要なバイナリは 2 つ。
 
 - **builder** (`go/build/cmd/builder`): 中核プロセス。API サーバー、Webhook 受信、ビルドのコーディネート、
-  各種ワーカー、（任意で）git-data-service を 1 プロセス内で起動する。複数レプリカで動かし、
+  各種ワーカーを 1 プロセス内で起動する。複数レプリカで動かし、
   リーダー選出で実際にビルドを駆動するワーカーを 1 つに絞る。
 - **bff** (`go/build/cmd/bff`): ブラウザ向けの Backend For Frontend。Connect プロトコルを話し、内部では
   builder の gRPC API と git-data-service を呼び出す。
 
 補助バイナリとして **buildctl**（CLI クライアント）、**sidecar**（Job 内で clone / 認証 / レポート生成を行う）、
+**git-data-service**（`build` のサブコマンド。builder に登録されたリポジトリを gRPC で提供する）、
 **git-data-updater**（`build` のサブコマンド。git-data-service のリポジトリを定期 fetch する）がある。
 
 ## バックエンド (`go/build`)
@@ -55,12 +56,11 @@
    マイグレーション自体は builder ではなく、別途実行される `migrate` Job（`build` イメージの `migrate`
    サブコマンド、`--schema=/schema/schema.sql --driver=mysql --execute`）が行う。builder はそれの完了を待つだけ。
 3. `setup`: MinIO（ログ用 / Bazel ミラー用）と Kubernetes のオプションを構築し、`coordinator.BazelBuilder` を生成。
-4. `startGitDataService`: `--git-data-listen` 指定時のみ。埋め込みの git-data-service (gRPC) を起動する。
-5. `startApiServer`: `Notifier`・`Reconcilers` を組み立て、`api.NewApi` で HTTP/gRPC サーバーを起動。
-6. `leaderElection`: `--enable-leader-election` 時に Lease ロックを取得。リーダーになるまでブロックする。
-7. `startWorker`: リーダーのみ：JobWatcher、（任意で）GC、releasewatcher の Manager、Task を起動する
+4. `startApiServer`: `Notifier`・`Reconcilers` を組み立て、`api.NewApi` で HTTP/gRPC サーバーを起動。
+5. `leaderElection`: `--enable-leader-election` 時に Lease ロックを取得。リーダーになるまでブロックする。
+6. `startWorker`: リーダーのみ：JobWatcher、（任意で）GC、releasewatcher の Manager、Task を起動する
    `BazelBuilder.Run`、webhook Scheduler を goroutine で起動。
-8. `shutdown`: API サーバー / git-data gRPC サーバーを graceful stop。
+7. `shutdown`: API サーバーを graceful stop。
 
 ポイントは **API サーバーと Webhook 受信は全レプリカで動く**が、**実際にビルドを駆動するワーカー
 （Scheduler / JobWatcher など）はリーダーのみ**で動くこと。非リーダーの Webhook Handler は行を INSERT して
@@ -145,8 +145,8 @@ Task には設定が JSON シリアライズされて保存され、再ビルド
 `go/git` の git-data-service は、リポジトリのオブジェクト（参照・コミット・統計）を gRPC で提供する。
 build システムでは 3 通りの使われ方をする。
 
-- **埋め込み**: builder が `--git-data-listen` 指定時に同一プロセス内でサーバーを起動する。
-  対象リポジトリは DB の `source_repository`（Ready のもの）から集める。
+- **サーバー**: `build git-data-service` が builder とは別プロセスでサーバーを起動する。
+  対象リポジトリは呼び出しのたびに DB の `source_repository`（Ready のもの）から集めるので、追加したリポジトリも再起動せずに提供する。
 - **Updater**: `build git-data-updater` が別プロセスで同じリポジトリを定期 fetch する。push の webhook では
   `push` reconciler が `--git-data-updater-url` の `GitDataUpdater.Sync` を呼び、fetch が終わってからビルドする。
   `--lock-file-path` を指定すると、オブジェクトストレージのロックを持つプロセスだけが定期 fetch する。

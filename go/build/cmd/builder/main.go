@@ -122,7 +122,6 @@ type Options struct {
 	GitDataServiceURL                 string
 	GitDataUpdaterURL                 string
 	CloneFromGitDataService           bool
-	GitDataListen                     string
 	GitDataStorageEndpoint            string
 	GitDataStorageRegion              string
 	GitDataStorageAccessKey           string
@@ -133,9 +132,6 @@ type Options struct {
 	GitDataMemcachedEndpoint          string
 	GitDataDisableInflatePackFile     bool
 	GitDataRepositoryInitTimeout      time.Duration
-	GitDataPackfileCacheSize          int64
-	GitDataPackfileCacheTTL           time.Duration
-	GitDataPackfileCacheSweepInterval time.Duration
 
 	Dev   bool
 	Debug bool
@@ -154,7 +150,6 @@ const (
 	stateInit fsm.State = iota
 	stateCheckMigrate
 	stateSetup
-	stateStartGitDataService
 	stateStartApiServer
 	stateLeaderElection
 	stateStartWorker
@@ -165,6 +160,11 @@ const (
 	stateGitDataUpdaterInit fsm.State = iota
 	stateGitDataUpdaterRun
 	stateGitDataUpdaterShutdown
+)
+
+const (
+	stateGitDataServiceInit fsm.State = iota
+	stateGitDataServiceShutdown
 )
 
 type process struct {
@@ -187,8 +187,6 @@ type process struct {
 	bazelBuilder       *coordinator.BazelBuilder
 	apiServer          *api.Api
 	eventProcessor     *ghwebhook.EventProcessor
-	gitDataGRPCServer  *grpc.Server
-	gitDataPackCache   *git.PackfileCache
 	gitDataConn        *grpc.ClientConn
 	gitDataClient      git.GitDataClient
 	gitDataUpdaterConn *grpc.ClientConn
@@ -199,14 +197,13 @@ func newProcess(opt Options) *process {
 	p := &process{ctx: ctx, cancel: cancel, opt: opt}
 	p.FSM = fsm.NewFSM(
 		map[fsm.State]fsm.StateFunc{
-			stateInit:                p.init,
-			stateCheckMigrate:        p.checkMigrate,
-			stateSetup:               p.setup,
-			stateStartGitDataService: p.startGitDataService,
-			stateStartApiServer:      p.startApiServer,
-			stateLeaderElection:      p.leaderElection,
-			stateStartWorker:         p.startWorker,
-			stateShutdown:            p.shutdown,
+			stateInit:           p.init,
+			stateCheckMigrate:   p.checkMigrate,
+			stateSetup:          p.setup,
+			stateStartApiServer: p.startApiServer,
+			stateLeaderElection: p.leaderElection,
+			stateStartWorker:    p.startWorker,
+			stateShutdown:       p.shutdown,
 		},
 		stateInit,
 		stateShutdown,
@@ -409,49 +406,6 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 	}
 	p.bazelBuilder = c
 
-	if p.opt.GitDataListen == "" {
-		return fsm.Next(stateStartApiServer)
-	}
-	return fsm.Next(stateStartGitDataService)
-}
-
-func (p *process) startGitDataService(ctx context.Context) (fsm.State, error) {
-	// A zero cache size disables the in-memory packfile cache.
-	if p.opt.GitDataPackfileCacheSize > 0 {
-		p.gitDataPackCache = git.NewPackfileCache(p.opt.GitDataPackfileCacheTTL, p.opt.GitDataPackfileCacheSweepInterval, p.opt.GitDataPackfileCacheSize)
-	}
-	backend, _, err := newGitDataBackend(ctx, p.opt, p.gitDataPackCache)
-	if err != nil {
-		return fsm.Error(err)
-	}
-
-	repositoryProvider := newGitDataRepositories(func(ctx context.Context) ([]*database.SourceRepository, error) {
-		rows, err := p.dao.Repository.ListAll(ctx)
-		return rows, xerrors.WithStack(err)
-	})
-	service, err := git.NewDataService(backend, p.opt.GitHubClient.TokenProvider, repositoryProvider)
-	if err != nil {
-		return fsm.Error(err)
-	}
-	service.SetInitTimeout(p.opt.GitDataRepositoryInitTimeout)
-	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(grpcutil.WithServerLogging()))
-	git.RegisterGitDataServer(grpcServer, service)
-	healthSvc := health.NewServer()
-	healthSvc.SetServingStatus("git-data", healthpb.HealthCheckResponse_SERVING)
-	healthpb.RegisterHealthServer(grpcServer, healthSvc)
-	p.gitDataGRPCServer = grpcServer
-
-	lis, err := net.Listen("tcp", p.opt.GitDataListen)
-	if err != nil {
-		return fsm.Error(xerrors.WithStack(err))
-	}
-	logger.Log.Info("Start git-data-service", slog.String("addr", p.opt.GitDataListen))
-	go func() {
-		if err := grpcServer.Serve(lis); err != nil {
-			logger.Log.Error("git-data-service returns error", logger.E(err))
-		}
-	}()
-
 	return fsm.Next(stateStartApiServer)
 }
 
@@ -631,18 +585,11 @@ func (p *process) shutdown(ctx context.Context) (fsm.State, error) {
 		p.apiServer.Shutdown(ctx)
 		logger.Log.Info("Shutdown API Server")
 	}
-	if p.gitDataGRPCServer != nil {
-		p.gitDataGRPCServer.GracefulStop()
-		logger.Log.Info("Shutdown Git Data GRPC Server")
-	}
 	if p.gitDataConn != nil {
 		p.gitDataConn.Close()
 	}
 	if p.gitDataUpdaterConn != nil {
 		p.gitDataUpdaterConn.Close()
-	}
-	if p.gitDataPackCache != nil {
-		p.gitDataPackCache.Close()
 	}
 
 	return fsm.Finish()
@@ -819,6 +766,107 @@ func (u *gitDataUpdater) shutdown(_ context.Context) (fsm.State, error) {
 	return fsm.Finish()
 }
 
+// gitDataService serves git-data-service for the repositories which are registered to the database.
+// The repositories are listed from the database on every call so that the added repository is served without restarting.
+type gitDataService struct {
+	FSM *fsm.FSM
+	opt Options
+
+	grpcServer *grpc.Server
+	packCache  *git.PackfileCache
+
+	Listen                     string
+	PackfileCacheSize          int64
+	PackfileCacheTTL           time.Duration
+	PackfileCacheSweepInterval time.Duration
+}
+
+func newGitDataService() *gitDataService {
+	s := &gitDataService{opt: Options{GitHubClient: githubutil.NewGitHubClientFactory("", true)}}
+	s.FSM = fsm.NewFSM(
+		map[fsm.State]fsm.StateFunc{
+			stateGitDataServiceInit:     s.init,
+			stateGitDataServiceShutdown: s.shutdown,
+		},
+		stateGitDataServiceInit,
+		stateGitDataServiceShutdown,
+	)
+	s.FSM.CloseContext = func() (context.Context, context.CancelFunc) {
+		return ctxutil.WithTimeout(context.Background(), 10*time.Second)
+	}
+
+	return s
+}
+
+func (s *gitDataService) Flags(fs *flag.FlagSet) {
+	fs.String("dsn", "Data source name").Var(&s.opt.DSN)
+	s.opt.GitHubClient.Flags(fs)
+	gitDataBackendFlags(fs, &s.opt)
+	fs.String("listen", "Listen addr of the gRPC server of git-data-service").Var(&s.Listen).Default(":8056")
+	fs.Int64("packfile-cache-size", "Maximum total bytes of packfiles cached in memory. If set zero, the in-memory packfile cache is disabled.").
+		Var(&s.PackfileCacheSize).Default(256 * 1024 * 1024)
+	fs.Duration("packfile-cache-ttl", "Lifetime of an in-memory cached packfile").Var(&s.PackfileCacheTTL).Default(1 * time.Hour)
+	fs.Duration("packfile-cache-sweep-interval", "Interval for reclaiming expired in-memory packfiles").Var(&s.PackfileCacheSweepInterval).Default(6 * time.Hour)
+}
+
+func (s *gitDataService) init(ctx context.Context) (fsm.State, error) {
+	if err := s.opt.GitHubClient.Init(); err != nil {
+		return fsm.Error(err)
+	}
+	conn, err := openDatabase(s.opt.DSN)
+	if err != nil {
+		return fsm.Error(err)
+	}
+	d := dao.NewOptions(conn)
+	if s.PackfileCacheSize > 0 {
+		s.packCache = git.NewPackfileCache(s.PackfileCacheTTL, s.PackfileCacheSweepInterval, s.PackfileCacheSize)
+	}
+	backend, _, err := newGitDataBackend(ctx, s.opt, s.packCache)
+	if err != nil {
+		return fsm.Error(err)
+	}
+
+	repositoryProvider := newGitDataRepositories(func(ctx context.Context) ([]*database.SourceRepository, error) {
+		rows, err := d.Repository.ListAll(ctx)
+		return rows, xerrors.WithStack(err)
+	})
+	service, err := git.NewDataService(backend, s.opt.GitHubClient.TokenProvider, repositoryProvider)
+	if err != nil {
+		return fsm.Error(err)
+	}
+	service.SetInitTimeout(s.opt.GitDataRepositoryInitTimeout)
+	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(grpcutil.WithServerLogging()))
+	git.RegisterGitDataServer(grpcServer, service)
+	healthSvc := health.NewServer()
+	healthSvc.SetServingStatus("git-data", healthpb.HealthCheckResponse_SERVING)
+	healthpb.RegisterHealthServer(grpcServer, healthSvc)
+	s.grpcServer = grpcServer
+
+	lis, err := net.Listen("tcp", s.Listen)
+	if err != nil {
+		return fsm.Error(xerrors.WithStack(err))
+	}
+	logger.Log.Info("Start git-data-service", slog.String("addr", s.Listen))
+	go func() {
+		if err := grpcServer.Serve(lis); err != nil {
+			logger.Log.Error("git-data-service returns error", logger.E(err))
+		}
+	}()
+
+	return fsm.Wait()
+}
+
+func (s *gitDataService) shutdown(_ context.Context) (fsm.State, error) {
+	if s.grpcServer != nil {
+		s.grpcServer.GracefulStop()
+		logger.Log.Info("Shutdown git-data-service")
+	}
+	if s.packCache != nil {
+		s.packCache.Close()
+	}
+	return fsm.Finish()
+}
+
 // buildServerConfig converts the runtime Options into a curated, human-meaningful
 // view shown on the info page. Secrets (credentials, tokens, DSN) are intentionally
 // excluded. Durations are formatted to strings; a zero duration becomes an empty
@@ -833,7 +881,6 @@ func buildServerConfig(opt Options) *api.ServerConfig {
 	taskCPULimit := opt.TaskCPULimit
 	taskMemoryLimit := opt.TaskMemoryLimit
 	gcEnabled := opt.WithGC
-	gitDataServiceListen := opt.GitDataListen
 	gitDataServiceURL := opt.GitDataServiceURL
 	gitDataUpdaterURL := opt.GitDataUpdaterURL
 	externalReleasePollInterval := formatConfigDuration(opt.ExternalReleasePollInterval)
@@ -861,7 +908,6 @@ func buildServerConfig(opt Options) *api.ServerConfig {
 		TaskCpuLimit:                &taskCPULimit,
 		TaskMemoryLimit:             &taskMemoryLimit,
 		GcEnabled:                   &gcEnabled,
-		GitDataServiceListen:        &gitDataServiceListen,
 		GitDataServiceUrl:           &gitDataServiceURL,
 		GitDataUpdaterUrl:           &gitDataUpdaterURL,
 		ExternalReleasePollInterval: &externalReleasePollInterval,
@@ -976,12 +1022,6 @@ func AddCommand(rootCmd *cli.Command) {
 	fs.String("git-data-service-url", "URL of the git-data-service gRPC endpoint used by reconcilers to read repository data. If empty, reconcilers read from GitHub instead.").Var(&opt.GitDataServiceURL)
 	fs.String("git-data-updater-url", "URL of the gRPC endpoint of the git-data updater (build git-data-updater) which syncs the pushed repository before building it. If empty, the pushed repository is not synced.").Var(&opt.GitDataUpdaterURL)
 	fs.Bool("clone-from-git-data-service", "Fetch the source tree from git-data-service (--git-data-service-url) in the pre-process container instead of cloning from GitHub. If not set, the source is always cloned from GitHub.").Var(&opt.CloneFromGitDataService)
-	fs.String("git-data-listen", "Listen addr of the embedded git-data-service. If empty, the service is disabled.").Var(&opt.GitDataListen)
-	gitDataBackendFlags(fs, &opt)
-	fs.Int64("git-data-packfile-cache-size", "Maximum total bytes of packfiles cached in memory by git-data-service. "+
-		"If set zero, the in-memory packfile cache is disabled.").Var(&opt.GitDataPackfileCacheSize).Default(256 * 1024 * 1024)
-	fs.Duration("git-data-packfile-cache-ttl", "Lifetime of an in-memory cached packfile in git-data-service").Var(&opt.GitDataPackfileCacheTTL).Default(1 * time.Hour)
-	fs.Duration("git-data-packfile-cache-sweep-interval", "Interval for reclaiming expired in-memory packfiles in git-data-service").Var(&opt.GitDataPackfileCacheSweepInterval).Default(6 * time.Hour)
 	fs.Bool("debug", "Enable debugging mode").Var(&opt.Debug)
 
 	rootCmd.AddCommand(cmd)
@@ -1000,6 +1040,23 @@ func AddGitDataUpdaterCommand(rootCmd *cli.Command) {
 		},
 	}
 	u.Flags(cmd.Flags())
+
+	rootCmd.AddCommand(cmd)
+}
+
+func AddGitDataServiceCommand(rootCmd *cli.Command) {
+	s := newGitDataService()
+	cmd := &cli.Command{
+		Use:   "git-data-service",
+		Short: "Serve git-data-service for the repositories which are registered to the database",
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
+			if err := loadGitHubAppFromEnv(s.opt.GitHubClient); err != nil {
+				return err
+			}
+			return s.FSM.LoopContext(ctx)
+		},
+	}
+	s.Flags(cmd.Flags())
 
 	rootCmd.AddCommand(cmd)
 }

@@ -49,10 +49,11 @@ GITHUB = --github-app-id $(APP_ID) --github-installation-id $(INSTALLATION_ID) -
 MINIO = --minio-endpoint http://127.0.0.1:9000 --minio-port $(MINIO_PORT) --minio-bucket $(MINIO_BUCKET) --minio-access-key $(MINIO_ACCESS_KEY) --minio-secret-access-key $(MINIO_SECRET_ACCESS_KEY)
 BAZEL_MIRROR_MINIO = --bazel-mirror-endpoint http://127.0.0.1:9000 --bazel-mirror-bucket build --bazel-mirror-access-key $(MINIO_ACCESS_KEY) --bazel-mirror-secret-access-key $(MINIO_SECRET_ACCESS_KEY) --bazel-mirror-prefix releases.bazel.build/
 GIT_DATA_STORAGE = --git-data-storage-endpoint http://127.0.0.1:9000 --git-data-bucket git-data --git-data-storage-access-key $(MINIO_ACCESS_KEY) --git-data-storage-secret-access-key $(MINIO_SECRET_ACCESS_KEY)
-GIT_DATA = --git-data-listen 127.0.0.1:8056 --git-data-service-url 127.0.0.1:8056 --git-data-updater-url 127.0.0.1:8057 $(GIT_DATA_STORAGE)
+GIT_DATA = --git-data-service-url 127.0.0.1:8056 --git-data-updater-url 127.0.0.1:8057
 
 APIFLAGS = --addr 127.0.0.1:8081 --dsn "$(DSN)" --namespace default --lease-lock-name builder --lease-lock-namespace default --log-level debug --emulate-job-control --kubeconfig $(CURDIR)/.kwok/kubeconfig $(GITHUB) $(MINIO) $(BAZEL_MIRROR_MINIO) $(GIT_DATA)
 GITDATAUPDATERFLAGS = --listen 127.0.0.1:8057 --dsn "$(DSN)" --refresh-interval 1h --log-level debug $(GITHUB) $(GIT_DATA_STORAGE)
+GITDATASERVICEFLAGS = --listen 127.0.0.1:8056 --dsn "$(DSN)" --log-level debug $(GITHUB) $(GIT_DATA_STORAGE)
 BFFFLAGS = --addr 127.0.0.1:8082 --api 127.0.0.1:8081 --git-data-service-url 127.0.0.1:8056 --log-level debug --storage-endpoint http://127.0.0.1:9000 --bucket $(MINIO_BUCKET) --access-key $(MINIO_ACCESS_KEY) --secret-access-key $(MINIO_SECRET_ACCESS_KEY)
 
 .PHONY: run-bff
@@ -67,9 +68,14 @@ run-api:
 	bazel run //go/cmd/build -- builder $(APIFLAGS)
 
 .PHONY: run-git-data-updater
-# Runs the updater of the repositories which are served by the git-data-service embedded in `make run-api`.
+# Runs the updater of the repositories which are served by `make run-git-data-service`.
 run-git-data-updater:
 	bazel run //go/cmd/build -- git-data-updater $(GITDATAUPDATERFLAGS)
+
+.PHONY: run-git-data-service
+# Runs git-data-service for the repositories which are registered to the database of `make run-api`.
+run-git-data-service:
+	bazel run //go/cmd/build -- git-data-service $(GITDATASERVICEFLAGS)
 
 .PHONY: run-migrate
 run-migrate:
