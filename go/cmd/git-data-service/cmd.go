@@ -26,6 +26,8 @@ import (
 	"go.f110.dev/mono/go/storage"
 )
 
+const mysqlLockName = "git-data-updater"
+
 const (
 	stateInit fsm.State = iota
 	stateStartService
@@ -288,7 +290,8 @@ func newUpdaterCommand() *updaterCommand {
 func (c *updaterCommand) Flags(fs *flag.FlagSet) {
 	c.repositoryOptions.Flags(fs)
 	fs.String("listen-webhook-receiver", "Listen addr of webhook receiver.").Var(&c.ListenWebhookReceiver)
-	fs.String("lock-file-path", "The path of the lock file.  If not set the value, don't get the lock").Var(&c.LockFilePath)
+	fs.String("lock-file-path", "The path of the lock file in the object storage. If not set the value, don't get the lock. "+
+		"If --dsn is set, the named lock of the database is used instead").Var(&c.LockFilePath)
 	fs.Duration("refresh-interval", "The interval time for updating the repository").Var(&c.RefreshInterval)
 	fs.Duration("refresh-timeout", "The duration for timeout to updating repository").Var(&c.RefreshTimeout).Default(1 * time.Minute)
 	fs.Int("refresh-workers", "The number of workers for updating repository").Var(&c.RefreshWorkers).Default(1)
@@ -314,7 +317,9 @@ func (c *updaterCommand) init(ctx context.Context) (fsm.State, error) {
 		SetTimeout(c.RefreshTimeout).
 		SetInitTimeout(c.RepositoryInitTimeout).
 		SetRepackInterval(c.RepackInterval)
-	if c.LockFilePath != "" {
+	if b, ok := backend.(*git.DatabaseBackend); ok {
+		c.locker = leaderelection.NewMySQL(b.Conn, mysqlLockName)
+	} else if c.LockFilePath != "" {
 		l, err := leaderelection.NewObjectStorage(storageClient, c.LockFilePath)
 		if err != nil {
 			return fsm.Error(err)
