@@ -1,6 +1,7 @@
 package jujutsu
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -270,4 +271,9 @@ func TestParseAliases(t *testing.T) {
 	assertion.MustNoError(t, err)
 	assertion.MustLen(t, aliases, 1)
 	assertion.Equal(t, *aliases[0], Alias{Name: "f", Args: []string{"git", "fetch"}})
+}
+
+func TestError(t *testing.T) {
+	assertion.Equal(t, "jj log: signal: killed", (&Error{Args: []string{"log"}, err: errors.New("signal: killed")}).Error())
+	assertion.Equal(t, "jj log: exit status 1: Error: Revision not found", (&Error{Args: []string{"log"}, Stderr: "Error: Revision not found\n", err: errors.New("exit status 1")}).Error())
 }

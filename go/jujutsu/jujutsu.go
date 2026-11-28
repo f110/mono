@@ -601,7 +601,14 @@ type Error struct {
 }
 
 func (e *Error) Error() string {
-	return "jj " + e.Args[0] + ": " + strings.TrimSpace(e.Stderr)
+	msg := "jj " + e.Args[0]
+	if e.err != nil {
+		msg += ": " + e.err.Error()
+	}
+	if stderr := strings.TrimSpace(e.Stderr); stderr != "" {
+		msg += ": " + stderr
+	}
+	return msg
 }
 
 func (e *Error) Unwrap() error {
