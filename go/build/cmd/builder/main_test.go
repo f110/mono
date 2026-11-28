@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"go.f110.dev/mono/go/build/database"
+	"go.f110.dev/mono/go/fsm"
+	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/github"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/testing/assertion"
@@ -32,8 +34,7 @@ func TestBuildServerConfig(t *testing.T) {
 		WithGC:                      true,
 		GitDataListen:               "0.0.0.0:9000",
 		GitDataServiceURL:           "git-data:9000",
-		GitDataRefreshInterval:      5 * time.Minute,
-		GitDataRefreshWorkers:       3,
+		GitDataUpdaterURL:           "git-data-updater:8057",
 		ExternalReleasePollInterval: time.Hour,
 		EventReconcileInterval:      30 * time.Second,
 		VaultAddr:                   "https://vault:8200",
@@ -59,8 +60,7 @@ func TestBuildServerConfig(t *testing.T) {
 	assertion.True(t, c.GetGcEnabled())
 	assertion.Equal(t, c.GetGitDataServiceListen(), "0.0.0.0:9000")
 	assertion.Equal(t, c.GetGitDataServiceUrl(), "git-data:9000")
-	assertion.Equal(t, c.GetGitDataRefreshInterval(), "5m0s")
-	assertion.Equal(t, c.GetGitDataRefreshWorkers(), int32(3))
+	assertion.Equal(t, c.GetGitDataUpdaterUrl(), "git-data-updater:8057")
 	assertion.Equal(t, c.GetExternalReleasePollInterval(), "1h0m0s")
 	assertion.Equal(t, c.GetEventReconcileInterval(), "30s")
 	assertion.Equal(t, c.GetGithubAppId(), int64(12345))
@@ -121,4 +121,40 @@ func TestGitDataRepositories(t *testing.T) {
 	assertion.True(t, got[0] != b)
 	assertion.Equal(t, got[0].URL, "https://example.com/b2.git")
 	assertion.True(t, got[1] == c)
+}
+
+func TestGitDataUpdater_Run(t *testing.T) {
+	t.Run("LostTheLock", func(t *testing.T) {
+		u := newGitDataUpdater()
+		u.updater = git.NewUpdater(nil, nil, git.NewStaticRepositoryProvider(nil), 1).SetInterval(time.Hour)
+		u.locker = &fakeLocker{lockDuration: 10 * time.Millisecond}
+
+		_, err := u.run(t.Context())
+		assertion.MustError(t, err)
+	})
+
+	t.Run("Shutdown", func(t *testing.T) {
+		u := newGitDataUpdater()
+		u.updater = git.NewUpdater(nil, nil, git.NewStaticRepositoryProvider(nil), 1).SetInterval(time.Hour)
+		u.locker = &fakeLocker{lockDuration: time.Hour}
+
+		ctx, cancel := context.WithTimeout(t.Context(), 10*time.Millisecond)
+		defer cancel()
+		s, err := u.run(ctx)
+		assertion.MustNoError(t, err)
+		assertion.Equal(t, s, fsm.WaitState)
+	})
+}
+
+type fakeLocker struct {
+	lockDuration time.Duration
+}
+
+func (l *fakeLocker) Lock(ctx context.Context) (context.Context, error) {
+	lockCtx, cancel := context.WithTimeout(ctx, l.lockDuration)
+	go func() {
+		<-lockCtx.Done()
+		cancel()
+	}()
+	return lockCtx, nil
 }

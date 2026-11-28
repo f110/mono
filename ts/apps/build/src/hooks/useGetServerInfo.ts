@@ -15,8 +15,7 @@ export interface ServerConfig {
   gcEnabled: boolean
   gitDataServiceListen: string
   gitDataServiceUrl: string
-  gitDataRefreshInterval: string
-  gitDataRefreshWorkers: number
+  gitDataUpdaterUrl: string
   externalReleasePollInterval: string
   eventReconcileInterval: string
   githubAppId: number
@@ -57,8 +56,7 @@ export function useGetServerInfo(): ServerInfo {
           gcEnabled: c.gcEnabled,
           gitDataServiceListen: c.gitDataServiceListen,
           gitDataServiceUrl: c.gitDataServiceUrl,
-          gitDataRefreshInterval: c.gitDataRefreshInterval,
-          gitDataRefreshWorkers: c.gitDataRefreshWorkers,
+          gitDataUpdaterUrl: c.gitDataUpdaterUrl,
           externalReleasePollInterval: c.externalReleasePollInterval,
           eventReconcileInterval: c.eventReconcileInterval,
           githubAppId: Number(c.githubAppId),

@@ -242,14 +242,11 @@ export declare type ServerConfig = Message<"mono.build.bff.ServerConfig"> & {
   gitDataServiceUrl: string;
 
   /**
-   * @generated from field: string git_data_refresh_interval = 12;
+   * URL of the git-data updater which syncs the pushed repository
+   *
+   * @generated from field: string git_data_updater_url = 21;
    */
-  gitDataRefreshInterval: string;
-
-  /**
-   * @generated from field: int32 git_data_refresh_workers = 13;
-   */
-  gitDataRefreshWorkers: number;
+  gitDataUpdaterUrl: string;
 
   /**
    * @generated from field: string external_release_poll_interval = 14;

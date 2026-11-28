@@ -66,8 +66,8 @@ function configItems(c: ServerConfig): { label: string; value: string }[] {
       value: c.gitDataServiceUrl ? `git-data-service (${c.gitDataServiceUrl})` : 'GitHub (direct)',
     },
     {
-      label: 'Repository refresh',
-      value: c.gitDataRefreshInterval ? `Every ${c.gitDataRefreshInterval} (workers: ${c.gitDataRefreshWorkers})` : 'Disabled',
+      label: 'Repository sync on push',
+      value: c.gitDataUpdaterUrl ? `git-data updater (${c.gitDataUpdaterUrl})` : 'Disabled',
     },
     {
       label: 'GitHub event reconcile interval',

@@ -18,7 +18,8 @@
 - **bff** (`go/build/cmd/bff`): ブラウザ向けの Backend For Frontend。Connect プロトコルを話し、内部では
   builder の gRPC API と git-data-service を呼び出す。
 
-補助バイナリとして **buildctl**（CLI クライアント）、**sidecar**（Job 内で clone / 認証 / レポート生成を行う）がある。
+補助バイナリとして **buildctl**（CLI クライアント）、**sidecar**（Job 内で clone / 認証 / レポート生成を行う）、
+**git-data-updater**（`build` のサブコマンド。git-data-service のリポジトリを定期 fetch する）がある。
 
 ## バックエンド (`go/build`)
 
@@ -54,11 +55,11 @@
    マイグレーション自体は builder ではなく、別途実行される `migrate` Job（`build` イメージの `migrate`
    サブコマンド、`--schema=/schema/schema.sql --driver=mysql --execute`）が行う。builder はそれの完了を待つだけ。
 3. `setup`: MinIO（ログ用 / Bazel ミラー用）と Kubernetes のオプションを構築し、`coordinator.BazelBuilder` を生成。
-4. `startGitDataService`: `--git-data-listen` 指定時のみ。埋め込みの git-data-service (gRPC) と `git.Updater` を起動する。
+4. `startGitDataService`: `--git-data-listen` 指定時のみ。埋め込みの git-data-service (gRPC) を起動する。
 5. `startApiServer`: `Notifier`・`Reconcilers` を組み立て、`api.NewApi` で HTTP/gRPC サーバーを起動。
 6. `leaderElection`: `--enable-leader-election` 時に Lease ロックを取得。リーダーになるまでブロックする。
 7. `startWorker`: リーダーのみ：JobWatcher、（任意で）GC、releasewatcher の Manager、Task を起動する
-   `BazelBuilder.Run`、webhook Scheduler、git-data の定期更新を goroutine で起動。
+   `BazelBuilder.Run`、webhook Scheduler を goroutine で起動。
 8. `shutdown`: API サーバー / git-data gRPC サーバーを graceful stop。
 
 ポイントは **API サーバーと Webhook 受信は全レプリカで動く**が、**実際にビルドを駆動するワーカー
@@ -142,10 +143,14 @@ Task には設定が JSON シリアライズされて保存され、再ビルド
 ### git-data-service 連携
 
 `go/git` の git-data-service は、リポジトリのオブジェクト（参照・コミット・統計）を gRPC で提供する。
-build システムでは 2 通りの使われ方をする。
+build システムでは 3 通りの使われ方をする。
 
-- **埋め込み**: builder が `--git-data-listen` 指定時に同一プロセス内でサーバーと `Updater`（定期 fetch）を起動。
+- **埋め込み**: builder が `--git-data-listen` 指定時に同一プロセス内でサーバーを起動する。
   対象リポジトリは DB の `source_repository`（Ready のもの）から集める。
+- **Updater**: `build git-data-updater` が別プロセスで同じリポジトリを定期 fetch する。push の webhook では
+  `push` reconciler が `--git-data-updater-url` の `GitDataUpdater.Sync` を呼び、fetch が終わってからビルドする。
+  `--lock-file-path` を指定すると、オブジェクトストレージのロックを持つプロセスだけが定期 fetch する。
+  ロックを失うとプロセスは終了し、再起動したプロセスがロックを取り直す。
 - **クライアント**: api サーバー（HEAD リビジョン解決）、reconciler（リポジトリ読み取り）、bff（Git Data ページ）が
   gRPC クライアントとして利用する。
 

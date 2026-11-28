@@ -42,6 +42,7 @@ import (
 	"go.f110.dev/mono/go/build/watcher"
 	"go.f110.dev/mono/go/build/webhook"
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/ctxutil"
 	_ "go.f110.dev/mono/go/database/querylog"
 	"go.f110.dev/mono/go/fsm"
@@ -119,6 +120,7 @@ type Options struct {
 	TaskScheduleInterval           time.Duration
 
 	GitDataServiceURL                 string
+	GitDataUpdaterURL                 string
 	CloneFromGitDataService           bool
 	GitDataListen                     string
 	GitDataStorageEndpoint            string
@@ -129,10 +131,6 @@ type Options struct {
 	GitDataStorageCAFile              string
 	GitDataBucket                     string
 	GitDataMemcachedEndpoint          string
-	GitDataLockFilePath               string
-	GitDataRefreshInterval            time.Duration
-	GitDataRefreshTimeout             time.Duration
-	GitDataRefreshWorkers             int
 	GitDataDisableInflatePackFile     bool
 	GitDataRepositoryInitTimeout      time.Duration
 	GitDataPackfileCacheSize          int64
@@ -163,6 +161,12 @@ const (
 	stateShutdown
 )
 
+const (
+	stateGitDataUpdaterInit fsm.State = iota
+	stateGitDataUpdaterRun
+	stateGitDataUpdaterShutdown
+)
+
 type process struct {
 	FSM    *fsm.FSM
 	opt    Options
@@ -180,15 +184,14 @@ type process struct {
 	bazelMirrorStorageOpt storage.S3Options
 	vaultClient           *vault.Client
 
-	bazelBuilder      *coordinator.BazelBuilder
-	apiServer         *api.Api
-	eventProcessor    *ghwebhook.EventProcessor
-	gitDataGRPCServer *grpc.Server
-	gitDataUpdater    *git.Updater
-	gitDataLocker     leaderelection.Locker
-	gitDataPackCache  *git.PackfileCache
-	gitDataConn       *grpc.ClientConn
-	gitDataClient     git.GitDataClient
+	bazelBuilder       *coordinator.BazelBuilder
+	apiServer          *api.Api
+	eventProcessor     *ghwebhook.EventProcessor
+	gitDataGRPCServer  *grpc.Server
+	gitDataPackCache   *git.PackfileCache
+	gitDataConn        *grpc.ClientConn
+	gitDataClient      git.GitDataClient
+	gitDataUpdaterConn *grpc.ClientConn
 }
 
 func newProcess(opt Options) *process {
@@ -249,22 +252,9 @@ func (p *process) init(ctx context.Context) (fsm.State, error) {
 		p.secretStoreClient = ssClient
 	}
 
-	parsedDSN, err := mysql.ParseDSN(p.opt.DSN)
+	conn, err := openDatabase(p.opt.DSN)
 	if err != nil {
-		return fsm.Error(xerrors.WithStack(err))
-	}
-	parsedDSN.ParseTime = true
-	loc, err := time.LoadLocation("Local")
-	if err != nil {
-		return fsm.Error(xerrors.WithStack(err))
-	}
-	parsedDSN.Loc = loc
-	p.opt.DSN = parsedDSN.FormatDSN()
-
-	logger.Log.Debug("Open sql connection", slog.String("dsn", p.opt.DSN))
-	conn, err := sql.Open("querylog", p.opt.DSN)
-	if err != nil {
-		return fsm.Error(xerrors.WithStack(err))
+		return fsm.Error(err)
 	}
 	p.dao = dao.NewOptions(conn)
 
@@ -426,57 +416,20 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 }
 
 func (p *process) startGitDataService(ctx context.Context) (fsm.State, error) {
-	if p.opt.GitDataStorageEndpoint == "" || p.opt.GitDataBucket == "" {
-		return fsm.Error(xerrors.Define("--git-data-storage-endpoint and --git-data-bucket are required when --git-data-listen is set").WithStack())
+	// A zero cache size disables the in-memory packfile cache.
+	if p.opt.GitDataPackfileCacheSize > 0 {
+		p.gitDataPackCache = git.NewPackfileCache(p.opt.GitDataPackfileCacheTTL, p.opt.GitDataPackfileCacheSweepInterval, p.opt.GitDataPackfileCacheSize)
 	}
-
-	secretAccessKey := p.opt.GitDataStorageSecretAccessKey
-	if p.opt.GitDataStorageSecretAccessKeyFile != "" {
-		b, err := os.ReadFile(p.opt.GitDataStorageSecretAccessKeyFile)
-		if err != nil {
-			return fsm.Error(xerrors.WithStack(err))
-		}
-		secretAccessKey = strings.TrimSpace(string(b))
-	}
-	storageOpt := storage.NewS3OptionToExternal(p.opt.GitDataStorageEndpoint, p.opt.GitDataStorageRegion, p.opt.GitDataStorageAccessKey, secretAccessKey)
-	storageOpt.PathStyle = true
-	storageOpt.CACertFile = p.opt.GitDataStorageCAFile
-	storageClient := storage.NewS3(p.opt.GitDataBucket, storageOpt)
-
-	var cachePool *client.SinglePool
-	if p.opt.GitDataMemcachedEndpoint != "" {
-		if err := netutil.WaitListen(p.opt.GitDataMemcachedEndpoint, 5*time.Minute); err != nil {
-			return fsm.Error(xerrors.WithStack(err))
-		}
-		cacheServer, err := client.NewServerWithMetaProtocol(ctx, "cache-1", "tcp", p.opt.GitDataMemcachedEndpoint)
-		if err != nil {
-			return fsm.Error(xerrors.WithStack(err))
-		}
-		cachePool, err = client.NewSinglePool(cacheServer)
-		if err != nil {
-			return fsm.Error(xerrors.WithStack(err))
-		}
+	backend, _, err := newGitDataBackend(ctx, p.opt, p.gitDataPackCache)
+	if err != nil {
+		return fsm.Error(err)
 	}
 
 	repositoryProvider := newGitDataRepositories(func(ctx context.Context) ([]*database.SourceRepository, error) {
 		rows, err := p.dao.Repository.ListAll(ctx)
 		return rows, xerrors.WithStack(err)
 	})
-
-	tokenProvider := p.opt.GitHubClient.TokenProvider
-
-	// A zero cache size disables the in-memory packfile cache.
-	if p.opt.GitDataPackfileCacheSize > 0 {
-		p.gitDataPackCache = git.NewPackfileCache(p.opt.GitDataPackfileCacheTTL, p.opt.GitDataPackfileCacheSweepInterval, p.opt.GitDataPackfileCacheSize)
-	}
-
-	backend := &git.ObjectStorageBackend{
-		Client:                 storageClient,
-		CachePool:              cachePool,
-		PackCache:              p.gitDataPackCache,
-		DisableInflatePackFile: p.opt.GitDataDisableInflatePackFile,
-	}
-	service, err := git.NewDataService(backend, tokenProvider, repositoryProvider)
+	service, err := git.NewDataService(backend, p.opt.GitHubClient.TokenProvider, repositoryProvider)
 	if err != nil {
 		return fsm.Error(err)
 	}
@@ -499,21 +452,6 @@ func (p *process) startGitDataService(ctx context.Context) (fsm.State, error) {
 		}
 	}()
 
-	updater := git.NewUpdater(backend, tokenProvider, repositoryProvider, p.opt.GitDataRefreshWorkers).
-		SetInitTimeout(p.opt.GitDataRepositoryInitTimeout)
-	if p.opt.GitDataRefreshInterval > 0 {
-		updater.SetInterval(p.opt.GitDataRefreshInterval).
-			SetTimeout(p.opt.GitDataRefreshTimeout)
-	}
-	p.gitDataUpdater = updater
-	if p.opt.GitDataLockFilePath != "" {
-		l, err := leaderelection.NewObjectStorage(storageClient, p.opt.GitDataLockFilePath)
-		if err != nil {
-			return fsm.Error(err)
-		}
-		p.gitDataLocker = l
-	}
-
 	return fsm.Next(stateStartApiServer)
 }
 
@@ -529,11 +467,17 @@ func (p *process) startApiServer(ctx context.Context) (fsm.State, error) {
 		logger.Log.Info("Use git-data-service for reading repository data", slog.String("addr", p.opt.GitDataServiceURL))
 	}
 
-	// Avoid handing the push reconciler a typed-nil *git.Updater: that would
+	// Avoid handing the push reconciler a typed-nil *git.UpdaterClient: that would
 	// satisfy the GitSyncer interface as a non-nil value and panic when called.
 	var gitSyncer webhook.GitSyncer
-	if p.gitDataUpdater != nil {
-		gitSyncer = p.gitDataUpdater
+	if p.opt.GitDataUpdaterURL != "" {
+		conn, err := grpc.NewClient(p.opt.GitDataUpdaterURL, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			return fsm.Error(xerrors.WithStack(err))
+		}
+		p.gitDataUpdaterConn = conn
+		gitSyncer = git.NewUpdaterClient(conn)
+		logger.Log.Info("Use git-data updater for syncing the pushed repository", slog.String("addr", p.opt.GitDataUpdaterURL))
 	}
 	p.eventProcessor = webhook.NewEventProcessor(p.dao, p.ghClient, p.bazelBuilder, gitSyncer, p.gitDataClient, p.opt.EventReconcileInterval, p.opt.EventMaxProcessingDuration)
 
@@ -678,21 +622,6 @@ func (p *process) startWorker(_ context.Context) (fsm.State, error) {
 
 	go p.eventProcessor.Run(p.ctx)
 
-	if p.gitDataUpdater != nil && p.opt.GitDataRefreshInterval > 0 {
-		go func() {
-			updaterCtx := p.ctx
-			if p.gitDataLocker != nil {
-				lockCtx, err := p.gitDataLocker.Lock(p.ctx)
-				if err != nil {
-					logger.Log.Error("Failed to get the lock", logger.E(err))
-					return
-				}
-				updaterCtx = lockCtx
-			}
-			p.gitDataUpdater.Run(updaterCtx)
-		}()
-	}
-
 	return fsm.Wait()
 }
 
@@ -708,6 +637,9 @@ func (p *process) shutdown(ctx context.Context) (fsm.State, error) {
 	}
 	if p.gitDataConn != nil {
 		p.gitDataConn.Close()
+	}
+	if p.gitDataUpdaterConn != nil {
+		p.gitDataUpdaterConn.Close()
 	}
 	if p.gitDataPackCache != nil {
 		p.gitDataPackCache.Close()
@@ -760,6 +692,133 @@ func (r *gitDataRepositories) Repositories(ctx context.Context) ([]*git.Reposito
 	return out, nil
 }
 
+// gitDataUpdater updates the repositories in the database periodically and serves Sync of the updater via gRPC.
+// The process exits when it loses the lock so that the lock is acquired again by the restarted process.
+type gitDataUpdater struct {
+	FSM *fsm.FSM
+	opt Options
+
+	grpcServer *grpc.Server
+	updater    *git.Updater
+	locker     leaderelection.Locker
+
+	Listen          string
+	LockFilePath    string
+	RefreshInterval time.Duration
+	RefreshTimeout  time.Duration
+	RefreshWorkers  int
+}
+
+func newGitDataUpdater() *gitDataUpdater {
+	u := &gitDataUpdater{opt: Options{GitHubClient: githubutil.NewGitHubClientFactory("", true)}}
+	u.FSM = fsm.NewFSM(
+		map[fsm.State]fsm.StateFunc{
+			stateGitDataUpdaterInit:     u.init,
+			stateGitDataUpdaterRun:      u.run,
+			stateGitDataUpdaterShutdown: u.shutdown,
+		},
+		stateGitDataUpdaterInit,
+		stateGitDataUpdaterShutdown,
+	)
+	u.FSM.CloseContext = func() (context.Context, context.CancelFunc) {
+		return ctxutil.WithTimeout(context.Background(), 10*time.Second)
+	}
+
+	return u
+}
+
+func (u *gitDataUpdater) Flags(fs *flag.FlagSet) {
+	fs.String("dsn", "Data source name").Var(&u.opt.DSN)
+	u.opt.GitHubClient.Flags(fs)
+	gitDataBackendFlags(fs, &u.opt)
+	fs.String("listen", "Listen addr of the gRPC server which serves Sync").Var(&u.Listen).Default(":8057")
+	fs.String("lock-file-path", "The path of the lock file in the bucket (--git-data-bucket). If not set the value, don't get the lock").Var(&u.LockFilePath)
+	fs.Duration("refresh-interval", "Interval for refreshing repositories").Var(&u.RefreshInterval)
+	fs.Duration("refresh-timeout", "Timeout for refreshing a repository").Var(&u.RefreshTimeout).Default(1 * time.Minute)
+	fs.Int("refresh-workers", "Number of workers for refreshing repositories").Var(&u.RefreshWorkers).Default(1)
+}
+
+func (u *gitDataUpdater) init(ctx context.Context) (fsm.State, error) {
+	if u.RefreshInterval <= 0 {
+		return fsm.Error(xerrors.Define("--refresh-interval is mandatory").WithStack())
+	}
+	if err := u.opt.GitHubClient.Init(); err != nil {
+		return fsm.Error(err)
+	}
+	conn, err := openDatabase(u.opt.DSN)
+	if err != nil {
+		return fsm.Error(err)
+	}
+	d := dao.NewOptions(conn)
+	backend, storageClient, err := newGitDataBackend(ctx, u.opt, nil)
+	if err != nil {
+		return fsm.Error(err)
+	}
+
+	repositoryProvider := newGitDataRepositories(func(ctx context.Context) ([]*database.SourceRepository, error) {
+		rows, err := d.Repository.ListAll(ctx)
+		return rows, xerrors.WithStack(err)
+	})
+	u.updater = git.NewUpdater(backend, u.opt.GitHubClient.TokenProvider, repositoryProvider, u.RefreshWorkers).
+		SetInterval(u.RefreshInterval).
+		SetTimeout(u.RefreshTimeout).
+		SetInitTimeout(u.opt.GitDataRepositoryInitTimeout)
+	if u.LockFilePath != "" {
+		l, err := leaderelection.NewObjectStorage(storageClient, u.LockFilePath)
+		if err != nil {
+			return fsm.Error(err)
+		}
+		u.locker = l
+	}
+
+	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(grpcutil.WithServerLogging()))
+	git.RegisterGitDataUpdaterServer(grpcServer, git.NewUpdaterService(u.updater))
+	healthSvc := health.NewServer()
+	healthSvc.SetServingStatus("git-data-updater", healthpb.HealthCheckResponse_SERVING)
+	healthpb.RegisterHealthServer(grpcServer, healthSvc)
+	u.grpcServer = grpcServer
+
+	lis, err := net.Listen("tcp", u.Listen)
+	if err != nil {
+		return fsm.Error(xerrors.WithStack(err))
+	}
+	logger.Log.Info("Start git-data updater", slog.String("addr", u.Listen))
+	go func() {
+		if err := grpcServer.Serve(lis); err != nil {
+			logger.Log.Error("git-data updater returns error", logger.E(err))
+		}
+	}()
+
+	return fsm.Next(stateGitDataUpdaterRun)
+}
+
+func (u *gitDataUpdater) run(ctx context.Context) (fsm.State, error) {
+	updaterCtx := ctx
+	if u.locker != nil {
+		lockCtx, err := u.locker.Lock(ctx)
+		if err != nil {
+			if ctx.Err() != nil {
+				return fsm.Wait()
+			}
+			return fsm.Error(err)
+		}
+		updaterCtx = lockCtx
+	}
+	u.updater.Run(updaterCtx)
+	if ctx.Err() != nil {
+		return fsm.Wait()
+	}
+	return fsm.Error(xerrors.Define("lost the lock").WithStack())
+}
+
+func (u *gitDataUpdater) shutdown(_ context.Context) (fsm.State, error) {
+	if u.grpcServer != nil {
+		u.grpcServer.GracefulStop()
+		logger.Log.Info("Shutdown git-data updater")
+	}
+	return fsm.Finish()
+}
+
 // buildServerConfig converts the runtime Options into a curated, human-meaningful
 // view shown on the info page. Secrets (credentials, tokens, DSN) are intentionally
 // excluded. Durations are formatted to strings; a zero duration becomes an empty
@@ -776,8 +835,7 @@ func buildServerConfig(opt Options) *api.ServerConfig {
 	gcEnabled := opt.WithGC
 	gitDataServiceListen := opt.GitDataListen
 	gitDataServiceURL := opt.GitDataServiceURL
-	gitDataRefreshInterval := formatConfigDuration(opt.GitDataRefreshInterval)
-	gitDataRefreshWorkers := int32(opt.GitDataRefreshWorkers)
+	gitDataUpdaterURL := opt.GitDataUpdaterURL
 	externalReleasePollInterval := formatConfigDuration(opt.ExternalReleasePollInterval)
 	eventReconcileInterval := formatConfigDuration(opt.EventReconcileInterval)
 	githubAppID := opt.GitHubClient.AppID
@@ -805,8 +863,7 @@ func buildServerConfig(opt Options) *api.ServerConfig {
 		GcEnabled:                   &gcEnabled,
 		GitDataServiceListen:        &gitDataServiceListen,
 		GitDataServiceUrl:           &gitDataServiceURL,
-		GitDataRefreshInterval:      &gitDataRefreshInterval,
-		GitDataRefreshWorkers:       &gitDataRefreshWorkers,
+		GitDataUpdaterUrl:           &gitDataUpdaterURL,
 		ExternalReleasePollInterval: &externalReleasePollInterval,
 		EventReconcileInterval:      &eventReconcileInterval,
 		GithubAppId:                 &githubAppID,
@@ -846,24 +903,9 @@ func AddCommand(rootCmd *cli.Command) {
 	cmd := &cli.Command{
 		Use: "builder",
 		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
-			if v := os.Getenv("GITHUB_APP_ID"); v != "" {
-				appId, err := strconv.ParseInt(v, 10, 64)
-				if err != nil {
-					return err
-				}
-				opt.GitHubClient.AppID = appId
+			if err := loadGitHubAppFromEnv(opt.GitHubClient); err != nil {
+				return err
 			}
-			if v := os.Getenv("GITHUB_INSTALLATION_ID"); v != "" {
-				installationId, err := strconv.ParseInt(v, 10, 64)
-				if err != nil {
-					return err
-				}
-				opt.GitHubClient.InstallationID = installationId
-			}
-			if v := os.Getenv("GITHUB_PRIVATEKEY_FILE"); v != "" {
-				opt.GitHubClient.PrivateKeyFile = v
-			}
-
 			return builder(ctx, opt)
 		},
 	}
@@ -932,8 +974,101 @@ func AddCommand(rootCmd *cli.Command) {
 	fs.Duration("task-schedule-interval", "Interval between scans of the pending tasks to start them").Var(&opt.TaskScheduleInterval).Default(30 * time.Second)
 	fs.Duration("event-max-processing-duration", "Time after `created_at` at which an unfinished github_event row is moved to EXPIRED").Var(&opt.EventMaxProcessingDuration).Default(30 * time.Minute)
 	fs.String("git-data-service-url", "URL of the git-data-service gRPC endpoint used by reconcilers to read repository data. If empty, reconcilers read from GitHub instead.").Var(&opt.GitDataServiceURL)
+	fs.String("git-data-updater-url", "URL of the gRPC endpoint of the git-data updater (build git-data-updater) which syncs the pushed repository before building it. If empty, the pushed repository is not synced.").Var(&opt.GitDataUpdaterURL)
 	fs.Bool("clone-from-git-data-service", "Fetch the source tree from git-data-service (--git-data-service-url) in the pre-process container instead of cloning from GitHub. If not set, the source is always cloned from GitHub.").Var(&opt.CloneFromGitDataService)
 	fs.String("git-data-listen", "Listen addr of the embedded git-data-service. If empty, the service is disabled.").Var(&opt.GitDataListen)
+	gitDataBackendFlags(fs, &opt)
+	fs.Int64("git-data-packfile-cache-size", "Maximum total bytes of packfiles cached in memory by git-data-service. "+
+		"If set zero, the in-memory packfile cache is disabled.").Var(&opt.GitDataPackfileCacheSize).Default(256 * 1024 * 1024)
+	fs.Duration("git-data-packfile-cache-ttl", "Lifetime of an in-memory cached packfile in git-data-service").Var(&opt.GitDataPackfileCacheTTL).Default(1 * time.Hour)
+	fs.Duration("git-data-packfile-cache-sweep-interval", "Interval for reclaiming expired in-memory packfiles in git-data-service").Var(&opt.GitDataPackfileCacheSweepInterval).Default(6 * time.Hour)
+	fs.Bool("debug", "Enable debugging mode").Var(&opt.Debug)
+
+	rootCmd.AddCommand(cmd)
+}
+
+func AddGitDataUpdaterCommand(rootCmd *cli.Command) {
+	u := newGitDataUpdater()
+	cmd := &cli.Command{
+		Use:   "git-data-updater",
+		Short: "Update the repositories of git-data-service which are registered to the database",
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
+			if err := loadGitHubAppFromEnv(u.opt.GitHubClient); err != nil {
+				return err
+			}
+			return u.FSM.LoopContext(ctx)
+		},
+	}
+	u.Flags(cmd.Flags())
+
+	rootCmd.AddCommand(cmd)
+}
+
+// openDatabase opens the connection of the database with the parameters which dao requires.
+func openDatabase(dsn string) (*sql.DB, error) {
+	parsedDSN, err := mysql.ParseDSN(dsn)
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	parsedDSN.ParseTime = true
+	loc, err := time.LoadLocation("Local")
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	parsedDSN.Loc = loc
+	dsn = parsedDSN.FormatDSN()
+
+	logger.Log.Debug("Open sql connection", slog.String("dsn", dsn))
+	conn, err := sql.Open("querylog", dsn)
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	return conn, nil
+}
+
+// newGitDataBackend creates the backend of git-data-service from the --git-data-* options. It also returns the client of the object storage.
+func newGitDataBackend(ctx context.Context, opt Options, packCache *git.PackfileCache) (*git.ObjectStorageBackend, *storage.S3, error) {
+	if opt.GitDataStorageEndpoint == "" || opt.GitDataBucket == "" {
+		return nil, nil, xerrors.Define("--git-data-storage-endpoint and --git-data-bucket are required").WithStack()
+	}
+
+	secretAccessKey := opt.GitDataStorageSecretAccessKey
+	if opt.GitDataStorageSecretAccessKeyFile != "" {
+		b, err := os.ReadFile(opt.GitDataStorageSecretAccessKeyFile)
+		if err != nil {
+			return nil, nil, xerrors.WithStack(err)
+		}
+		secretAccessKey = strings.TrimSpace(string(b))
+	}
+	storageOpt := storage.NewS3OptionToExternal(opt.GitDataStorageEndpoint, opt.GitDataStorageRegion, opt.GitDataStorageAccessKey, secretAccessKey)
+	storageOpt.PathStyle = true
+	storageOpt.CACertFile = opt.GitDataStorageCAFile
+	storageClient := storage.NewS3(opt.GitDataBucket, storageOpt)
+
+	var cachePool *client.SinglePool
+	if opt.GitDataMemcachedEndpoint != "" {
+		if err := netutil.WaitListen(opt.GitDataMemcachedEndpoint, 5*time.Minute); err != nil {
+			return nil, nil, xerrors.WithStack(err)
+		}
+		cacheServer, err := client.NewServerWithMetaProtocol(ctx, "cache-1", "tcp", opt.GitDataMemcachedEndpoint)
+		if err != nil {
+			return nil, nil, xerrors.WithStack(err)
+		}
+		cachePool, err = client.NewSinglePool(cacheServer)
+		if err != nil {
+			return nil, nil, xerrors.WithStack(err)
+		}
+	}
+
+	return &git.ObjectStorageBackend{
+		Client:                 storageClient,
+		CachePool:              cachePool,
+		PackCache:              packCache,
+		DisableInflatePackFile: opt.GitDataDisableInflatePackFile,
+	}, storageClient, nil
+}
+
+func gitDataBackendFlags(fs *flag.FlagSet, opt *Options) {
 	fs.String("git-data-storage-endpoint", "The endpoint of the object storage for git-data-service").Var(&opt.GitDataStorageEndpoint)
 	fs.String("git-data-storage-region", "The region name of the object storage for git-data-service").Var(&opt.GitDataStorageRegion)
 	fs.String("git-data-storage-access-key", "The access key for the git-data-service object storage").Var(&opt.GitDataStorageAccessKey)
@@ -942,17 +1077,28 @@ func AddCommand(rootCmd *cli.Command) {
 	fs.String("git-data-storage-ca-file", "CA certificate file path for the git-data-service object storage").Var(&opt.GitDataStorageCAFile)
 	fs.String("git-data-bucket", "The bucket name used by git-data-service").Var(&opt.GitDataBucket)
 	fs.String("git-data-memcached-endpoint", "The endpoint of memcached used by git-data-service").Var(&opt.GitDataMemcachedEndpoint)
-	fs.String("git-data-lock-file-path", "The path of the git-data-service updater lock file").Var(&opt.GitDataLockFilePath)
-	fs.Duration("git-data-refresh-interval", "Interval for refreshing repositories in git-data-service. Zero disables periodic refresh.").Var(&opt.GitDataRefreshInterval)
-	fs.Duration("git-data-refresh-timeout", "Timeout for refreshing a repository in git-data-service").Var(&opt.GitDataRefreshTimeout).Default(1 * time.Minute)
-	fs.Int("git-data-refresh-workers", "Number of workers for refreshing repositories in git-data-service").Var(&opt.GitDataRefreshWorkers).Default(1)
 	fs.Bool("git-data-disable-inflate-packfile", "Disable inflating packfile in git-data-service").Var(&opt.GitDataDisableInflatePackFile)
 	fs.Duration("git-data-repository-init-timeout", "Timeout for initializing a repository in git-data-service").Var(&opt.GitDataRepositoryInitTimeout).Default(5 * time.Minute)
-	fs.Int64("git-data-packfile-cache-size", "Maximum total bytes of packfiles cached in memory by git-data-service. "+
-		"If set zero, the in-memory packfile cache is disabled.").Var(&opt.GitDataPackfileCacheSize).Default(256 * 1024 * 1024)
-	fs.Duration("git-data-packfile-cache-ttl", "Lifetime of an in-memory cached packfile in git-data-service").Var(&opt.GitDataPackfileCacheTTL).Default(1 * time.Hour)
-	fs.Duration("git-data-packfile-cache-sweep-interval", "Interval for reclaiming expired in-memory packfiles in git-data-service").Var(&opt.GitDataPackfileCacheSweepInterval).Default(6 * time.Hour)
-	fs.Bool("debug", "Enable debugging mode").Var(&opt.Debug)
+}
 
-	rootCmd.AddCommand(cmd)
+// loadGitHubAppFromEnv overrides the credential of GitHub App by the environment variables.
+func loadGitHubAppFromEnv(f *githubutil.GitHubClientFactory) error {
+	if v := os.Getenv("GITHUB_APP_ID"); v != "" {
+		appId, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		f.AppID = appId
+	}
+	if v := os.Getenv("GITHUB_INSTALLATION_ID"); v != "" {
+		installationId, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		f.InstallationID = installationId
+	}
+	if v := os.Getenv("GITHUB_PRIVATEKEY_FILE"); v != "" {
+		f.PrivateKeyFile = v
+	}
+	return nil
 }
