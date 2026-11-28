@@ -3,6 +3,8 @@ package leaderelection
 import (
 	"context"
 	"crypto/rand"
+	"database/sql"
+	"database/sql/driver"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -195,4 +197,101 @@ func (l *ObjectStorage) put(ctx context.Context) (time.Time, error) {
 		return time.Time{}, xerrors.WithStack(err)
 	}
 	return expire, nil
+}
+
+// MySQL is the Locker which uses the named lock of MySQL (GET_LOCK).
+// The lock is held by a dedicated connection while it is held, and is lost when the connection is closed.
+type MySQL struct {
+	db            *sql.DB
+	name          string
+	checkInterval time.Duration
+	retryInterval time.Duration
+}
+
+var _ Locker = (*MySQL)(nil)
+
+func NewMySQL(db *sql.DB, name string) *MySQL {
+	return &MySQL{
+		db:            db,
+		name:          name,
+		checkInterval: 10 * time.Second,
+		retryInterval: 10 * time.Second,
+	}
+}
+
+func (l *MySQL) Lock(ctx context.Context) (context.Context, error) {
+	logger.Log.Info("Acquiring the lock...", slog.String("name", l.name))
+	t := time.NewTicker(l.retryInterval)
+	defer t.Stop()
+	for {
+		if err := ctx.Err(); err != nil {
+			return nil, xerrors.WithStack(err)
+		}
+		conn, err := l.tryLock(ctx)
+		if err != nil {
+			logger.Log.Warn("Failed to acquire the lock", logger.E(err), slog.String("name", l.name))
+		} else if conn != nil {
+			logger.Log.Info("Got lock", slog.String("name", l.name))
+			lockCtx, cancel := context.WithCancel(ctx)
+			go l.keep(ctx, cancel, conn)
+			return lockCtx, nil
+		}
+
+		select {
+		case <-ctx.Done():
+			return nil, xerrors.WithStack(ctx.Err())
+		case <-t.C:
+		}
+	}
+}
+
+func (l *MySQL) tryLock(ctx context.Context) (*sql.Conn, error) {
+	conn, err := l.db.Conn(ctx)
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	var got sql.NullInt64
+	if err := conn.QueryRowContext(ctx, "SELECT GET_LOCK(?, 0)", l.name).Scan(&got); err != nil {
+		l.discardConn(conn)
+		return nil, xerrors.WithStack(err)
+	}
+	if got.Int64 != 1 {
+		logger.Log.Debug("Other process is holding the lock", slog.String("name", l.name))
+		conn.Close()
+		return nil, nil
+	}
+	return conn, nil
+}
+
+func (l *MySQL) keep(ctx context.Context, cancel context.CancelFunc, conn *sql.Conn) {
+	defer cancel()
+	defer l.discardConn(conn)
+
+	t := time.NewTicker(l.checkInterval)
+	defer t.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			logger.Log.Info("Released the lock", slog.String("name", l.name))
+			return
+		case <-t.C:
+			var held sql.NullBool
+			if err := conn.QueryRowContext(ctx, "SELECT IS_USED_LOCK(?) = CONNECTION_ID()", l.name).Scan(&held); err != nil {
+				if ctx.Err() != nil {
+					continue
+				}
+				logger.Log.Error("Lost the lock because failed to check the lock", logger.E(err), slog.String("name", l.name))
+				return
+			}
+			if !held.Bool {
+				logger.Log.Error("Lost the lock because other process has taken it", slog.String("name", l.name))
+				return
+			}
+		}
+	}
+}
+
+// discardConn closes the session of conn instead of returning it to the pool, so that the named lock held by the session is released.
+func (*MySQL) discardConn(conn *sql.Conn) {
+	conn.Raw(func(any) error { return driver.ErrBadConn })
 }

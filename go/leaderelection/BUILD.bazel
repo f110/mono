@@ -17,8 +17,10 @@ go_test(
     srcs = ["lock_test.go"],
     embed = [":leaderelection"],
     deps = [
+        "//go/database/dbtestutil",
         "//go/logger",
         "//go/storage",
         "//go/testing/assertion",
+        "@com_github_go_sql_driver_mysql//:mysql",
     ],
 )
