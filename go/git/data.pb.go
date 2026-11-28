@@ -1598,6 +1598,86 @@ func (x *ResponseGetRepositoryStatistics) GetHeadCommit() *Commit {
 	return nil
 }
 
+type RequestSync struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RequestSync) Reset() {
+	*x = RequestSync{}
+	mi := &file_proto_git_data_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestSync) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestSync) ProtoMessage() {}
+
+func (x *RequestSync) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_git_data_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RequestSync.ProtoReflect.Descriptor instead.
+func (*RequestSync) Descriptor() ([]byte, []int) {
+	return file_proto_git_data_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *RequestSync) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+type ResponseSync struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResponseSync) Reset() {
+	*x = ResponseSync{}
+	mi := &file_proto_git_data_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseSync) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseSync) ProtoMessage() {}
+
+func (x *ResponseSync) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_git_data_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResponseSync.ProtoReflect.Descriptor instead.
+func (*ResponseSync) Descriptor() ([]byte, []int) {
+	return file_proto_git_data_proto_rawDescGZIP(), []int{30}
+}
+
 var File_proto_git_data_proto protoreflect.FileDescriptor
 
 const file_proto_git_data_proto_rawDesc = "" +
@@ -1699,7 +1779,10 @@ const file_proto_git_data_proto_rawDesc = "" +
 	"\x04repo\x18\x01 \x01(\tR\x04repo\"T\n" +
 	"\x1fResponseGetRepositoryStatistics\x121\n" +
 	"\vhead_commit\x18\x01 \x01(\v2\x10.mono.git.CommitR\n" +
-	"headCommit2\x90\a\n" +
+	"headCommit\"\x1f\n" +
+	"\vRequestSync\x12\x10\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\"\x0e\n" +
+	"\fResponseSync2\x90\a\n" +
 	"\aGitData\x12Y\n" +
 	"\x10ListRepositories\x12!.mono.git.RequestListRepositories\x1a\".mono.git.ResponseListRepositories\x12S\n" +
 	"\x0eListReferences\x12\x1f.mono.git.RequestListReferences\x1a .mono.git.ResponseListReferences\x12P\n" +
@@ -1713,7 +1796,9 @@ const file_proto_git_data_proto_rawDesc = "" +
 	"\aListTag\x12\x18.mono.git.RequestListTag\x1a\x19.mono.git.ResponseListTag\x12G\n" +
 	"\n" +
 	"ListBranch\x12\x1b.mono.git.RequestListBranch\x1a\x1c.mono.git.ResponseListBranch\x12n\n" +
-	"\x17GetRepositoryStatistics\x12(.mono.git.RequestGetRepositoryStatistics\x1a).mono.git.ResponseGetRepositoryStatisticsB\x19Z\x17go.f110.dev/mono/go/gitb\x06proto3"
+	"\x17GetRepositoryStatistics\x12(.mono.git.RequestGetRepositoryStatistics\x1a).mono.git.ResponseGetRepositoryStatistics2G\n" +
+	"\x0eGitDataUpdater\x125\n" +
+	"\x04Sync\x12\x15.mono.git.RequestSync\x1a\x16.mono.git.ResponseSyncB\x19Z\x17go.f110.dev/mono/go/gitb\x06proto3"
 
 var (
 	file_proto_git_data_proto_rawDescOnce sync.Once
@@ -1727,7 +1812,7 @@ func file_proto_git_data_proto_rawDescGZIP() []byte {
 	return file_proto_git_data_proto_rawDescData
 }
 
-var file_proto_git_data_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
+var file_proto_git_data_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
 var file_proto_git_data_proto_goTypes = []any{
 	(*Reference)(nil),                       // 0: mono.git.Reference
 	(*TreeEntry)(nil),                       // 1: mono.git.TreeEntry
@@ -1758,12 +1843,14 @@ var file_proto_git_data_proto_goTypes = []any{
 	(*ResponseListBranch)(nil),              // 26: mono.git.ResponseListBranch
 	(*RequestGetRepositoryStatistics)(nil),  // 27: mono.git.RequestGetRepositoryStatistics
 	(*ResponseGetRepositoryStatistics)(nil), // 28: mono.git.ResponseGetRepositoryStatistics
-	(*timestamppb.Timestamp)(nil),           // 29: google.protobuf.Timestamp
+	(*RequestSync)(nil),                     // 29: mono.git.RequestSync
+	(*ResponseSync)(nil),                    // 30: mono.git.ResponseSync
+	(*timestamppb.Timestamp)(nil),           // 31: google.protobuf.Timestamp
 }
 var file_proto_git_data_proto_depIdxs = []int32{
 	3,  // 0: mono.git.Commit.author:type_name -> mono.git.Signature
 	3,  // 1: mono.git.Commit.committer:type_name -> mono.git.Signature
-	29, // 2: mono.git.Signature.when:type_name -> google.protobuf.Timestamp
+	31, // 2: mono.git.Signature.when:type_name -> google.protobuf.Timestamp
 	4,  // 3: mono.git.ResponseListRepositories.repositories:type_name -> mono.git.Repository
 	0,  // 4: mono.git.ResponseListReferences.refs:type_name -> mono.git.Reference
 	0,  // 5: mono.git.ResponseGetReference.ref:type_name -> mono.git.Reference
@@ -1784,20 +1871,22 @@ var file_proto_git_data_proto_depIdxs = []int32{
 	23, // 20: mono.git.GitData.ListTag:input_type -> mono.git.RequestListTag
 	25, // 21: mono.git.GitData.ListBranch:input_type -> mono.git.RequestListBranch
 	27, // 22: mono.git.GitData.GetRepositoryStatistics:input_type -> mono.git.RequestGetRepositoryStatistics
-	6,  // 23: mono.git.GitData.ListRepositories:output_type -> mono.git.ResponseListRepositories
-	8,  // 24: mono.git.GitData.ListReferences:output_type -> mono.git.ResponseListReferences
-	10, // 25: mono.git.GitData.GetRepository:output_type -> mono.git.ResponseGetRepository
-	12, // 26: mono.git.GitData.GetReference:output_type -> mono.git.ResponseGetReference
-	14, // 27: mono.git.GitData.GetCommit:output_type -> mono.git.ResponseGetCommit
-	16, // 28: mono.git.GitData.GetTree:output_type -> mono.git.ResponseGetTree
-	18, // 29: mono.git.GitData.GetBlob:output_type -> mono.git.ResponseGetBlob
-	20, // 30: mono.git.GitData.GetFile:output_type -> mono.git.ResponseGetFile
-	22, // 31: mono.git.GitData.Stat:output_type -> mono.git.ResponseStat
-	24, // 32: mono.git.GitData.ListTag:output_type -> mono.git.ResponseListTag
-	26, // 33: mono.git.GitData.ListBranch:output_type -> mono.git.ResponseListBranch
-	28, // 34: mono.git.GitData.GetRepositoryStatistics:output_type -> mono.git.ResponseGetRepositoryStatistics
-	23, // [23:35] is the sub-list for method output_type
-	11, // [11:23] is the sub-list for method input_type
+	29, // 23: mono.git.GitDataUpdater.Sync:input_type -> mono.git.RequestSync
+	6,  // 24: mono.git.GitData.ListRepositories:output_type -> mono.git.ResponseListRepositories
+	8,  // 25: mono.git.GitData.ListReferences:output_type -> mono.git.ResponseListReferences
+	10, // 26: mono.git.GitData.GetRepository:output_type -> mono.git.ResponseGetRepository
+	12, // 27: mono.git.GitData.GetReference:output_type -> mono.git.ResponseGetReference
+	14, // 28: mono.git.GitData.GetCommit:output_type -> mono.git.ResponseGetCommit
+	16, // 29: mono.git.GitData.GetTree:output_type -> mono.git.ResponseGetTree
+	18, // 30: mono.git.GitData.GetBlob:output_type -> mono.git.ResponseGetBlob
+	20, // 31: mono.git.GitData.GetFile:output_type -> mono.git.ResponseGetFile
+	22, // 32: mono.git.GitData.Stat:output_type -> mono.git.ResponseStat
+	24, // 33: mono.git.GitData.ListTag:output_type -> mono.git.ResponseListTag
+	26, // 34: mono.git.GitData.ListBranch:output_type -> mono.git.ResponseListBranch
+	28, // 35: mono.git.GitData.GetRepositoryStatistics:output_type -> mono.git.ResponseGetRepositoryStatistics
+	30, // 36: mono.git.GitDataUpdater.Sync:output_type -> mono.git.ResponseSync
+	24, // [24:37] is the sub-list for method output_type
+	11, // [11:24] is the sub-list for method input_type
 	11, // [11:11] is the sub-list for extension type_name
 	11, // [11:11] is the sub-list for extension extendee
 	0,  // [0:11] is the sub-list for field type_name
@@ -1814,9 +1903,9 @@ func file_proto_git_data_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_git_data_proto_rawDesc), len(file_proto_git_data_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   29,
+			NumMessages:   31,
 			NumExtensions: 0,
-			NumServices:   1,
+			NumServices:   2,
 		},
 		GoTypes:           file_proto_git_data_proto_goTypes,
 		DependencyIndexes: file_proto_git_data_proto_depIdxs,
@@ -2297,6 +2386,78 @@ var _GitData_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetRepositoryStatistics",
 			Handler:    _GitData_GetRepositoryStatistics_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "proto/git/data.proto",
+}
+
+// GitDataUpdaterClient is the client API for GitDataUpdater service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+type GitDataUpdaterClient interface {
+	Sync(ctx context.Context, in *RequestSync, opts ...grpc.CallOption) (*ResponseSync, error)
+}
+
+type gitDataUpdaterClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewGitDataUpdaterClient(cc grpc.ClientConnInterface) GitDataUpdaterClient {
+	return &gitDataUpdaterClient{cc}
+}
+
+func (c *gitDataUpdaterClient) Sync(ctx context.Context, in *RequestSync, opts ...grpc.CallOption) (*ResponseSync, error) {
+	out := new(ResponseSync)
+	err := c.cc.Invoke(ctx, "/mono.git.GitDataUpdater/Sync", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// GitDataUpdaterServer is the server API for GitDataUpdater service.
+type GitDataUpdaterServer interface {
+	Sync(context.Context, *RequestSync) (*ResponseSync, error)
+}
+
+// UnimplementedGitDataUpdaterServer can be embedded to have forward compatible implementations.
+type UnimplementedGitDataUpdaterServer struct {
+}
+
+func (*UnimplementedGitDataUpdaterServer) Sync(context.Context, *RequestSync) (*ResponseSync, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Sync not implemented")
+}
+
+func RegisterGitDataUpdaterServer(s *grpc.Server, srv GitDataUpdaterServer) {
+	s.RegisterService(&_GitDataUpdater_serviceDesc, srv)
+}
+
+func _GitDataUpdater_Sync_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestSync)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GitDataUpdaterServer).Sync(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/mono.git.GitDataUpdater/Sync",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GitDataUpdaterServer).Sync(ctx, req.(*RequestSync))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _GitDataUpdater_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "mono.git.GitDataUpdater",
+	HandlerType: (*GitDataUpdaterServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Sync",
+			Handler:    _GitDataUpdater_Sync_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -15,6 +15,9 @@ import (
 	gitHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/google/go-github/v85/github"
 	"go.f110.dev/xerrors"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"go.f110.dev/mono/go/ctxutil"
 	githubutil "go.f110.dev/mono/go/github"
@@ -289,6 +292,46 @@ func (u *Updater) updateRepo(ctx context.Context, repo *git.Repository) error {
 	}
 
 	return updateBranches(repo)
+}
+
+// UpdaterService serves Sync of Updater via gRPC.
+type UpdaterService struct {
+	updater *Updater
+}
+
+var _ GitDataUpdaterServer = &UpdaterService{}
+
+func NewUpdaterService(updater *Updater) *UpdaterService {
+	return &UpdaterService{updater: updater}
+}
+
+func (s *UpdaterService) Sync(ctx context.Context, req *RequestSync) (*ResponseSync, error) {
+	err := s.updater.Sync(ctx, req.Url)
+	switch {
+	case errors.Is(err, ErrRepositoryNotTracked):
+		return nil, status.Error(codes.NotFound, err.Error())
+	case err != nil:
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return &ResponseSync{}, nil
+}
+
+// UpdaterClient calls Sync of Updater which is served by UpdaterService in the other process.
+type UpdaterClient struct {
+	client GitDataUpdaterClient
+}
+
+func NewUpdaterClient(conn grpc.ClientConnInterface) *UpdaterClient {
+	return &UpdaterClient{client: NewGitDataUpdaterClient(conn)}
+}
+
+// Sync has the same semantics as Updater.Sync.
+func (c *UpdaterClient) Sync(ctx context.Context, url string) error {
+	_, err := c.client.Sync(ctx, &RequestSync{Url: url})
+	if status.Code(err) == codes.NotFound {
+		return ErrRepositoryNotTracked.WithStack()
+	}
+	return xerrors.WithStack(err)
 }
 
 // basicAuth returns the credential for GitHub. It returns nil if tokenProvider is nil or fails to get the token.

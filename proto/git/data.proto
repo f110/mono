@@ -19,6 +19,13 @@ service GitData {
   rpc GetRepositoryStatistics(RequestGetRepositoryStatistics) returns (ResponseGetRepositoryStatistics);
 }
 
+// GitDataUpdater updates the repositories which are served by GitData.
+service GitDataUpdater {
+  // Sync fetches the repository whose url matches and blocks until the fetch finishes.
+  // It returns NOT_FOUND if the repository is not tracked.
+  rpc Sync(RequestSync) returns (ResponseSync);
+}
+
 message Reference {
   string name   = 1;
   string target = 2;
@@ -175,3 +182,9 @@ message ResponseGetRepositoryStatistics {
   // repository can be derived from head_commit.committer.when.
   Commit head_commit = 1;
 }
+
+message RequestSync {
+  string url = 1;
+}
+
+message ResponseSync {}

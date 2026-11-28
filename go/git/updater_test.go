@@ -3,6 +3,7 @@ package git
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"testing"
@@ -14,6 +15,9 @@ import (
 	"github.com/go-git/go-git/v5/storage/filesystem"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/test/bufconn"
 
 	"go.f110.dev/mono/go/git/database"
 	"go.f110.dev/mono/go/logger"
@@ -78,6 +82,32 @@ func TestUpdater_Sync(t *testing.T) {
 	n, err := repo.Reference(plumbing.NewBranchReferenceName("foobar"), false)
 	require.NoError(t, err)
 	assert.Equal(t, masterRef.Hash(), n.Hash())
+}
+
+func TestUpdaterClient_Sync(t *testing.T) {
+	sourceRepo := makeUpdaterSourceRepository(t)
+	repoPath := sourceRepo.Storer.(*filesystem.Storage).Filesystem().Root()
+	repoConfig := &RepositoryConfig{Name: "test", URL: repoPath, Prefix: "test"}
+	updater := NewUpdater(&ObjectStorageBackend{Client: storage.NewMock()}, nil, NewStaticRepositoryProvider([]*RepositoryConfig{repoConfig}), 1)
+
+	lis := bufconn.Listen(1024 * 1024)
+	s := grpc.NewServer()
+	RegisterGitDataUpdaterServer(s, NewUpdaterService(updater))
+	go s.Serve(lis)
+	t.Cleanup(s.Stop)
+	conn, err := grpc.NewClient("passthrough:///bufnet", grpc.WithContextDialer(func(_ context.Context, _ string) (net.Conn, error) {
+		return lis.Dial()
+	}), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	require.NoError(t, err)
+	t.Cleanup(func() { conn.Close() })
+	client := NewUpdaterClient(conn)
+
+	err = client.Sync(context.Background(), "https://example.com/unknown.git")
+	assert.ErrorIs(t, err, ErrRepositoryNotTracked)
+
+	err = client.Sync(context.Background(), repoPath)
+	require.NoError(t, err)
+	require.NotNil(t, repoConfig.goGit)
 }
 
 func TestUpdater_SyncNotOpenedRepository(t *testing.T) {
